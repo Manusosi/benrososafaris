@@ -3,6 +3,7 @@ import { localePath } from '@/lib/public/locale-path';
 
 export type LegalSection = {
   id: string;
+  listAfterParagraphIndex?: number;
   listItems?: string[];
   paragraphs: string[];
   title: string;
@@ -10,7 +11,8 @@ export type LegalSection = {
 
 export type LegalPageDefinition = {
   description: string;
-  eyebrow: string;
+  eyebrow?: string;
+  intro?: string | string[];
   lastUpdated: string;
   sections: LegalSection[];
   slug: string;
@@ -141,49 +143,123 @@ export const LEGAL_PAGES: LegalPageDefinition[] = [
   {
     slug: 'cookie-policy',
     title: 'Cookie Policy',
-    eyebrow: 'Legal',
     description:
-      'Information about cookies and similar technologies used on the Benroso Safaris website.',
-    lastUpdated: '2026-06-22',
+      'How Benroso Safaris uses cookies and similar technologies to improve your browsing experience and understand website performance.',
+    lastUpdated: '2026-06-25',
+    intro: [
+      'This Cookie Policy explains how Benroso Safaris may use cookies and similar technologies on our website to improve user experience, understand website performance, and support our online services.',
+      'By using our website, you agree to the use of cookies as described in this policy, unless you disable them through your browser settings.'
+    ],
     sections: [
       {
         id: 'what-are-cookies',
         title: '1. What Are Cookies?',
         paragraphs: [
-          'Cookies are small text files stored on your device when you visit a website. Similar technologies include local storage, pixels, and SDKs. They help websites function, remember preferences, and understand how visitors use the site.'
+          'Cookies are small text files placed on your device when you visit a website. They help the website remember certain information about your visit, such as your preferences, browsing activity, or how you interact with different pages.',
+          'Cookies can help improve website performance, make pages easier to use, and provide insights into how visitors find and use our website.'
         ]
       },
       {
-        id: 'how-we-use',
-        title: '2. How We Use Cookies',
-        paragraphs: ['We use cookies and similar technologies for the following purposes:'],
+        id: 'how-we-use-cookies',
+        title: '2. How Benroso Safaris Uses Cookies',
+        listAfterParagraphIndex: 0,
+        paragraphs: [
+          'Benroso Safaris may use cookies to:',
+          'Cookies do not give us access to your computer, mobile device, or personal files.'
+        ],
         listItems: [
-          'Strictly necessary — essential for site security, session management, and core functionality',
-          'Functional — remember language, locale, or form preferences',
-          'Analytics — understand traffic patterns and improve content (only with consent where required)',
-          'Marketing — measure campaign effectiveness (only with consent where required)'
+          'Make the website function properly',
+          'Improve website speed, performance, and user experience',
+          'Understand how visitors use our website',
+          'Identify which pages, safari packages, destinations, or blog articles are most useful to visitors',
+          'Improve our website content and inquiry process',
+          'Support contact forms, inquiry forms, and basic website functionality',
+          'Measure the effectiveness of our online content or marketing activities'
         ]
       },
       {
-        id: 'consent',
-        title: '3. Consent and Control',
+        id: 'types-of-cookies',
+        title: '3. Types of Cookies We May Use',
         paragraphs: [
-          'Where required by law (including the EU ePrivacy Directive and UK PECR), we request your consent before placing non-essential cookies. You may withdraw consent at any time via your browser settings or our cookie preference controls when available.',
-          'Strictly necessary cookies cannot be disabled without affecting site functionality.'
+          '**Essential Cookies**',
+          'These cookies are necessary for the website to work properly. They support basic functions such as page navigation, form submission, security, and access to key website features.',
+          'Without these cookies, some parts of the website may not function correctly.',
+          '**Performance and Analytics Cookies**',
+          'These cookies help us understand how visitors interact with our website. For example, they may show us which pages are visited most often, how long visitors stay on the website, and whether users experience errors.',
+          'This information helps Benroso Safaris improve the website and create better safari content for visitors.',
+          '**Functionality Cookies**',
+          'Functionality cookies allow the website to remember certain preferences or actions, such as form entries, region preferences, or previous interactions.',
+          'These cookies help make your browsing experience smoother and more convenient.',
+          '**Marketing and Advertising Cookies**',
+          'Benroso Safaris may use marketing cookies or similar tracking technologies to understand the effectiveness of online campaigns or show relevant safari-related content to users who have visited our website.',
+          'These cookies may be set by Benroso Safaris or by trusted third-party platforms, such as advertising, analytics, or social media tools.'
         ]
       },
       {
-        id: 'third-party',
+        id: 'third-party-cookies',
         title: '4. Third-Party Cookies',
+        listAfterParagraphIndex: 1,
         paragraphs: [
-          'Third parties such as analytics providers, embedded maps, payment gateways, or social platforms may set their own cookies. Their use is governed by the respective third-party privacy policies.'
+          'Some cookies on our website may be placed by third-party services that help us manage, measure, or improve our website.',
+          'These may include services such as:',
+          'Third-party providers may collect information according to their own privacy and cookie policies. Benroso Safaris does not control how third-party cookies are used once they are set by those external platforms.'
+        ],
+        listItems: [
+          'Website analytics tools',
+          'Search engine tools',
+          'Social media platforms',
+          'Embedded maps',
+          'Video platforms',
+          'Advertising or remarketing platforms'
         ]
       },
       {
-        id: 'manage',
-        title: '5. Managing Cookies',
+        id: 'cookies-and-personal-information',
+        title: '5. Cookies and Personal Information',
         paragraphs: [
-          'Most browsers allow you to block or delete cookies through settings. Blocking all cookies may limit website functionality. For guidance, visit your browser help pages or www.allaboutcookies.org.'
+          'Cookies may collect general technical information such as browser type, device type, IP address, pages visited, time spent on the website, and referral source.',
+          'Where cookies are linked to personal information submitted through an inquiry form, such information will be handled in accordance with our [Privacy Policy](/privacy-policy).',
+          'Benroso Safaris does not use cookies to collect payment card details, bank details, or sensitive financial information through the website.'
+        ]
+      },
+      {
+        id: 'managing-cookies',
+        title: '6. Managing or Disabling Cookies',
+        listAfterParagraphIndex: 1,
+        paragraphs: [
+          'You can choose to accept, reject, or delete cookies through your browser settings.',
+          'Most browsers allow you to:',
+          'Please note that disabling certain cookies may affect how the website functions. Some features, such as inquiry forms, page preferences, or embedded content, may not work properly if cookies are disabled.'
+        ],
+        listItems: [
+          'View which cookies are stored',
+          'Delete existing cookies',
+          'Block all cookies',
+          'Block third-party cookies',
+          'Receive alerts before cookies are placed on your device'
+        ]
+      },
+      {
+        id: 'cookie-consent',
+        title: '7. Cookie Consent',
+        paragraphs: [
+          'Where required, Benroso Safaris may display a cookie notice or consent banner when you visit the website. This allows you to accept, reject, or manage certain cookie categories depending on the website setup.',
+          'Essential cookies may still be used because they are necessary for the website to operate correctly.'
+        ]
+      },
+      {
+        id: 'updates',
+        title: '8. Updates to This Cookie Policy',
+        paragraphs: [
+          'Benroso Safaris may update this Cookie Policy from time to time to reflect changes in website features, technology, legal requirements, or how cookies are used.',
+          'Any updates will be posted on this page with the revised effective date.'
+        ]
+      },
+      {
+        id: 'contact-us',
+        title: '9. Contact Us',
+        paragraphs: [
+          'For questions about this Cookie Policy or how Benroso Safaris uses cookies, please [contact us](/contact) through the official contact details provided on our website.'
         ]
       }
     ]
@@ -265,61 +341,185 @@ export const LEGAL_PAGES: LegalPageDefinition[] = [
     title: 'Payment Terms',
     eyebrow: 'Legal',
     description:
-      'Deposits, payment methods, refunds, and billing conditions for Benroso Safaris bookings.',
-    lastUpdated: '2026-06-22',
+      'Deposits, payment schedules, currency, refunds, and billing conditions for Benroso Safaris bookings.',
+    lastUpdated: '2026-06-25',
+    intro: [
+      'These Payment Terms apply to all safari, tour, accommodation, transport, group travel, incentive travel, and related travel arrangements booked with Benroso Safaris.',
+      'By confirming a booking with us, the client agrees to the payment terms outlined below.'
+    ],
     sections: [
       {
-        id: 'overview',
-        title: '1. Overview',
+        id: 'booking-confirmation',
+        title: '1. Booking Confirmation',
         paragraphs: [
-          'These Payment Terms apply to all confirmed safari bookings with Benroso Safaris. They should be read together with your booking confirmation, proposal, and our Terms & Conditions.'
+          'A booking is considered confirmed once Benroso Safaris has issued a written confirmation and the required deposit has been received within the stated payment period.',
+          'All bookings are subject to availability at the time of confirmation. Accommodation, transport, flights, guides, park arrangements, and other services can only be secured once the required payment has been received.'
         ]
       },
       {
-        id: 'deposits',
-        title: '2. Deposits and Balance Payments',
+        id: 'payments-fits-private-tours',
+        title: '2. Payments for FITs and Private Tours',
         paragraphs: [
-          'A non-refundable deposit is typically required to secure reservations with lodges, parks, and suppliers. The deposit amount and due date will be stated in your booking confirmation.',
-          'Final balance payment is due by the date specified in your confirmation — commonly 30–60 days before travel unless otherwise agreed for late bookings.'
+          'FITs refer to Fully Inclusive Tours, individual safaris, private tours, family safaris, couples’ safaris, and other customized travel arrangements.',
+          'For FITs and private tours, an advance payment of **20% of the total tour cost** is required within **7 days** of confirmation of the arrangements.',
+          'The remaining balance is due **60 days before departure**.',
+          'For bookings made within **60 days of departure**, the full tour cost is payable immediately upon confirmation.'
         ]
       },
       {
-        id: 'methods',
-        title: '3. Payment Methods',
-        paragraphs: ['We accept payment via methods stated in your invoice, which may include:'],
+        id: 'payments-groups-incentive',
+        title: '3. Payments for Groups and Incentive Travel',
+        paragraphs: [
+          'For group bookings and incentive travel arrangements, an advance payment of **25% of the total invoice amount** is required within **7 days** of confirmation.',
+          'This deposit is used to secure rooms, transport, suppliers, activities, and other services required for the group.',
+          'A further payment of **60%** is due **60 days before departure from the country of origin**.',
+          'The remaining **15%** is payable before the group’s arrival.',
+          'Any alternative payment arrangement for groups, incentive travel, or special bookings must be agreed in writing by both parties before confirmation.'
+        ]
+      },
+      {
+        id: 'payment-deadlines',
+        title: '4. Payment Deadlines',
+        listAfterParagraphIndex: 1,
+        paragraphs: [
+          'Clients are responsible for ensuring that payments are made by the due dates stated on the invoice, quotation, or booking confirmation.',
+          'Failure to make payment within the required period may result in:',
+          'Benroso Safaris shall not be held responsible for any loss of availability, rate changes, or supplier cancellation caused by late payment.'
+        ],
         listItems: [
-          'Bank transfer (SWIFT / local Kenyan bank transfer)',
-          'Card payments through our secure payment gateway where available',
-          'Other methods as agreed in writing for corporate or agency bookings'
+          'Delay in confirming the booking',
+          'Release of reserved rooms or services by suppliers',
+          'Changes in availability',
+          'Price adjustments',
+          'Cancellation of the booking',
+          'Additional supplier charges'
         ]
       },
       {
-        id: 'currency',
-        title: '4. Currency and Exchange Rates',
+        id: 'invoices-quotations',
+        title: '5. Invoices and Quotations',
         paragraphs: [
-          'Quotes may be issued in USD, EUR, GBP, or KES. If you pay in a different currency, your bank or payment provider exchange rate and fees apply. We are not responsible for intermediary bank charges.'
+          'Benroso Safaris may issue a quotation before a booking is confirmed. A quotation does not guarantee availability until the required deposit has been received and the booking has been confirmed in writing.',
+          'Invoices will show the amount payable, payment schedule, due dates, and any applicable booking details.',
+          'All prices are based on the services, dates, destinations, accommodation, transport, and activities included in the confirmed itinerary.'
         ]
       },
       {
-        id: 'refunds',
-        title: '5. Refunds and Cancellations',
+        id: 'currency-exchange-rates',
+        title: '6. Currency and Exchange Rates',
         paragraphs: [
-          'Refund eligibility depends on cancellation timing, supplier policies, and non-refundable components (park fees, permits, peak-season lodges). Detailed cancellation charges will be provided before you confirm your booking.',
-          'Refunds, when due, are processed to the original payment method where possible within a reasonable timeframe after supplier credits are received.'
+          'Tour prices may be quoted in United States Dollars, Kenya Shillings, or another agreed currency depending on the nature of the booking.',
+          'Where payments are made in a currency different from the quoted currency, the final amount received by Benroso Safaris must match the invoiced amount after any exchange rate differences, bank charges, transaction fees, or transfer costs have been applied.',
+          'Any shortfall resulting from exchange rate changes or transfer deductions shall be payable by the client.'
         ]
       },
       {
-        id: 'chargebacks',
-        title: '6. Chargebacks and Failed Payments',
+        id: 'bank-charges-transaction-fees',
+        title: '7. Bank Charges and Transaction Fees',
         paragraphs: [
-          'If a payment fails or is charged back without prior contact, we may cancel affected services and apply applicable cancellation fees. Please contact us immediately if you experience payment issues.'
+          'All bank charges, mobile money charges, transfer fees, card charges, intermediary bank fees, foreign exchange charges, and transaction costs are the responsibility of the client unless otherwise agreed in writing.',
+          'The full invoiced amount must be received by Benroso Safaris.'
         ]
       },
       {
-        id: 'taxes',
-        title: '7. Taxes and Fees',
+        id: 'accepted-payment-methods',
+        title: '8. Accepted Payment Methods',
         paragraphs: [
-          'Unless stated otherwise, quotes include applicable tourism levies and park fees as described in your itinerary. Government tax changes after confirmation may require price adjustment.'
+          'Benroso Safaris will provide official payment instructions directly to the client during the booking process.',
+          'Accepted payment methods may vary depending on the booking type, location of the client, currency, and operational requirements.',
+          'Clients should only make payments using the official payment details shared by Benroso Safaris through recognized communication channels.',
+          'For security reasons, clients are encouraged to confirm payment details directly with Benroso Safaris before making any payment.'
+        ]
+      },
+      {
+        id: 'online-payments',
+        title: '9. Online Payments',
+        paragraphs: [
+          'Payments are not processed directly on the Benroso Safaris website.',
+          'The website is used for safari inquiries, quotation requests, destination information, and communication with our team. After a client submits an inquiry, the Benroso Safaris team may contact the client to prepare a customized itinerary, confirm availability, issue a quotation, and share official payment instructions where applicable.',
+          'Benroso Safaris does not collect or store debit card, credit card, bank account, or online payment details through the website.'
+        ]
+      },
+      {
+        id: 'supplier-deposits-non-refundable',
+        title: '10. Supplier Deposits and Non-Refundable Costs',
+        paragraphs: [
+          'Certain suppliers, including lodges, camps, hotels, airlines, and activity providers, may require deposits or full payment to secure services.',
+          'Some supplier deposits, domestic flights, park fees, permits, special activities, and peak-season accommodation bookings may be non-refundable once confirmed.',
+          'Where such costs apply, they may affect refund amounts in the event of cancellation, date changes, itinerary amendments, or reduction in the number of travelers.'
+        ]
+      },
+      {
+        id: 'changes-after-payment',
+        title: '11. Changes After Payment',
+        listAfterParagraphIndex: 1,
+        paragraphs: [
+          'Any changes requested after payment has been made are subject to availability and supplier conditions.',
+          'Changes may include, but are not limited to:',
+          'Where changes result in additional costs, the client shall be responsible for paying the difference before the revised arrangements are confirmed.',
+          'Where changes reduce the overall cost, any refund or credit shall be subject to supplier terms, cancellation conditions, and costs already incurred.'
+        ],
+        listItems: [
+          'Travel dates',
+          'Number of travelers',
+          'Accommodation',
+          'Rooming arrangements',
+          'Destinations',
+          'Transport arrangements',
+          'Domestic flights',
+          'Activities or excursions'
+        ]
+      },
+      {
+        id: 'late-bookings',
+        title: '12. Late Bookings',
+        paragraphs: [
+          'Bookings made close to the travel date may require immediate full payment to secure accommodation, transport, flights, permits, park arrangements, and other services.',
+          'Benroso Safaris will advise the client of the payment requirements at the time of confirmation.'
+        ]
+      },
+      {
+        id: 'post-tour-billing',
+        title: '13. Post-Tour Billing',
+        paragraphs: [
+          'Any post-tour billing must be authorized by mutual agreement between Benroso Safaris and the client.',
+          'Post-tour charges may include additional services requested during the trip, extra mileage, itinerary extensions, upgraded accommodation, optional activities, personal expenses, or other costs not included in the original invoice.',
+          'Such charges shall be payable within the period agreed between both parties.'
+        ]
+      },
+      {
+        id: 'receipts-proof-of-payment',
+        title: '14. Receipts and Proof of Payment',
+        paragraphs: [
+          'Clients should share proof of payment with Benroso Safaris once payment has been made.',
+          'A booking will only be treated as paid once the funds have been received and confirmed by Benroso Safaris.',
+          'Payment receipts or acknowledgements may be issued after payment confirmation.'
+        ]
+      },
+      {
+        id: 'cancellations-refunds',
+        title: '15. Cancellations and Refunds',
+        listAfterParagraphIndex: 1,
+        paragraphs: [
+          'Cancellation fees shall apply in accordance with the Benroso Safaris Terms and Conditions and Cancellation Policy.',
+          'Refunds, where applicable, will be subject to:',
+          'Cancellations must be submitted in writing and will take effect from the date received by Benroso Safaris.'
+        ],
+        listItems: [
+          'The date of cancellation',
+          'Supplier cancellation terms',
+          'Non-refundable deposits or fees',
+          'Bank charges and transaction costs',
+          'Services already booked, paid for, or used',
+          'Any administrative or operational costs incurred'
+        ]
+      },
+      {
+        id: 'acceptance-payment-terms',
+        title: '16. Acceptance of Payment Terms',
+        paragraphs: [
+          'Payment of a deposit, partial payment, full payment, or confirmation of a booking constitutes acceptance of these Payment Terms by the client and all members of the traveling party.',
+          'Clients are responsible for ensuring that all travelers included in the booking understand the payment requirements, cancellation conditions, and related booking terms.'
         ]
       }
     ]
@@ -327,65 +527,245 @@ export const LEGAL_PAGES: LegalPageDefinition[] = [
   {
     slug: 'service-level-agreement',
     title: 'Service Level Agreement',
-    eyebrow: 'Legal',
     description:
-      'Response times, support standards, and service commitments for Benroso Safaris clients.',
-    lastUpdated: '2026-06-22',
+      'Service standards, support commitments, and responsibilities when booking safaris, tours, and travel services with Benroso Safaris.',
+    lastUpdated: '2026-06-25',
+    intro: [
+      'This Service Level Agreement outlines the level of service, support, communication, and responsibility clients can expect when booking a safari, tour, transfer, accommodation arrangement, or related travel service with Benroso Safaris.',
+      'At Benroso Safaris, we are committed to providing reliable, professional, and well-coordinated safari experiences while recognizing that travel in natural environments may be affected by factors beyond our control.'
+    ],
     sections: [
       {
-        id: 'purpose',
-        title: '1. Purpose',
+        id: 'our-service-commitment',
+        title: '1. Our Service Commitment',
+        listAfterParagraphIndex: 1,
         paragraphs: [
-          'This Service Level Agreement (SLA) describes the service standards Benroso Safaris aims to provide before, during, and after your safari. It supplements your booking confirmation and Terms & Conditions.'
-        ]
-      },
-      {
-        id: 'enquiry-response',
-        title: '2. Enquiry Response Times',
-        paragraphs: [
-          'We target the following initial response times during business hours (EAT, UTC+3):'
+          'Benroso Safaris is committed to offering clients a professional, responsive, and personalized travel planning experience from the first inquiry to the completion of the safari.',
+          'We aim to:'
         ],
         listItems: [
-          'Website and email enquiries: within 1 business day',
-          'Urgent travel-within-72-hours enquiries: within 4 business hours where possible',
-          'Confirmed booking amendments: within 2 business days depending on supplier availability'
+          'Respond to inquiries in a timely and helpful manner',
+          'Prepare customized safari itineraries based on client preferences',
+          'Provide clear quotations and booking information',
+          'Confirm services with reliable suppliers and partners',
+          'Offer accurate destination and travel guidance to the best of our knowledge',
+          'Provide professional driver-guides, transport arrangements, and safari coordination',
+          'Support clients before, during, and after their safari where reasonably possible'
         ]
       },
       {
-        id: 'business-hours',
-        title: '3. Business Hours and Emergency Support',
+        id: 'inquiry-and-communication-support',
+        title: '2. Inquiry and Communication Support',
         paragraphs: [
-          'Standard office hours: Monday–Friday, 08:00–17:00 EAT (excluding Kenyan public holidays).',
-          'For guests on active safaris, emergency operational support is available via the contact number provided in your travel documents and on your voucher.'
+          'When a client submits an inquiry through our website, email, phone, WhatsApp, or any other communication channel, the Benroso Safaris team will review the request and respond with relevant information, recommendations, or follow-up questions where necessary.',
+          'Our team may contact the client to clarify travel dates, destination interests, number of travelers, accommodation preferences, budget range, and any special requirements.',
+          'All safari proposals and quotations are prepared based on the information provided by the client and the availability of services at the time of planning.'
         ]
       },
       {
-        id: 'pre-travel',
-        title: '4. Pre-Travel Services',
+        id: 'customized-safari-planning',
+        title: '3. Customized Safari Planning',
+        listAfterParagraphIndex: 1,
         paragraphs: [
-          'Before departure we aim to provide: written itinerary confirmation, voucher pack, key contact numbers, and guidance on visas, health, and packing. Final documents are typically issued after balance payment clearance.'
+          "Benroso Safaris specializes in creating tailor-made safari experiences. We make every reasonable effort to design itineraries that reflect the client's travel interests, preferred destinations, comfort level, budget, and schedule.",
+          'Safari planning may include recommendations on:',
+          'All proposed itineraries remain subject to availability, seasonal conditions, supplier confirmation, park regulations, and payment requirements.'
+        ],
+        listItems: [
+          'National parks, reserves, and conservancies',
+          'Accommodation options',
+          'Transport arrangements',
+          'Game drives and activities',
+          'Domestic flights where applicable',
+          'Beach extensions and add-on experiences',
+          'Family, private, group, or incentive travel arrangements'
         ]
       },
       {
-        id: 'on-safari',
-        title: '5. On-Safari Standards',
+        id: 'booking-coordination',
+        title: '4. Booking Coordination',
         paragraphs: [
-          'We work with licensed guides, insured vehicles, and vetted accommodation partners. If a service issue arises during your trip, notify your guide and our operations team promptly so we can attempt resolution.'
+          'Once a booking is confirmed and the required payment has been received, Benroso Safaris will proceed to secure the agreed services with relevant suppliers.',
+          'These may include accommodation providers, transport providers, domestic airlines, guides, park authorities, activity providers, and other service partners involved in the itinerary.',
+          'Benroso Safaris will make reasonable efforts to ensure that all confirmed services are properly coordinated. However, certain services are provided by independent third parties, and their own terms, operational standards, cancellation policies, and service conditions may apply.'
         ]
       },
       {
-        id: 'complaints',
-        title: '6. Complaints and Escalation',
+        id: 'accuracy-of-information',
+        title: '5. Accuracy of Information',
         paragraphs: [
-          `Submit post-travel feedback or complaints within 14 days of service completion to ${email}. We will acknowledge within 3 business days and provide a substantive response within 14 business days where investigation is required.`,
-          'Unresolved disputes may be escalated to relevant industry bodies including KATO where applicable.'
+          'Benroso Safaris aims to provide accurate and up-to-date information on its website, itineraries, quotations, and communication materials.',
+          'However, travel information may change from time to time due to supplier updates, park regulations, seasonal conditions, government directives, flight schedule changes, conservation fee revisions, exchange rates, or other circumstances.',
+          'While we make every effort to keep information accurate, Benroso Safaris does not guarantee that all website content, prices, availability, descriptions, or travel details will always be complete, current, or free from errors.',
+          'Where an error or change is identified, we will make reasonable efforts to correct it and advise affected clients accordingly.'
         ]
       },
       {
-        id: 'exclusions',
-        title: '7. SLA Exclusions',
+        id: 'itinerary-changes-and-operational-adjustments',
+        title: '6. Itinerary Changes and Operational Adjustments',
+        listAfterParagraphIndex: 1,
         paragraphs: [
-          'This SLA does not cover delays or failures caused by force majeure, third-party supplier failures beyond our control, incorrect information provided by the guest, or events outside agreed service scope.'
+          'Safari travel may be affected by conditions that require changes to routes, accommodation, activities, timing, or transport arrangements.',
+          'Benroso Safaris reserves the right to make necessary adjustments before or during a safari where circumstances require. Such circumstances may include, but are not limited to:',
+          'Where changes are necessary, Benroso Safaris will make reasonable efforts to provide suitable alternatives of comparable standard and value where possible.'
+        ],
+        listItems: [
+          'Weather conditions',
+          'Road conditions',
+          'Wildlife movement',
+          'Park or conservancy regulations',
+          'Security concerns',
+          'Accommodation availability',
+          'Supplier changes',
+          'Vehicle breakdown',
+          'Flight delays or cancellations',
+          'Government directives',
+          'Medical or emergency situations',
+          'Events beyond our reasonable control'
+        ]
+      },
+      {
+        id: 'wildlife-nature-and-safari-experience-disclaimer',
+        title: '7. Wildlife, Nature, and Safari Experience Disclaimer',
+        paragraphs: [
+          'Safaris take place in natural and wildlife-rich environments. While Benroso Safaris and its guides make every reasonable effort to provide rewarding safari experiences, wildlife sightings cannot be guaranteed.',
+          'Animal movement, weather, vegetation, migration patterns, park conditions, and natural behavior may affect what is seen during a safari.',
+          'Clients acknowledge that safari experiences involve natural unpredictability and that no specific animal sighting, river crossing, migration moment, photography opportunity, or wildlife encounter can be promised.'
+        ]
+      },
+      {
+        id: 'client-safety-and-conduct',
+        title: '8. Client Safety and Conduct',
+        listAfterParagraphIndex: 2,
+        paragraphs: [
+          'The safety and comfort of our clients is important to Benroso Safaris. Clients are expected to follow guidance provided by driver-guides, tour leaders, accommodation staff, park rangers, and other authorized personnel during the safari.',
+          'Clients are responsible for conducting themselves in a respectful and safe manner throughout the trip.',
+          'This includes:',
+          'Benroso Safaris reserves the right to refuse or discontinue service to any client whose conduct threatens the safety, comfort, or enjoyment of other travelers, staff, guides, suppliers, wildlife, or local communities.'
+        ],
+        listItems: [
+          'Following park and conservancy rules',
+          'Remaining inside the vehicle unless advised otherwise',
+          'Keeping a safe distance from wildlife',
+          'Respecting local communities, cultures, and customs',
+          'Avoiding behavior that may endanger themselves or others',
+          'Observing accommodation and activity provider rules',
+          'Informing Benroso Safaris of any medical, mobility, dietary, or special requirements before travel'
+        ]
+      },
+      {
+        id: 'health-medical-and-travel-preparedness',
+        title: '9. Health, Medical, and Travel Preparedness',
+        paragraphs: [
+          'Clients are responsible for ensuring that they are medically fit to travel and participate in the activities included in their itinerary.',
+          'Benroso Safaris recommends that all travelers consult a qualified medical professional or travel clinic before visiting safari destinations, especially regarding vaccinations, malaria precautions, medication, allergies, mobility limitations, and any existing medical conditions.',
+          'Clients are also responsible for carrying any personal medication, medical documents, vaccination certificates, or health-related travel documents required for their journey.',
+          "Benroso Safaris shall not be held responsible for medical complications, denied entry, travel disruption, or additional costs arising from a client's failure to meet health or travel requirements."
+        ]
+      },
+      {
+        id: 'travel-documents-and-entry-requirements',
+        title: '10. Travel Documents and Entry Requirements',
+        paragraphs: [
+          'Clients are responsible for ensuring that they have valid passports, visas, permits, vaccination certificates, insurance documents, and any other travel documents required for their trip.',
+          'Passport, visa, immigration, health, and entry requirements may change without notice. Clients should confirm current requirements with relevant embassies, consulates, airlines, immigration authorities, or official government sources before travel.',
+          'Benroso Safaris may provide general guidance where possible, but the responsibility for correct and valid travel documents remains with the client.'
+        ]
+      },
+      {
+        id: 'travel-insurance',
+        title: '11. Travel Insurance',
+        listAfterParagraphIndex: 1,
+        paragraphs: [
+          'Benroso Safaris strongly recommends that all clients obtain comprehensive travel insurance before departure.',
+          'Travel insurance should ideally cover:',
+          'Benroso Safaris shall not be held responsible for costs, losses, or disruptions that could have been covered by suitable travel insurance.'
+        ],
+        listItems: [
+          'Medical emergencies',
+          'Emergency evacuation',
+          'Trip cancellation or interruption',
+          'Travel delays',
+          'Lost or damaged luggage',
+          'Personal accident',
+          'Safari and adventure-related activities',
+          'Supplier failure where applicable'
+        ]
+      },
+      {
+        id: 'third-party-services',
+        title: '12. Third-Party Services',
+        paragraphs: [
+          'Some services included in a safari itinerary may be provided by independent third parties, including lodges, camps, hotels, airlines, transport companies, activity providers, park authorities, and conservation bodies.',
+          'Benroso Safaris carefully selects suppliers and partners where possible, but we do not directly control the operations, staff, facilities, schedules, policies, or decisions of third-party providers.',
+          'Benroso Safaris shall not be liable for delays, omissions, service failures, accidents, losses, damages, or additional costs caused by third-party providers, except where such liability is required by law.'
+        ]
+      },
+      {
+        id: 'force-majeure-and-events-beyond-our-control',
+        title: '13. Force Majeure and Events Beyond Our Control',
+        listAfterParagraphIndex: 1,
+        paragraphs: [
+          'Benroso Safaris shall not be liable for failure to perform, delays, changes, losses, additional costs, or disruption caused by events beyond our reasonable control.',
+          'Such events may include, but are not limited to:',
+          'In such situations, Benroso Safaris will make reasonable efforts to assist clients, rearrange services where possible, or provide suitable guidance depending on the circumstances.'
+        ],
+        listItems: [
+          'Extreme weather',
+          'Floods, fires, or natural disasters',
+          'Disease outbreaks or public health emergencies',
+          'Border closures',
+          'Political unrest or civil disturbances',
+          'Government restrictions',
+          'Park closures',
+          'Airline disruptions',
+          'Labor disputes',
+          'Security incidents',
+          'Road closures',
+          'Mechanical failure',
+          'Any other unforeseeable or unavoidable event'
+        ]
+      },
+      {
+        id: 'complaints-and-service-concerns',
+        title: '14. Complaints and Service Concerns',
+        paragraphs: [
+          'If a client experiences any issue during their safari, they should notify the driver-guide, tour leader, or Benroso Safaris team as soon as possible so that reasonable efforts can be made to resolve the matter during the trip.',
+          'Complaints raised only after the completion of the safari may be more difficult to investigate or resolve, especially where Benroso Safaris was not given an opportunity to address the concern during travel.',
+          'Any post-tour complaint should be submitted in writing with relevant details. Please [contact us](/contact) through the official contact details provided on our website.'
+        ]
+      },
+      {
+        id: 'limitations-of-responsibility',
+        title: '15. Limitations of Responsibility',
+        paragraphs: [
+          'Benroso Safaris will make reasonable efforts to deliver the services agreed in the confirmed itinerary. However, clients acknowledge that safari travel involves natural, operational, logistical, and third-party factors that may affect the final experience.',
+          'Benroso Safaris shall not be responsible for loss, inconvenience, injury, delay, damage, additional expense, disappointment, or disruption arising from circumstances beyond our reasonable control, client negligence, failure to follow instructions, third-party actions, or natural safari conditions.',
+          'Nothing in this Service Level Agreement is intended to exclude liability where such exclusion is not permitted by applicable law.'
+        ]
+      },
+      {
+        id: 'client-responsibility',
+        title: '16. Client Responsibility',
+        listAfterParagraphIndex: 0,
+        paragraphs: ['By booking with Benroso Safaris, the client agrees to:'],
+        listItems: [
+          'Provide accurate personal and travel information',
+          'Make payments within the required timelines',
+          'Read and understand the itinerary, quotation, [Terms and Conditions](/terms-conditions), [Payment Terms](/payment-terms), and relevant policies',
+          'Ensure all travel documents are valid and complete',
+          'Arrange appropriate travel insurance',
+          'Disclose any special needs, medical conditions, dietary requirements, or mobility concerns before travel',
+          'Follow safety instructions and local regulations during the safari',
+          'Respect wildlife, communities, staff, guides, and other travelers'
+        ]
+      },
+      {
+        id: 'acceptance-of-this-service-level-agreement',
+        title: '17. Acceptance of This Service Level Agreement',
+        paragraphs: [
+          'Confirmation of a booking, payment of a deposit, partial payment, or full payment constitutes acceptance of this Service Level Agreement by the client and all members of the traveling party.',
+          'Clients are responsible for ensuring that all travelers included in their booking understand and accept the service expectations, responsibilities, and limitations outlined in this agreement.'
         ]
       }
     ]

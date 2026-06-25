@@ -117,6 +117,16 @@
   color: var(--benroso-muted);
 }
 
+.public-site .benroso-legal-section {
+  scroll-margin-top: calc(var(--benroso-header-h) + 1.5rem);
+}
+
+@media (min-width: 1024px) {
+  .public-site .benroso-legal-section {
+    scroll-margin-top: calc(var(--benroso-topbar-h) + var(--benroso-header-h) + 1.5rem);
+  }
+}
+
 .public-site .benroso-legal-section + .benroso-legal-section {
   margin-top: 2.5rem;
   padding-top: 2.5rem;
@@ -144,6 +154,15 @@
 
 .public-site .benroso-legal-prose li + li {
   margin-top: 0.5rem;
+}
+
+.public-site .benroso-legal-prose strong {
+  color: var(--benroso-heading);
+  font-weight: 600;
+}
+
+.public-site .benroso-legal-intro {
+  color: var(--benroso-muted);
 }
 
 /* Footer */
