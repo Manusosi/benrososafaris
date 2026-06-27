@@ -417,8 +417,8 @@ export const PLACEHOLDER_TESTIMONIALS: AboutTestimonial[] = [
     guestName: 'Helen & Mark',
     country: 'United Kingdom',
     quote:
-      'Our driver-guide made every game drive feel personal — incredible wildlife, seamless logistics, and genuine warmth from start to finish.',
-    tourLabel: '7-Day Kenya Safari — Mara, Nakuru, Naivasha & Amboseli',
+      'Our driver-guide made every game drive feel personal. The wildlife was incredible, the logistics were seamless, and the whole team was warm from start to finish.',
+    tourLabel: '7-Day Kenya Safari, Mara, Nakuru, Naivasha and Amboseli',
     rating: 5
   },
   {
@@ -435,8 +435,8 @@ export const PLACEHOLDER_TESTIMONIALS: AboutTestimonial[] = [
     guestName: 'The Okafor Family',
     country: 'Nigeria',
     quote:
-      'Traveling with three generations is not easy — Benroso paced the itinerary perfectly and our guide kept everyone engaged and comfortable.',
-    tourLabel: 'Family Safari — Kenya & Tanzania',
+      'Traveling with three generations is not easy, yet Benroso paced the itinerary perfectly and our guide kept everyone engaged and comfortable the whole way.',
+    tourLabel: 'Family Safari in Kenya and Tanzania',
     rating: 5
   },
   {
@@ -444,8 +444,8 @@ export const PLACEHOLDER_TESTIMONIALS: AboutTestimonial[] = [
     guestName: 'Sophie Laurent',
     country: 'France',
     quote:
-      'From gorilla trekking in Uganda to a beach finish in Zanzibar, every transition was smooth. Professional team and responsive before the trip.',
-    tourLabel: 'East Africa Combo — Primates & Beach',
+      'From gorilla trekking in Uganda to a beach finish in Zanzibar, every transition was smooth. The team was professional and responsive well before the trip.',
+    tourLabel: 'East Africa Combo, Primates and Beach',
     rating: 5
   },
   {
@@ -453,17 +453,17 @@ export const PLACEHOLDER_TESTIMONIALS: AboutTestimonial[] = [
     guestName: 'James & Patricia',
     country: 'United States',
     quote:
-      'We chose Benroso after reading SafariBookings reviews — the experience matched every promise. Amboseli at sunrise was worth the journey alone.',
-    tourLabel: 'Amboseli & Tsavo Safari',
+      'We chose Benroso after reading their reviews and the experience matched every promise. Amboseli at sunrise was worth the journey on its own.',
+    tourLabel: 'Amboseli and Tsavo Safari',
     rating: 5
   },
   {
     id: 'review-6',
-    guestName: 'Chama Group — Nairobi',
+    guestName: 'Chama Group, Nairobi',
     country: 'Kenya',
     quote:
-      'Our chama outing was flawlessly organized — comfortable cruiser, great guide, and pricing that worked for our group size.',
-    tourLabel: 'Weekend Safari — Lake Naivasha & Nakuru',
+      'Our chama outing was flawlessly organized. Comfortable cruiser, a great guide, and pricing that worked well for our group size.',
+    tourLabel: 'Weekend Safari, Lake Naivasha and Nakuru',
     rating: 5
   }
 ];

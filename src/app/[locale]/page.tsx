@@ -1,16 +1,23 @@
 import {
-  HomeDestinations,
-  HomeEditorial,
   HomeFeaturedTours,
+  HomeFleetGuides,
   HomeHero,
-  HomeServices,
   HomeTrustCta,
   HomeWhyChooseUs
 } from '@/components/public/home/home-sections';
-import { HomeReviews } from '@/components/public/home/home-reviews';
-import { HomeNewsletter } from '@/components/public/home-newsletter';
+import { ExperienceShowcase } from '@/components/public/home/experience-showcase';
+import { HomeArticles } from '@/components/public/home/home-articles';
+import { HomeBookingSteps } from '@/components/public/home/home-booking-steps';
+import { HomeDestinationsMap } from '@/components/public/home/home-destinations-map';
+import { HomeExperiencesGrid } from '@/components/public/home/home-experiences-grid';
+import { HomeGoogleReviews } from '@/components/public/home/home-google-reviews';
+import { HomePartners } from '@/components/public/home/home-partners';
+import { HomeTrustBadges } from '@/components/public/home/home-trust-badges';
+import { FaqSection } from '@/components/public/faq-section';
+import { HOME_FAQS } from '@/lib/public/home-content';
 import {
-  getPublicDestinations,
+  getHeroSlides,
+  getPublicBlogPosts,
   getPublicSiteSettings,
   getPublicTours
 } from '@/lib/public/site-data';
@@ -23,23 +30,34 @@ type HomePageProps = {
 
 export default async function HomePage({ params }: HomePageProps) {
   const { locale } = await params;
-  const [siteSettings, destinations, tours] = await Promise.all([
+  const [siteSettings, tours, blogPosts, heroSlides] = await Promise.all([
     getPublicSiteSettings(),
-    getPublicDestinations(locale),
-    getPublicTours(locale)
+    getPublicTours(locale),
+    getPublicBlogPosts(locale, 4),
+    getHeroSlides()
   ]);
 
   return (
     <>
-      <HomeHero locale={locale} siteSettings={siteSettings} />
-      <HomeWhyChooseUs />
-      <HomeEditorial locale={locale} />
-      <HomeDestinations destinations={destinations} locale={locale} />
-      <HomeServices />
+      <HomeHero locale={locale} slides={heroSlides} />
+      <HomeTrustBadges />
+      <ExperienceShowcase locale={locale} />
+      <HomeDestinationsMap />
+      <HomeExperiencesGrid locale={locale} />
       <HomeFeaturedTours locale={locale} tours={tours} />
-      <HomeReviews />
+      <HomeWhyChooseUs locale={locale} />
+      <HomeBookingSteps locale={locale} />
+      <HomeFleetGuides locale={locale} />
+      <HomeGoogleReviews />
+      <FaqSection
+        eyebrow=''
+        faqs={HOME_FAQS}
+        headingId='home-faq-heading'
+        title='Safari Questions, Answered'
+      />
+      <HomePartners />
+      <HomeArticles locale={locale} posts={blogPosts} />
       <HomeTrustCta locale={locale} siteSettings={siteSettings} />
-      <HomeNewsletter />
     </>
   );
 }

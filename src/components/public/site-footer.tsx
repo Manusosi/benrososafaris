@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 
 import { Icons } from '@/components/icons';
+import { FooterNewsletter } from '@/components/public/footer-newsletter';
 import { FooterSocialLinks } from '@/components/public/footer-social-links';
 import {
   BENROSO_KATO,
@@ -17,10 +18,6 @@ type SiteFooterProps = {
   locale: string;
   siteSettings: PublicSiteSettings;
 };
-
-function phoneHref(phone: string) {
-  return phone.replace(/[^\d+]/g, '');
-}
 
 function FooterLinkColumn({ column }: { column: PublicFooterColumn }) {
   return (
@@ -41,107 +38,70 @@ function FooterLinkColumn({ column }: { column: PublicFooterColumn }) {
 
 export function SiteFooter({ footerColumns, locale, siteSettings }: SiteFooterProps) {
   const homeHref = localePath(locale);
-  const whyChooseHref = `${homeHref}#why-choose-us`;
 
   const linkColumns = footerColumns.filter((column) => column.title !== 'Help & Policies');
   const policyColumn = footerColumns.find((column) => column.title === 'Help & Policies');
 
   return (
     <footer className='benroso-footer bg-[var(--benroso-primary)] text-white'>
-      {/* Brand + contact strip */}
-      <div className='border-b border-white/10'>
-        <div className='benroso-container py-8 lg:py-9'>
-          <div className='benroso-footer-brand-grid'>
-            <Link
-              className='benroso-footer-brand-logo inline-flex shrink-0 items-center'
-              href={homeHref}
-            >
+      <div className='benroso-container py-14 lg:py-16'>
+        <div className='grid gap-10 md:grid-cols-2 lg:grid-cols-12 lg:gap-12'>
+          {/* Brand */}
+          <div className='lg:col-span-4'>
+            <Link className='inline-flex items-center' href={homeHref}>
               <Image
                 alt={siteSettings.companyName}
-                className='h-[52px] w-auto max-w-none'
+                className='h-[52px] w-auto max-w-none rounded-[var(--benroso-radius)] bg-white p-1.5'
                 height={BENROSO_LOGO_HEIGHT}
                 src={BENROSO_LOGO_PATH}
                 width={BENROSO_LOGO_WIDTH}
               />
             </Link>
-
-            <div className='benroso-footer-contact'>
-              <ul className='benroso-footer-contact-row'>
-                <li className='flex items-center gap-2'>
-                  <Icons.phone className='h-4 w-4 shrink-0 text-white' />
-                  <span>
-                    <a
-                      className='hover:text-white'
-                      href={`tel:${phoneHref(siteSettings.phoneSecondary)}`}
-                    >
-                      {siteSettings.phoneSecondary}
-                    </a>
-                    <span className='px-1.5 text-white/35'>/</span>
-                    <a
-                      className='hover:text-white'
-                      href={`tel:${phoneHref(siteSettings.phonePrimary)}`}
-                    >
-                      {siteSettings.phonePrimary}
-                    </a>
-                  </span>
-                </li>
-                <li className='flex items-center gap-2'>
-                  <Icons.mail className='h-4 w-4 shrink-0 text-white' />
-                  <a className='hover:text-white' href={`mailto:${siteSettings.email}`}>
-                    {siteSettings.email}
-                  </a>
-                </li>
-              </ul>
-              <p className='flex items-center gap-2 text-sm text-white/90'>
-                <Icons.mapPin className='h-4 w-4 shrink-0 text-white' />
-                <span>{siteSettings.addressShort}</span>
-              </p>
-            </div>
-
-            <FooterSocialLinks siteSettings={siteSettings} />
-          </div>
-        </div>
-      </div>
-
-      {/* Link columns */}
-      <div className='benroso-container py-10 lg:py-12'>
-        <div className='grid gap-10 sm:grid-cols-2 lg:grid-cols-4'>
-          {linkColumns.map((column) => (
-            <FooterLinkColumn column={column} key={column.title} />
-          ))}
-        </div>
-      </div>
-
-      {/* KATO trust — compact reference, full story lives on homepage */}
-      <div className='border-t border-white/10 bg-[var(--benroso-primary-dark)]'>
-        <div className='benroso-container py-5'>
-          <div className='flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-6'>
-            <a
-              className='inline-flex shrink-0 items-center hover:opacity-90'
-              href={BENROSO_KATO.url}
-              rel='noopener noreferrer'
-              target='_blank'
-            >
-              {/* Official KATO bonded member seal */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                alt={BENROSO_KATO.alt}
-                className='h-8 w-8 shrink-0 object-contain'
-                height={32}
-                src={BENROSO_KATO.logoPath}
-                width={32}
-              />
-            </a>
-            <p className='text-sm font-medium text-white sm:text-base'>
-              KATO Registered · Licensed Tour Operator · KPSGA Member
+            <p className='mt-5 max-w-sm text-sm leading-7 text-white/75'>
+              {siteSettings.description ||
+                'Committed to safaris done the right way across Kenya, Tanzania, Uganda, Rwanda, and South Africa. Tailored to you, guided by people who have known these parks since 2000.'}
             </p>
-            <Link
-              className='text-sm font-medium text-white underline decoration-white/40 underline-offset-2 hover:text-white'
-              href={whyChooseHref}
-            >
-              Why choose Benroso
-            </Link>
+            <div className='mt-6'>
+              <FooterSocialLinks siteSettings={siteSettings} />
+            </div>
           </div>
+
+          {/* Menu columns */}
+          {linkColumns.map((column) => (
+            <div className='lg:col-span-2' key={column.title}>
+              <FooterLinkColumn column={column} />
+            </div>
+          ))}
+
+          {/* Newsletter */}
+          <div className='md:col-span-2 lg:col-span-4'>
+            <FooterNewsletter />
+          </div>
+        </div>
+      </div>
+
+      {/* KATO credential strip */}
+      <div className='border-t border-white/10 bg-[var(--benroso-primary-dark)]'>
+        <div className='benroso-container flex flex-col items-center justify-center gap-3 py-4 text-center sm:flex-row sm:gap-5'>
+          <a
+            className='inline-flex shrink-0 items-center hover:opacity-90'
+            href={BENROSO_KATO.url}
+            rel='noopener noreferrer'
+            target='_blank'
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt={BENROSO_KATO.alt}
+              className='h-7 w-7 shrink-0 object-contain'
+              height={28}
+              src={BENROSO_KATO.logoPath}
+              width={28}
+            />
+          </a>
+          <p className='inline-flex items-center gap-2 text-sm font-medium text-white/90'>
+            <Icons.badgeCheck className='h-4 w-4 text-[var(--benroso-gold)]' />
+            KATO Registered · Licensed Tour Operator · KPSGA Member
+          </p>
         </div>
       </div>
 

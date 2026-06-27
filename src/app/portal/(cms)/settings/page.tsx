@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { requireSuperAdmin } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { BENROSO_CONTACT_DEFAULTS, BENROSO_SOCIAL_DEFAULTS } from '@/config/benroso';
+import { normalizeHeroSlides } from '@/lib/public/hero-slides';
+import { HeroSettingsForm } from '@/features/portal/cms/settings/hero-settings-form';
 
 export default async function PortalSettingsPage() {
   await requireSuperAdmin();
@@ -12,6 +14,10 @@ export default async function PortalSettingsPage() {
     .select('*')
     .eq('singleton_key', 'default')
     .maybeSingle();
+
+  const heroSlides = normalizeHeroSlides(
+    (settings as { hero_slides?: unknown } | null)?.hero_slides
+  );
 
   const contact = settings ?? {
     company_name: BENROSO_CONTACT_DEFAULTS.companyName,
@@ -23,6 +29,14 @@ export default async function PortalSettingsPage() {
 
   return (
     <PageContainer pageTitle='Site Settings'>
+      <Card className='mb-4'>
+        <CardHeader>
+          <CardTitle className='text-base'>Homepage hero</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <HeroSettingsForm initialSlides={heroSlides} />
+        </CardContent>
+      </Card>
       <div className='grid gap-4 lg:grid-cols-2'>
         <Card>
           <CardHeader>
