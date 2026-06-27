@@ -2,7 +2,14 @@ import { BENROSO_CONTACT_DEFAULTS } from '@/config/benroso';
 import { createClient } from '@/lib/supabase/server';
 
 import { localePath } from './locale-path';
-import type { PublicBlogPost, PublicDestination, PublicSiteSettings, PublicTour } from './types';
+import { activeHeroSlides, normalizeHeroSlides } from './hero-slides';
+import type {
+  HeroSlide,
+  PublicBlogPost,
+  PublicDestination,
+  PublicSiteSettings,
+  PublicTour
+} from './types';
 
 const DEFAULT_DESCRIPTION =
   'Benroso Safaris crafts premium Kenya and Tanzania safari holidays with local experts, tailored itineraries, and trusted on-the-ground support.';
@@ -50,6 +57,23 @@ export async function getPublicSiteSettings(): Promise<PublicSiteSettings> {
     whatsappMessage:
       data?.whatsapp_message ?? 'Hello Benroso Safaris, I would like help planning a safari.'
   };
+}
+
+export async function getHeroSlides(): Promise<HeroSlide[]> {
+  try {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from('site_settings')
+      .select('hero_slides')
+      .eq('singleton_key', 'default')
+      .maybeSingle();
+
+    const slides = normalizeHeroSlides((data as { hero_slides?: unknown } | null)?.hero_slides);
+    return activeHeroSlides(slides);
+  } catch {
+    // Column may not exist yet (migration not applied). Hero falls back to defaults.
+    return [];
+  }
 }
 
 export async function getPublicDestinations(

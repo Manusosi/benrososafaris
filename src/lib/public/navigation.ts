@@ -11,12 +11,6 @@ function lp(locale: string, path: string) {
   return localePath(locale, path);
 }
 
-function navSection(nav: PublicNavItem[], label: string): PublicNavItem[] {
-  const item = nav.find((entry) => entry.label === label);
-  if (!item) return [];
-  return [{ label: item.label, href: item.href }, ...(item.items ?? [])];
-}
-
 function uniqueLinks(links: PublicNavItem[]): PublicNavItem[] {
   const seen = new Set<string>();
   return links.filter((link) => {
@@ -102,54 +96,23 @@ export function buildPublicNavigation(
 
 export function buildFooterNavigation(
   locale: string,
-  destinations: PublicDestination[],
-  experiences: PublicExperience[] = []
+  _destinations: PublicDestination[],
+  _experiences: PublicExperience[] = []
 ): PublicFooterColumn[] {
-  const nav = buildPublicNavigation(locale, destinations, experiences);
   const path = (route: string) => lp(locale, route);
 
-  const aboutLinks = uniqueLinks([
+  const exploreLinks = uniqueLinks([
+    { label: 'Destinations', href: path('/destinations') },
+    { label: 'Safari Tours', href: path('/tours') },
+    { label: 'Safari Experiences', href: path('/experiences') },
+    { label: 'National Parks', href: path('/national-parks') },
+    { label: 'Accommodations', href: path('/accommodations') }
+  ]);
+
+  const companyLinks = uniqueLinks([
     { label: 'About Us', href: path('/about') },
     { label: 'Our Safari Vehicles', href: path('/our-fleet') },
     { label: 'Our Tour Guides', href: path('/safari-guides') },
-    { label: 'Why Choose Us', href: `${path('/')}#why-choose-us` }
-  ]);
-
-  const safariLinks = uniqueLinks([
-    { label: 'All Safari Tours', href: path('/tours') },
-    ...(nav.find((entry) => entry.label === 'Safari Tours')?.items ?? []),
-    { label: 'Safari Experiences', href: path('/experiences') }
-  ]);
-
-  const destinationLinks =
-    destinations.length > 0
-      ? uniqueLinks([
-          { label: 'All Destinations', href: path('/destinations') },
-          ...destinations.slice(0, 7).map((destination) => ({
-            label: destination.name,
-            href: destination.href
-          }))
-        ])
-      : uniqueLinks([
-          { label: 'All Destinations', href: path('/destinations') },
-          ...navSection(nav, 'Destinations')
-        ]);
-
-  const experienceLinks =
-    experiences.length > 0
-      ? uniqueLinks([
-          { label: 'All Experiences', href: path('/experiences') },
-          ...experiences.slice(0, 6).map((experience) => ({
-            label: experience.title,
-            href: experience.href
-          }))
-        ])
-      : [{ label: 'Safari Experiences', href: path('/experiences') }];
-
-  const planLinks = uniqueLinks([
-    ...experienceLinks,
-    { label: 'Accommodations', href: path('/accommodations') },
-    { label: 'National Parks', href: path('/national-parks') },
     { label: 'Travel Blog', href: path('/blog') },
     { label: 'Contact Us', href: path('/contact') }
   ]);
@@ -160,10 +123,8 @@ export function buildFooterNavigation(
   }));
 
   return [
-    { title: 'About Benroso', links: aboutLinks },
-    { title: 'Safari Tours', links: safariLinks },
-    { title: 'Destinations', links: destinationLinks },
-    { title: 'Plan Your Safari', links: planLinks },
+    { title: 'Explore', links: exploreLinks },
+    { title: 'Company', links: companyLinks },
     { title: 'Help & Policies', links: policyLinks }
   ];
 }

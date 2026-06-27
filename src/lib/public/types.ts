@@ -10,6 +10,17 @@ export type PublicFooterColumn = {
   title: string;
 };
 
+export type HeroSlide = {
+  alt: string | null;
+  heading: string | null;
+  isActive: boolean;
+  mediaType: 'image' | 'video';
+  mediaUrl: string;
+  posterUrl: string | null;
+  sortOrder: number;
+  subheading: string | null;
+};
+
 export type PublicSiteSettings = {
   addressShort: string;
   companyName: string;
