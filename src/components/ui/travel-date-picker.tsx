@@ -18,12 +18,15 @@ const CAROUSEL_PAGE_SIZE = 7;
 /** Total days reachable via slider before calendar takes over */
 const MAX_SLIDER_DAYS = 14;
 
+type TravelDatePickerVariant = 'default' | 'compact';
+
 type TravelDateCarouselProps = {
   label: string;
   maxDate?: Date;
   minDate: Date;
   onChange: (isoDate: string) => void;
   value: string;
+  variant?: TravelDatePickerVariant;
 };
 
 function isBeforeMin(date: Date, minDate: Date) {
@@ -40,9 +43,11 @@ export function TravelDateCarousel({
   maxDate,
   minDate,
   onChange,
-  value
+  value,
+  variant = 'default'
 }: TravelDateCarouselProps) {
-  const [showCalendar, setShowCalendar] = React.useState(false);
+  const isCompact = variant === 'compact';
+  const [showCalendar, setShowCalendar] = React.useState(isCompact);
   const [windowStart, setWindowStart] = React.useState(0);
 
   const selectedDate = value ? parseIsoDate(value) : undefined;
@@ -94,7 +99,9 @@ export function TravelDateCarousel({
 
   function selectDate(date: Date) {
     onChange(toIsoDate(date));
-    closeCalendar();
+    if (!isCompact) {
+      closeCalendar();
+    }
   }
 
   function handlePrevious() {
@@ -111,19 +118,23 @@ export function TravelDateCarousel({
   }
 
   return (
-    <div className='benroso-travel-date-field'>
+    <div
+      className={cn('benroso-travel-date-field', isCompact && 'benroso-travel-date-field--compact')}
+    >
       <div className='benroso-travel-date-field-header'>
         <p className='benroso-travel-date-label'>{label}</p>
-        <button
-          className='benroso-travel-date-show-more'
-          onClick={() => (showCalendar ? closeCalendar() : openCalendar())}
-          type='button'
-        >
-          {showCalendar ? 'Hide calendar' : 'Show more dates'}
-        </button>
+        {!isCompact ? (
+          <button
+            className='benroso-travel-date-show-more'
+            onClick={() => (showCalendar ? closeCalendar() : openCalendar())}
+            type='button'
+          >
+            {showCalendar ? 'Hide calendar' : 'Show more dates'}
+          </button>
+        ) : null}
       </div>
 
-      {!showCalendar ? (
+      {!isCompact && !showCalendar ? (
         <div className='benroso-travel-date-carousel-wrap'>
           <button
             aria-label='Show earlier dates'
@@ -207,17 +218,23 @@ export function TravelDateCarousel({
 export type TravelDatePickerProps = {
   className?: string;
   endDate: string;
+  endLabel?: string;
   onEndDateChange: (value: string) => void;
   onStartDateChange: (value: string) => void;
   startDate: string;
+  startLabel?: string;
+  variant?: TravelDatePickerVariant;
 };
 
 export function TravelDatePicker({
   className,
   endDate,
+  endLabel = 'End of the journey:',
   onEndDateChange,
   onStartDateChange,
-  startDate
+  startDate,
+  startLabel = 'Start of the journey:',
+  variant = 'default'
 }: TravelDatePickerProps) {
   const earliestDate = React.useMemo(() => addDays(startOfDay(new Date()), 1), []);
   const latestDate = React.useMemo(() => addDays(startOfDay(new Date()), 730), []);
@@ -229,23 +246,33 @@ export function TravelDatePicker({
     }
   }, [startDate, endDate, onEndDateChange]);
 
+  const isCompact = variant === 'compact';
+
   return (
-    <div className={cn('benroso-travel-date-picker', className)}>
+    <div
+      className={cn(
+        'benroso-travel-date-picker',
+        isCompact && 'benroso-travel-date-picker--compact',
+        className
+      )}
+    >
       <TravelDateCarousel
-        label='Start of the journey:'
+        label={startLabel}
         maxDate={latestDate}
         minDate={earliestDate}
         onChange={onStartDateChange}
         value={startDate}
+        variant={variant}
       />
 
       {startDate ? (
         <TravelDateCarousel
-          label='End of the journey:'
+          label={endLabel}
           maxDate={latestDate}
           minDate={endMinDate}
           onChange={onEndDateChange}
           value={endDate}
+          variant={variant}
         />
       ) : (
         <p className='benroso-travel-date-helper'>

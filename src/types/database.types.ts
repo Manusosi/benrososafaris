@@ -15,10 +15,13 @@ export type Database = {
         Row: {
           accommodation_id: string;
           canonical_override: string | null;
+          created_at: string;
           description: Json | null;
           direct_answers: Json;
           faqs: Json;
+          focus_keyword: string | null;
           id: string;
+          keywords: Json;
           locale: string;
           name: string;
           og_image_id: string | null;
@@ -27,14 +30,18 @@ export type Database = {
           seo_title: string | null;
           slug: string;
           summary: string | null;
+          updated_at: string;
         };
         Insert: {
           accommodation_id: string;
           canonical_override?: string | null;
+          created_at?: string;
           description?: Json | null;
           direct_answers?: Json;
           faqs?: Json;
+          focus_keyword?: string | null;
           id?: string;
+          keywords?: Json;
           locale: string;
           name: string;
           og_image_id?: string | null;
@@ -43,14 +50,18 @@ export type Database = {
           seo_title?: string | null;
           slug: string;
           summary?: string | null;
+          updated_at?: string;
         };
         Update: {
           accommodation_id?: string;
           canonical_override?: string | null;
+          created_at?: string;
           description?: Json | null;
           direct_answers?: Json;
           faqs?: Json;
+          focus_keyword?: string | null;
           id?: string;
+          keywords?: Json;
           locale?: string;
           name?: string;
           og_image_id?: string | null;
@@ -59,6 +70,7 @@ export type Database = {
           seo_title?: string | null;
           slug?: string;
           summary?: string | null;
+          updated_at?: string;
         };
         Relationships: [
           {
@@ -80,33 +92,54 @@ export type Database = {
       accommodations: {
         Row: {
           amenities: Json;
+          availability: string | null;
           comfort_level: string | null;
           country: string | null;
           created_at: string;
+          deleted_at: string | null;
+          gallery: Json;
           id: string;
+          map_query: string | null;
+          price_per_night: number | null;
+          property_type: string | null;
           region: string | null;
           room_types: Json;
           status: string;
+          updated_at: string;
         };
         Insert: {
           amenities?: Json;
+          availability?: string | null;
           comfort_level?: string | null;
           country?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
+          gallery?: Json;
           id?: string;
+          map_query?: string | null;
+          price_per_night?: number | null;
+          property_type?: string | null;
           region?: string | null;
           room_types?: Json;
           status?: string;
+          updated_at?: string;
         };
         Update: {
           amenities?: Json;
+          availability?: string | null;
           comfort_level?: string | null;
           country?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
+          gallery?: Json;
           id?: string;
+          map_query?: string | null;
+          price_per_night?: number | null;
+          property_type?: string | null;
           region?: string | null;
           room_types?: Json;
           status?: string;
+          updated_at?: string;
         };
         Relationships: [];
       };
@@ -114,7 +147,10 @@ export type Database = {
         Row: {
           author_id: string | null;
           created_at: string;
+          deleted_at: string | null;
+          featured: boolean;
           id: string;
+          primary_category_id: string | null;
           published_at: string | null;
           status: string;
           updated_at: string;
@@ -122,7 +158,10 @@ export type Database = {
         Insert: {
           author_id?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
+          featured?: boolean;
           id?: string;
+          primary_category_id?: string | null;
           published_at?: string | null;
           status?: string;
           updated_at?: string;
@@ -130,12 +169,125 @@ export type Database = {
         Update: {
           author_id?: string | null;
           created_at?: string;
+          deleted_at?: string | null;
+          featured?: boolean;
           id?: string;
+          primary_category_id?: string | null;
           published_at?: string | null;
           status?: string;
           updated_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: 'blog_posts_primary_category_id_fkey';
+            columns: ['primary_category_id'];
+            isOneToOne: false;
+            referencedRelation: 'blog_categories';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      blog_categories: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          slug: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          slug: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          slug?: string;
+        };
         Relationships: [];
+      };
+      blog_tags: {
+        Row: {
+          created_at: string;
+          id: string;
+          name: string;
+          slug: string;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          name: string;
+          slug: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          name?: string;
+          slug?: string;
+        };
+        Relationships: [];
+      };
+      blog_post_categories: {
+        Row: {
+          category_id: string;
+          post_id: string;
+        };
+        Insert: {
+          category_id: string;
+          post_id: string;
+        };
+        Update: {
+          category_id?: string;
+          post_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'blog_post_categories_category_id_fkey';
+            columns: ['category_id'];
+            isOneToOne: false;
+            referencedRelation: 'blog_categories';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'blog_post_categories_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'blog_posts';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      blog_post_tags: {
+        Row: {
+          post_id: string;
+          tag_id: string;
+        };
+        Insert: {
+          post_id: string;
+          tag_id: string;
+        };
+        Update: {
+          post_id?: string;
+          tag_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'blog_post_tags_post_id_fkey';
+            columns: ['post_id'];
+            isOneToOne: false;
+            referencedRelation: 'blog_posts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'blog_post_tags_tag_id_fkey';
+            columns: ['tag_id'];
+            isOneToOne: false;
+            referencedRelation: 'blog_tags';
+            referencedColumns: ['id'];
+          }
+        ];
       };
       blog_translations: {
         Row: {
@@ -145,7 +297,10 @@ export type Database = {
           direct_answers: Json;
           excerpt: string | null;
           faqs: Json;
+          featured_image_caption: string | null;
+          focus_keyword: string | null;
           id: string;
+          keywords: Json;
           locale: string;
           og_image_id: string | null;
           post_id: string;
@@ -163,7 +318,10 @@ export type Database = {
           direct_answers?: Json;
           excerpt?: string | null;
           faqs?: Json;
+          featured_image_caption?: string | null;
+          focus_keyword?: string | null;
           id?: string;
+          keywords?: Json;
           locale: string;
           og_image_id?: string | null;
           post_id: string;
@@ -181,7 +339,10 @@ export type Database = {
           direct_answers?: Json;
           excerpt?: string | null;
           faqs?: Json;
+          featured_image_caption?: string | null;
+          focus_keyword?: string | null;
           id?: string;
+          keywords?: Json;
           locale?: string;
           og_image_id?: string | null;
           post_id?: string;

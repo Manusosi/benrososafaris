@@ -51,6 +51,7 @@ export type PublicTour = {
 export type { PublicExperience } from '@/features/experiences/public/types';
 
 export type PublicBlogPost = {
+  category: string | null;
   excerpt: string | null;
   href: string;
   id: string;

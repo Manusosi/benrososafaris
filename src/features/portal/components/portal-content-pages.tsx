@@ -2,14 +2,7 @@ import PageContainer from '@/components/layout/page-container';
 import { PortalModulePage } from '@/features/portal/components/portal-module-page';
 import { getPortalContentList } from '@/features/portal/api/service';
 
-type ModuleKey =
-  | 'destinations'
-  | 'tours'
-  | 'packages'
-  | 'experiences'
-  | 'accommodations'
-  | 'fleet'
-  | 'blog';
+type ModuleKey = 'destinations' | 'tours' | 'packages' | 'experiences' | 'accommodations' | 'fleet';
 
 interface ModuleConfig {
   title: string;
@@ -42,15 +35,13 @@ const MODULES: Record<ModuleKey, ModuleConfig> = {
   },
   accommodations: {
     title: 'Accommodations',
-    publicPath: '/en/accommodations'
+    publicPath: '/en/accommodations',
+    newHref: '/portal/accommodations/new',
+    editBasePath: '/portal/accommodations'
   },
   fleet: {
     title: 'Our Fleet',
     publicPath: '/en/our-fleet'
-  },
-  blog: {
-    title: 'Blog',
-    publicPath: '/en/blog'
   }
 };
 

@@ -144,12 +144,18 @@ export async function getPublicBlogPosts(locale: string, limit = 3): Promise<Pub
       title,
       excerpt,
       published_at,
-      post:blog_posts!inner(id, status),
+      post:blog_posts!inner(
+        id,
+        status,
+        deleted_at,
+        primary_category:blog_categories!blog_posts_primary_category_id_fkey(name)
+      ),
       og_image:media_assets!blog_translations_og_image_id_fkey(url, alt)
     `
     )
     .eq('locale', locale)
     .eq('post.status', 'published')
+    .is('post.deleted_at', null)
     .not('published_at', 'is', null)
     .order('published_at', { ascending: false })
     .limit(limit);
@@ -160,6 +166,7 @@ export async function getPublicBlogPosts(locale: string, limit = 3): Promise<Pub
 
     return [
       {
+        category: unwrapRelation(post.primary_category)?.name ?? null,
         excerpt: row.excerpt,
         href: localePath(locale, `/blog/${row.slug}`),
         id: post.id,

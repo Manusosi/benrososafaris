@@ -7,6 +7,7 @@ import {
   HomeTrustCta,
   HomeWhyChooseUs
 } from '@/components/public/home/home-sections';
+import { HomeReviews } from '@/components/public/home/home-reviews';
 import { HomeNewsletter } from '@/components/public/home-newsletter';
 import {
   getPublicDestinations,
@@ -36,6 +37,7 @@ export default async function HomePage({ params }: HomePageProps) {
       <HomeDestinations destinations={destinations} locale={locale} />
       <HomeServices />
       <HomeFeaturedTours locale={locale} tours={tours} />
+      <HomeReviews />
       <HomeTrustCta locale={locale} siteSettings={siteSettings} />
       <HomeNewsletter />
     </>
