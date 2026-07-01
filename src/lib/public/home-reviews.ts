@@ -14,6 +14,20 @@ export type HomeReview = {
   rating: number;
 };
 
+export type HomeReviewSource = 'google' | 'tripadvisor';
+
+/** Shape served to the homepage reviews slider (DB-backed, with static fallback). */
+export type HomeReviewItem = {
+  id: string;
+  authorName: string;
+  authorLocation: string | null;
+  rating: number;
+  source: HomeReviewSource;
+  body: string;
+  reviewDate: string | null;
+  avatarUrl: string | null;
+};
+
 export const HOME_REVIEWS_SUMMARY = {
   count: '120+',
   label: 'Reviews on Google + Tripadvisor'
@@ -90,3 +104,15 @@ export const HOME_REVIEWS: HomeReview[] = [
       'A thrilling Kenyan safari adventure. The staff were first class, the guides genuinely knowledgeable and the vehicles in great condition. I can already say I will be booking another trip with Benroso.'
   }
 ];
+
+/** Static fallback used when the database has no published reviews yet. */
+export const FALLBACK_HOME_REVIEWS: HomeReviewItem[] = HOME_REVIEWS.map((review) => ({
+  id: review.id,
+  authorName: review.guestName,
+  authorLocation: review.location ?? null,
+  rating: review.rating,
+  source: review.source === 'Google' ? 'google' : 'tripadvisor',
+  body: review.quote,
+  reviewDate: null,
+  avatarUrl: null
+}));

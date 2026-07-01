@@ -15,13 +15,14 @@ import {
 } from '@/config/benroso';
 import { localePath, stripLocalePrefix } from '@/lib/public/locale-path';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
-import type { PublicNavItem, PublicSiteSettings } from '@/lib/public/types';
+import type { PublicMegaMenu, PublicNavItem, PublicSiteSettings } from '@/lib/public/types';
 import { cn } from '@/lib/utils';
 
 type SiteHeaderProps = {
   locale: string;
   navItems: PublicNavItem[];
   siteSettings: PublicSiteSettings;
+  destinationsMenu?: PublicMegaMenu;
 };
 
 function phoneHref(phone: string) {
@@ -41,7 +42,7 @@ function getDropdownPositionClass(label: string) {
   return 'left-1/2 -translate-x-1/2';
 }
 
-export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) {
+export function SiteHeader({ locale, navItems, siteSettings, destinationsMenu }: SiteHeaderProps) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openGroup, setOpenGroup] = useState<string | null>(null);
@@ -92,7 +93,7 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
           <div className='hidden items-center justify-end gap-8 lg:flex'>
             <div className='text-right text-sm leading-6'>
               <div className='flex items-center justify-end gap-2'>
-                <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-brand-gold)]' />
+                <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
                 <span className='whitespace-nowrap text-white/90'>
                   <a
                     className='hover:text-white'
@@ -113,13 +114,13 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
                 className='mt-1 flex items-center justify-end gap-2 hover:text-white'
                 href={`mailto:${siteSettings.email}`}
               >
-                <Icons.mail className='h-4 w-4 shrink-0 text-[var(--benroso-brand-gold)]' />
+                <Icons.mail className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
                 {siteSettings.email}
               </a>
             </div>
             <a
               aria-label='Help me plan my safari on WhatsApp'
-              className='group inline-flex min-h-9 items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-brand-gold)] bg-transparent px-4 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--benroso-brand-gold)] transition-colors duration-200 hover:bg-[var(--benroso-brand-gold)] hover:text-[var(--benroso-primary-dark)]'
+              className='group benroso-fill-hover inline-flex min-h-9 items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-lime)] bg-transparent px-4 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--benroso-lime)] transition-colors duration-200 hover:text-[var(--benroso-primary-dark)]'
               href={whatsappHref}
               rel='noopener noreferrer'
               target='_blank'
@@ -169,8 +170,8 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
                     <Link
                       className={cn(
                         'inline-flex items-center gap-1.5 whitespace-nowrap border-b-2 border-transparent py-6 text-[15px] font-normal uppercase leading-none tracking-normal transition-colors xl:text-base',
-                        'hover:border-white hover:text-white',
-                        isActive && 'border-white text-white'
+                        'hover:border-[var(--benroso-lime)] hover:text-[var(--benroso-lime)]',
+                        isActive && 'border-[var(--benroso-lime)] text-[var(--benroso-lime)]'
                       )}
                       href={item.href}
                     >
@@ -179,7 +180,9 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
                         <Icons.chevronDown className={cn('h-3.5 w-3.5', isOpen && 'rotate-180')} />
                       ) : null}
                     </Link>
-                    {hasChildren && isOpen ? (
+                    {isOpen && item.variant === 'mega' && destinationsMenu ? (
+                      <DestinationsMegaPanel menu={destinationsMenu} viewAllHref={item.href} />
+                    ) : hasChildren && isOpen ? (
                       <div
                         className={cn(
                           'absolute top-full z-50 min-w-[210px] pt-0',
@@ -229,7 +232,7 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
             <div className='benroso-container max-h-[min(70vh,520px)] overflow-y-auto py-4'>
               <a
                 aria-label='Help me plan my safari on WhatsApp'
-                className='group mb-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-brand-gold)] bg-transparent px-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--benroso-brand-gold)] transition-colors hover:bg-[var(--benroso-brand-gold)] hover:text-[var(--benroso-primary-dark)]'
+                className='group benroso-fill-hover mb-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-lime)] bg-transparent px-4 text-sm font-semibold uppercase tracking-[0.08em] text-[var(--benroso-lime)] transition-colors hover:text-[var(--benroso-primary-dark)]'
                 href={whatsappHref}
                 onClick={() => setMobileOpen(false)}
                 rel='noopener noreferrer'
@@ -250,7 +253,9 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
                       <Link
                         className={cn(
                           'flex-1 py-3 text-[15px] font-normal uppercase tracking-normal transition-colors',
-                          isActive ? 'text-white' : 'text-white hover:text-white'
+                          isActive
+                            ? 'text-[var(--benroso-lime)]'
+                            : 'text-white hover:text-[var(--benroso-lime)]'
                         )}
                         href={item.href}
                         onClick={() => setMobileOpen(false)}
@@ -295,14 +300,14 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
                   className='flex items-center gap-2 hover:text-white'
                   href={`tel:${phoneHref(siteSettings.phoneSecondary)}`}
                 >
-                  <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-brand-gold)]' />
+                  <Icons.phone className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
                   {siteSettings.phoneSecondary}
                 </a>
                 <a
                   className='flex items-center gap-2 hover:text-white'
                   href={`mailto:${siteSettings.email}`}
                 >
-                  <Icons.mail className='h-4 w-4 shrink-0 text-[var(--benroso-brand-gold)]' />
+                  <Icons.mail className='h-4 w-4 shrink-0 text-[var(--benroso-lime)]' />
                   {siteSettings.email}
                 </a>
               </div>
@@ -312,6 +317,98 @@ export function SiteHeader({ locale, navItems, siteSettings }: SiteHeaderProps) 
       </header>
       {isAtTop ? null : <div aria-hidden className='h-[var(--benroso-header-h)] shrink-0' />}
     </>
+  );
+}
+
+function DestinationsMegaPanel({
+  menu,
+  viewAllHref
+}: {
+  menu: PublicMegaMenu;
+  viewAllHref: string;
+}) {
+  return (
+    <div className='absolute left-0 top-full z-50 w-[min(880px,calc(100vw-2rem))]'>
+      <div className='grid grid-cols-1 overflow-hidden rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white text-left shadow-2xl md:grid-cols-[1fr_250px]'>
+        <div className='p-6'>
+          <div className='grid grid-cols-2 gap-x-8 gap-y-6'>
+            {menu.columns.map((column) => (
+              <div key={column.country}>
+                <Link
+                  className='block border-b border-[var(--benroso-line)] pb-2 text-sm font-semibold uppercase tracking-[0.05em] text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+                  href={column.href}
+                >
+                  {column.country}
+                </Link>
+                <ul className='mt-2 space-y-1'>
+                  {column.destinations.length ? (
+                    column.destinations.map((destination) => (
+                      <li key={destination.href}>
+                        <Link
+                          className='block py-1 text-[14px] leading-snug text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-lime)]'
+                          href={destination.href}
+                        >
+                          {destination.label}
+                        </Link>
+                      </li>
+                    ))
+                  ) : (
+                    <li>
+                      <Link
+                        className='block py-1 text-[13px] italic text-[var(--benroso-muted)]/70 transition-colors hover:text-[var(--benroso-lime)]'
+                        href={column.href}
+                      >
+                        Explore {column.country} safaris →
+                      </Link>
+                    </li>
+                  )}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <div className='mt-6 border-t border-[var(--benroso-line)] pt-4'>
+            <Link
+              className='group/all inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+              href={viewAllHref}
+            >
+              View all destinations
+              <Icons.arrowRight className='h-4 w-4 transition-transform duration-300 group-hover/all:translate-x-1' />
+            </Link>
+          </div>
+        </div>
+
+        {menu.featured ? (
+          <Link
+            className='group relative hidden flex-col justify-end overflow-hidden bg-[var(--benroso-primary)] p-5 text-white md:flex'
+            href={menu.featured.href}
+          >
+            {menu.featured.imageUrl ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  alt={menu.featured.imageAlt}
+                  className='absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105'
+                  src={menu.featured.imageUrl}
+                />
+                <div className='absolute inset-0 bg-gradient-to-t from-[var(--benroso-primary-dark)] via-[var(--benroso-primary-dark)]/60 to-transparent' />
+              </>
+            ) : (
+              <div className='absolute inset-0 bg-gradient-to-br from-[var(--benroso-primary)] to-[var(--benroso-primary-dark)]' />
+            )}
+            <div className='relative'>
+              <p className='text-base font-bold leading-tight'>{menu.featured.title}</p>
+              <p className='mt-1.5 text-[13px] leading-snug text-white/80'>
+                {menu.featured.description}
+              </p>
+              <span className='mt-3 inline-flex items-center gap-1.5 rounded-[var(--benroso-button-radius)] bg-[var(--benroso-lime)] px-3.5 py-1.5 text-xs font-bold uppercase tracking-[0.06em] text-[var(--benroso-primary-dark)] shadow-sm transition-all duration-300 group-hover:-translate-y-0.5 group-hover:bg-[var(--benroso-lime-hover)] group-hover:shadow-lg'>
+                {menu.featured.cta}
+                <Icons.arrowRight className='h-3.5 w-3.5 transition-transform duration-300 group-hover:translate-x-1' />
+              </span>
+            </div>
+          </Link>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

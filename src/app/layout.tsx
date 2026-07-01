@@ -5,6 +5,7 @@ import { DEFAULT_THEME, THEMES } from '@/components/themes/theme.config';
 import { MetaThemeColorSync } from '@/components/themes/meta-theme-color-sync';
 import ThemeProvider from '@/components/themes/theme-provider';
 import { cn } from '@/lib/utils';
+import { getPublicSiteSettings } from '@/lib/public/site-data';
 import { getTheme } from '@teispace/next-themes/server';
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
@@ -12,18 +13,37 @@ import NextTopLoader from 'nextjs-toploader';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import '../styles/globals.css';
 
-export const metadata: Metadata = {
-  title: {
-    default: 'Benroso Safaris | Kenya & Tanzania Safari Holidays',
-    template: '%s | Benroso Safaris'
-  },
-  description:
-    'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.'
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getPublicSiteSettings();
+  const { analytics } = settings;
 
-export const viewport: Viewport = {
-  themeColor: '#3C5142'
-};
+  return {
+    title: {
+      default: 'Benroso Safaris | Kenya & Tanzania Safari Holidays',
+      template: '%s | Benroso Safaris'
+    },
+    description:
+      'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.',
+    icons: settings.faviconUrl ? { icon: settings.faviconUrl } : undefined,
+    openGraph: settings.ogImage ? { images: [settings.ogImage] } : undefined,
+    verification:
+      analytics.googleSiteVerification || analytics.bingSiteVerification
+        ? {
+            google: analytics.googleSiteVerification ?? undefined,
+            other: analytics.bingSiteVerification
+              ? { 'msvalidate.01': analytics.bingSiteVerification }
+              : undefined
+          }
+        : undefined
+  };
+}
+
+export async function generateViewport(): Promise<Viewport> {
+  const settings = await getPublicSiteSettings();
+  return {
+    themeColor: settings.themeColor ?? '#3C5142'
+  };
+}
 
 const THEME_PROVIDER_PROPS = {
   attribute: 'class' as const,

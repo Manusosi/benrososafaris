@@ -10,6 +10,28 @@ export type PublicFooterColumn = {
   title: string;
 };
 
+/** A single country column in the Destinations mega menu. */
+export type PublicMegaColumn = {
+  country: string;
+  href: string;
+  /** Flag emoji or null. */
+  flag: string | null;
+  destinations: { label: string; href: string }[];
+};
+
+/** Data backing the Destinations hover mega menu. */
+export type PublicMegaMenu = {
+  columns: PublicMegaColumn[];
+  featured: {
+    title: string;
+    description: string;
+    href: string;
+    cta: string;
+    imageUrl: string | null;
+    imageAlt: string;
+  } | null;
+};
+
 export type HeroSlide = {
   alt: string | null;
   heading: string | null;
@@ -21,16 +43,49 @@ export type HeroSlide = {
   subheading: string | null;
 };
 
+/** How a page hero renders its background. */
+export type PageHeroType = 'slider' | 'youtube' | 'image';
+
+/** Per-page hero configuration managed in Portal > Settings > Hero Sections. */
+export type PageHero = {
+  type: PageHeroType;
+  /** Background slides — slider rotates them; image/youtube use the first as poster/fallback. */
+  slides: HeroSlide[];
+  /** YouTube watch/share/embed URL when type === 'youtube'. */
+  youtubeUrl: string | null;
+  eyebrow: string | null;
+  heading: string | null;
+  subheading: string | null;
+  ctaLabel: string | null;
+  ctaHref: string | null;
+  /** Dark overlay strength over the media, 0–1. */
+  overlayOpacity: number;
+};
+
+export type SiteAnalyticsSettings = {
+  gaMeasurementId: string | null;
+  gtmId: string | null;
+  metaPixelId: string | null;
+  googleSiteVerification: string | null;
+  bingSiteVerification: string | null;
+};
+
 export type PublicSiteSettings = {
   addressShort: string;
+  analytics: SiteAnalyticsSettings;
   companyName: string;
   description: string;
   email: string;
+  faviconUrl: string | null;
+  logoUrl: string | null;
+  ogImage: string | null;
   phoneOffice: string;
   phonePrimary: string;
   phoneSecondary: string;
   postalAddress: string;
   socialLinks: Record<string, string>;
+  tagline: string | null;
+  themeColor: string | null;
   whatsappMessage: string;
 };
 
@@ -46,17 +101,132 @@ export type PublicDestination = {
   summary: string | null;
 };
 
+export type PublicDestinationMedia = {
+  alt: string | null;
+  id: string;
+  url: string | null;
+};
+
+export type PublicDestinationDetail = {
+  bestTime: string | null;
+  country: string | null;
+  descriptionHtml: string | null;
+  faqs: { question: string; answer: string }[];
+  gallery: PublicDestinationMedia[];
+  id: string;
+  imageAlt: string | null;
+  imageUrl: string | null;
+  name: string;
+  region: string | null;
+  seoDescription: string | null;
+  seoTitle: string | null;
+  slug: string;
+  summary: string | null;
+  wildlife: string[];
+};
+
 export type PublicTour = {
   days: number | null;
+  destinationLabels?: string[];
   excerpt: string | null;
+  experienceLabels?: string[];
   href: string;
   id: string;
   imageAlt: string | null;
   imageUrl: string | null;
+  maxPrice?: number | null;
+  minPrice?: number | null;
   nights: number | null;
+  priceFrom: number | null;
+  pricingTiers?: PublicTourPricingTier[];
+  slug: string;
+  title: string;
+};
+
+export type PublicTourItineraryDay = {
+  day: number;
+  title: string;
+  description: string;
+};
+
+export type PublicTourPricingCell = {
+  groupBand: string;
+  price: number;
+};
+
+export type PublicTourPricingSeason = {
+  id: string;
+  label: string;
+  dateStart: string | null;
+  dateEnd: string | null;
+  cells: PublicTourPricingCell[];
+};
+
+export type PublicTourPricingTier = {
+  id: string;
+  tier: 'budget' | 'mid_range' | 'luxury';
+  label: string;
+  blurb: string | null;
+  notes: string | null;
+  currency: string;
+  seasons: PublicTourPricingSeason[];
+};
+
+export type PublicTourDetail = PublicTour & {
+  accommodations: PublicAccommodation[];
+  descriptionHtml: string | null;
+  endLocation: string | null;
+  exclusions: string[];
+  gallery: PublicDestinationMedia[];
+  importantNotice: string | null;
+  inclusions: string[];
+  itineraryDays: PublicTourItineraryDay[];
+  startLocation: string | null;
+};
+
+export type PublicTourCatalogFacets = {
+  destinationLabels: string[];
+  durationBounds: {
+    max: number;
+    min: number;
+  };
+  experienceLabels: string[];
+  priceBounds: {
+    max: number;
+    min: number;
+  };
+  pricingTiers: PublicTourPricingTier['tier'][];
+};
+
+export type PublicTourCatalogFilters = {
+  destination?: string[];
+  durationMax?: number;
+  durationMin?: number;
+  experience?: string[];
+  priceMax?: number;
+  priceMin?: number;
+  pricingTier?: PublicTourPricingTier['tier'][];
+  sort?: 'name' | 'price';
+};
+
+export type PublicPackage = {
+  comfortTier: PublicTourPricingTier['tier'] | null;
+  excerpt: string | null;
+  group: string | null;
+  href: string;
+  id: string;
+  imageAlt: string | null;
+  imageUrl: string | null;
   priceFrom: number | null;
   slug: string;
   title: string;
+  tour: PublicTour | null;
+};
+
+export type PublicPackageDetail = PublicPackage & {
+  contentHtml: string | null;
+  linkedTour: PublicTourDetail | null;
+  pricingTier: PublicTourPricingTier | null;
 };
 
 export type { PublicExperience } from '@/features/experiences/public/types';
@@ -72,3 +242,4 @@ export type PublicBlogPost = {
   slug: string;
   title: string;
 };
+import type { PublicAccommodation } from '@/features/accommodations/public/types';

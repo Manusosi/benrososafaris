@@ -2,7 +2,7 @@ import { ContactFormSection } from '@/components/public/contact/contact-form-sec
 import { ContactHero } from '@/components/public/contact/contact-hero';
 import { ContactKatoSection } from '@/components/public/contact/contact-kato-section';
 import { localePath } from '@/lib/public/locale-path';
-import { getPublicSiteSettings } from '@/lib/public/site-data';
+import { getPageHero, getPublicSiteSettings } from '@/lib/public/site-data';
 
 type ContactPageProps = {
   params: Promise<{ locale: string }>;
@@ -10,13 +10,17 @@ type ContactPageProps = {
 
 export default async function ContactPage({ params }: ContactPageProps) {
   const { locale } = await params;
-  const siteSettings = await getPublicSiteSettings();
+  const [siteSettings, pageHero] = await Promise.all([
+    getPublicSiteSettings(),
+    getPageHero('contact')
+  ]);
 
   return (
     <>
       <ContactHero
         breadcrumbs={[{ href: localePath(locale), label: 'Home' }, { label: 'Contact' }]}
         description='Tell us about your dream East Africa safari and receive a free, no-obligation quote from our expert planners. We aim to respond within 24 hours. No payment is collected on this website.'
+        hero={pageHero}
         title='Request a Free Safari Quote!'
       />
 

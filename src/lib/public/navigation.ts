@@ -4,11 +4,89 @@ import type {
   PublicDestination,
   PublicExperience,
   PublicFooterColumn,
+  PublicMegaMenu,
   PublicNavItem
 } from './types';
 
 function lp(locale: string, path: string) {
   return localePath(locale, path);
+}
+
+/** The countries Benroso operates in, in preferred column order, with flags. */
+const COUNTRY_COLUMNS: { country: string; slug: string; flag: string }[] = [
+  { country: 'Kenya', slug: 'kenya', flag: '🇰🇪' },
+  { country: 'Tanzania', slug: 'tanzania', flag: '🇹🇿' },
+  { country: 'Uganda', slug: 'uganda', flag: '🇺🇬' },
+  { country: 'Rwanda', slug: 'rwanda', flag: '🇷🇼' },
+  { country: 'South Africa', slug: 'south-africa', flag: '🇿🇦' }
+];
+
+function countrySlug(country: string) {
+  return country.trim().toLowerCase().replace(/\s+/g, '-');
+}
+
+/**
+ * Builds the Destinations hover mega menu: one column per operating country,
+ * each listing its published destinations, plus a featured promo card. Columns
+ * render even with no destinations yet (the design stays in place as trips are
+ * added one by one).
+ */
+export function buildDestinationsMegaMenu(
+  locale: string,
+  destinations: PublicDestination[]
+): PublicMegaMenu {
+  const path = (route: string) => lp(locale, route);
+
+  // Group destinations by their country (case-insensitive).
+  const byCountry = new Map<string, PublicDestination[]>();
+  for (const destination of destinations) {
+    const key = (destination.country ?? '').trim().toLowerCase();
+    if (!key) continue;
+    const list = byCountry.get(key) ?? [];
+    list.push(destination);
+    byCountry.set(key, list);
+  }
+
+  // Start from the preset countries, then append any extra countries present in
+  // the data that are not already covered.
+  const presetKeys = new Set(COUNTRY_COLUMNS.map((column) => column.country.toLowerCase()));
+  const extraColumns = [...byCountry.keys()]
+    .filter((key) => !presetKeys.has(key))
+    .map((key) => {
+      const sample = byCountry.get(key)?.[0];
+      const country = sample?.country ?? key;
+      return { country, slug: countrySlug(country), flag: '🌍' };
+    });
+
+  const columns = [...COUNTRY_COLUMNS, ...extraColumns].map((column) => {
+    const list = (byCountry.get(column.country.toLowerCase()) ?? []).toSorted((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+    return {
+      country: column.country,
+      flag: column.flag,
+      href: path(`/destinations?country=${column.slug}`),
+      destinations: list.map((destination) => ({
+        label: destination.name,
+        href: destination.href
+      }))
+    };
+  });
+
+  const featuredSource = destinations.find((destination) => destination.imageUrl) ?? null;
+
+  return {
+    columns,
+    featured: {
+      title: 'Not sure where to go?',
+      description:
+        'Tell us how you like to travel and our experts will craft a tailor-made safari.',
+      cta: 'Plan my safari',
+      href: path('/contact'),
+      imageUrl: featuredSource?.imageUrl ?? null,
+      imageAlt: featuredSource?.imageAlt ?? 'Safari landscape'
+    }
+  };
 }
 
 function uniqueLinks(links: PublicNavItem[]): PublicNavItem[] {
@@ -49,7 +127,7 @@ export function buildPublicNavigation(
         { label: 'Rwanda', href: path('/destinations?country=rwanda') },
         { label: 'South Africa', href: path('/destinations?country=south-africa') }
       ],
-      variant: 'dynamic'
+      variant: 'mega'
     },
     {
       label: 'Safari Tours',

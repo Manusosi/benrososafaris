@@ -1,0 +1,718 @@
+'use client';
+
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
+
+import { revalidateLogic, useStore } from '@tanstack/react-form';
+import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Icons } from '@/components/icons';
+import { useAppForm } from '@/components/ui/tanstack-form';
+import { useFormStepper } from '@/hooks/use-stepper';
+import { slugify } from '@/lib/utils';
+import { getMediaByIds } from '../media/api/client';
+import { mediaKeys } from '../media/api/queries';
+import { MediaGalleryField } from '../media/components/media-picker';
+import { SEO_LIMITS } from '../seo/analyze';
+import { KeywordInput } from '../seo/components/keyword-input';
+import { SeoAnalyzer } from '../seo/components/seo-analyzer';
+import { FaqInput } from '../shared/faq-input';
+import { HighlightsInput } from '../shared/highlights-input';
+import { MultiCombobox } from '../shared/multi-combobox';
+import { htmlToText, RichTextEditor } from '../shared/rich-text-editor';
+import { WizardShell, type WizardPendingAction } from '../shared/wizard-shell';
+import {
+  emptyTourValues,
+  tourFormSchema,
+  tourStepSchemas,
+  tourWizardSteps,
+  type ItineraryDay,
+  type PricingTier,
+  type TourFormValues
+} from './schema';
+import { saveTour, type RelationOption, type SaveStatus } from './service';
+
+interface TourWizardProps {
+  id?: string;
+  initialValues?: TourFormValues;
+  options: {
+    parks: RelationOption[];
+    destinations: RelationOption[];
+    experiences: RelationOption[];
+    accommodations: RelationOption[];
+    fleet: RelationOption[];
+  };
+}
+
+function ItineraryInput({
+  value,
+  onChange
+}: {
+  value: ItineraryDay[];
+  onChange: (next: ItineraryDay[]) => void;
+}) {
+  function addDay() {
+    onChange([...value, { day: value.length + 1, title: '', description: '' }]);
+  }
+  function updateDay(index: number, patch: Partial<ItineraryDay>) {
+    onChange(value.map((day, i) => (i === index ? { ...day, ...patch } : day)));
+  }
+  function removeDay(index: number) {
+    onChange(value.filter((_, i) => i !== index).map((day, i) => ({ ...day, day: i + 1 })));
+  }
+
+  return (
+    <div className='grid gap-4'>
+      {value.map((day, index) => (
+        <div key={index} className='rounded-lg border p-4'>
+          <div className='mb-3 flex items-center justify-between'>
+            <span className='text-sm font-semibold'>Day {day.day}</span>
+            <Button type='button' size='sm' variant='ghost' onClick={() => removeDay(index)}>
+              <Icons.trash className='size-4' />
+            </Button>
+          </div>
+          <div className='grid gap-3'>
+            <Input
+              value={day.title}
+              onChange={(event) => updateDay(index, { title: event.target.value })}
+              placeholder='Day title — e.g. Nairobi to Masai Mara'
+            />
+            <Textarea
+              value={day.description}
+              onChange={(event) => updateDay(index, { description: event.target.value })}
+              placeholder='What happens on this day…'
+              rows={3}
+            />
+          </div>
+        </div>
+      ))}
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={addDay}
+        className='justify-self-start'
+      >
+        <Icons.add className='mr-2 size-4' />
+        Add day
+      </Button>
+    </div>
+  );
+}
+
+const PRICING_TIER_OPTIONS: Array<{ value: PricingTier['tier']; label: string }> = [
+  { value: 'budget', label: 'Budget' },
+  { value: 'mid_range', label: 'Mid Range' },
+  { value: 'luxury', label: 'Luxury' }
+];
+
+function emptyPricingTier(tier: PricingTier['tier'] = 'mid_range'): PricingTier {
+  return {
+    tier,
+    label:
+      tier === 'mid_range'
+        ? 'Mid-range options'
+        : tier === 'budget'
+          ? 'Budget options'
+          : 'Luxury options',
+    blurb: '',
+    notes: '',
+    currency: 'USD',
+    seasons: []
+  };
+}
+
+function PricingInput({
+  value,
+  onChange
+}: {
+  value: PricingTier[];
+  onChange: (next: PricingTier[]) => void;
+}) {
+  function updateTier(index: number, patch: Partial<PricingTier>) {
+    onChange(value.map((tier, i) => (i === index ? { ...tier, ...patch } : tier)));
+  }
+
+  function removeTier(index: number) {
+    onChange(value.filter((_, i) => i !== index));
+  }
+
+  function addSeason(tierIndex: number) {
+    updateTier(tierIndex, {
+      seasons: [
+        ...value[tierIndex].seasons,
+        {
+          label: '',
+          dateStart: '',
+          dateEnd: '',
+          cells: [
+            { groupBand: '1', price: '' },
+            { groupBand: '2-3', price: '' },
+            { groupBand: '4-5', price: '' },
+            { groupBand: '6+', price: '' }
+          ]
+        }
+      ]
+    });
+  }
+
+  return (
+    <div className='grid gap-4'>
+      {value.map((tier, tierIndex) => (
+        <div className='rounded-lg border p-4' key={`${tier.tier}-${tierIndex}`}>
+          <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
+            <div className='grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)]'>
+              <select
+                className='border-input bg-background rounded-md border px-3 py-2 text-sm'
+                onChange={(event) =>
+                  updateTier(tierIndex, { tier: event.target.value as PricingTier['tier'] })
+                }
+                value={tier.tier}
+              >
+                {PRICING_TIER_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+              <Input
+                value={tier.label}
+                onChange={(event) => updateTier(tierIndex, { label: event.target.value })}
+                placeholder='Tier heading, e.g. Mid-range options'
+              />
+            </div>
+            <Button type='button' size='sm' variant='ghost' onClick={() => removeTier(tierIndex)}>
+              <Icons.trash className='size-4' />
+            </Button>
+          </div>
+          <div className='grid gap-3'>
+            <Textarea
+              value={tier.blurb}
+              onChange={(event) => updateTier(tierIndex, { blurb: event.target.value })}
+              placeholder='Short tier description…'
+              rows={2}
+            />
+            {tier.seasons.map((season, seasonIndex) => (
+              <div className='rounded-md border p-3' key={seasonIndex}>
+                <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_150px_150px]'>
+                  <Input
+                    value={season.label}
+                    onChange={(event) => {
+                      const seasons = tier.seasons.map((item, i) =>
+                        i === seasonIndex ? { ...item, label: event.target.value } : item
+                      );
+                      updateTier(tierIndex, { seasons });
+                    }}
+                    placeholder='Jan 3 - Mar 31, 2026'
+                  />
+                  <Input
+                    type='date'
+                    value={season.dateStart}
+                    onChange={(event) => {
+                      const seasons = tier.seasons.map((item, i) =>
+                        i === seasonIndex ? { ...item, dateStart: event.target.value } : item
+                      );
+                      updateTier(tierIndex, { seasons });
+                    }}
+                  />
+                  <Input
+                    type='date'
+                    value={season.dateEnd}
+                    onChange={(event) => {
+                      const seasons = tier.seasons.map((item, i) =>
+                        i === seasonIndex ? { ...item, dateEnd: event.target.value } : item
+                      );
+                      updateTier(tierIndex, { seasons });
+                    }}
+                  />
+                </div>
+                <div className='mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4'>
+                  {season.cells.map((cell, cellIndex) => (
+                    <div className='grid gap-1' key={cellIndex}>
+                      <Input
+                        value={cell.groupBand}
+                        onChange={(event) => {
+                          const seasons = tier.seasons.map((item, i) =>
+                            i === seasonIndex
+                              ? {
+                                  ...item,
+                                  cells: item.cells.map((nextCell, nextCellIndex) =>
+                                    nextCellIndex === cellIndex
+                                      ? { ...nextCell, groupBand: event.target.value }
+                                      : nextCell
+                                  )
+                                }
+                              : item
+                          );
+                          updateTier(tierIndex, { seasons });
+                        }}
+                        placeholder='2-3'
+                      />
+                      <Input
+                        inputMode='numeric'
+                        value={cell.price}
+                        onChange={(event) => {
+                          const seasons = tier.seasons.map((item, i) =>
+                            i === seasonIndex
+                              ? {
+                                  ...item,
+                                  cells: item.cells.map((nextCell, nextCellIndex) =>
+                                    nextCellIndex === cellIndex
+                                      ? { ...nextCell, price: event.target.value }
+                                      : nextCell
+                                  )
+                                }
+                              : item
+                          );
+                          updateTier(tierIndex, { seasons });
+                        }}
+                        placeholder='645'
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+            <Textarea
+              value={tier.notes}
+              onChange={(event) => updateTier(tierIndex, { notes: event.target.value })}
+              placeholder='Pricing notes, child rules, optional extras…'
+              rows={2}
+            />
+            <Button type='button' size='sm' variant='outline' onClick={() => addSeason(tierIndex)}>
+              <Icons.add className='mr-2 size-4' />
+              Add season
+            </Button>
+          </div>
+        </div>
+      ))}
+      <Button
+        type='button'
+        variant='outline'
+        size='sm'
+        onClick={() => onChange([...value, emptyPricingTier()])}
+        className='justify-self-start'
+      >
+        <Icons.add className='mr-2 size-4' />
+        Add pricing tier
+      </Button>
+    </div>
+  );
+}
+
+export function TourWizard({ id, initialValues, options }: TourWizardProps) {
+  const router = useRouter();
+  const [pendingAction, setPendingAction] = React.useState<WizardPendingAction>(null);
+
+  const autoSlugRef = React.useRef(!id);
+  const autoTitleRef = React.useRef(!id);
+
+  const {
+    currentStep,
+    isFirstStep,
+    step,
+    currentValidator,
+    handleNextStepOrSubmit,
+    handleCancelOrBack
+  } = useFormStepper(tourStepSchemas);
+
+  const form = useAppForm({
+    defaultValues: initialValues ?? emptyTourValues,
+    validationLogic: revalidateLogic(),
+    validators: {
+      onDynamic: currentValidator as typeof tourFormSchema
+    },
+    onSubmit: () => {
+      // Submission is driven explicitly by Save draft / Publish below.
+    }
+  });
+
+  const values = useStore(form.store, (state) => state.values);
+
+  const { data: galleryAssets = [] } = useQuery({
+    queryKey: [...mediaKeys.all, 'byIds', values.gallery],
+    queryFn: () => getMediaByIds(values.gallery),
+    enabled: values.gallery.length > 0
+  });
+  const imagesWithAlt = galleryAssets.filter((asset) => (asset.alt ?? '').trim().length > 0).length;
+
+  async function persist(status: SaveStatus) {
+    const schema = status === 'published' ? tourFormSchema : tourStepSchemas[0];
+    const parsed = schema.safeParse(values);
+
+    if (!parsed.success) {
+      await form.handleSubmit();
+      toast.error(
+        status === 'published'
+          ? 'Fix the highlighted fields before publishing.'
+          : 'Add a title and slug to save a draft.'
+      );
+      return;
+    }
+
+    setPendingAction(status === 'published' ? 'publish' : 'draft');
+    try {
+      await saveTour({ id, values, status });
+      toast.success(status === 'published' ? 'Tour published.' : 'Draft saved.');
+      router.push('/portal/tours');
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+      );
+    } finally {
+      setPendingAction(null);
+    }
+  }
+
+  return (
+    <form.AppForm>
+      <WizardShell
+        steps={tourWizardSteps}
+        currentStep={currentStep}
+        isFirstStep={isFirstStep}
+        isLastStep={step.isCompleted}
+        pendingAction={pendingAction}
+        onBack={() => handleCancelOrBack({ onBack: () => {} })}
+        onNext={() => void handleNextStepOrSubmit(form)}
+        onSaveDraft={() => void persist('draft')}
+        onPublish={() => void persist('published')}
+      >
+        {currentStep === 1 ? (
+          <div className='grid gap-4'>
+            <form.AppField
+              name='title'
+              listeners={{
+                onChange: ({ value }) => {
+                  if (autoSlugRef.current) form.setFieldValue('slug', slugify(value));
+                  if (autoTitleRef.current) form.setFieldValue('seoTitle', value);
+                }
+              }}
+            >
+              {(field) => (
+                <field.TextField
+                  label='Tour title'
+                  required
+                  placeholder='e.g. 7-Day Great Migration Safari'
+                />
+              )}
+            </form.AppField>
+            <form.AppField
+              name='slug'
+              listeners={{
+                onChange: ({ value }) => {
+                  if (value !== slugify(form.getFieldValue('title'))) autoSlugRef.current = false;
+                }
+              }}
+            >
+              {(field) => (
+                <field.TextField
+                  label='URL slug'
+                  required
+                  placeholder='auto-generated-from-title'
+                  description='Auto-generated from the title. Edit only if you need a custom URL.'
+                />
+              )}
+            </form.AppField>
+            <form.AppField name='excerpt'>
+              {(field) => (
+                <field.TextareaField
+                  label='Excerpt'
+                  placeholder='One or two sentences shown on listing cards.'
+                  rows={2}
+                  maxLength={280}
+                />
+              )}
+            </form.AppField>
+            <div className='grid gap-4 sm:grid-cols-3'>
+              <form.AppField name='days'>
+                {(field) => <field.TextField label='Days' placeholder='7' inputMode='numeric' />}
+              </form.AppField>
+              <form.AppField name='nights'>
+                {(field) => <field.TextField label='Nights' placeholder='6' inputMode='numeric' />}
+              </form.AppField>
+              <form.AppField name='priceFrom'>
+                {(field) => (
+                  <field.TextField
+                    label='Price from (USD)'
+                    placeholder='1500'
+                    inputMode='numeric'
+                  />
+                )}
+              </form.AppField>
+            </div>
+            <div className='grid gap-4 sm:grid-cols-2'>
+              <form.AppField name='startLocation'>
+                {(field) => <field.TextField label='Starts in' placeholder='e.g. Nairobi' />}
+              </form.AppField>
+              <form.AppField name='endLocation'>
+                {(field) => <field.TextField label='Ends in' placeholder='e.g. Nairobi' />}
+              </form.AppField>
+            </div>
+          </div>
+        ) : null}
+
+        {currentStep === 2 ? (
+          <ItineraryInput
+            value={values.itineraryDays}
+            onChange={(next) => form.setFieldValue('itineraryDays', next)}
+          />
+        ) : null}
+
+        {currentStep === 3 ? (
+          <div className='grid gap-5'>
+            <div className='grid gap-2'>
+              <Label htmlFor='tour-parks'>National parks</Label>
+              <MultiCombobox
+                id='tour-parks'
+                options={options.parks}
+                value={values.parkIds}
+                onChange={(next) => form.setFieldValue('parkIds', next)}
+                placeholder='Select national parks this safari visits'
+                searchPlaceholder='Search parks…'
+                emptyText='No national parks yet. Add them under National Parks.'
+              />
+              <p className='text-muted-foreground text-xs'>
+                Selected parks list this tour under “Safaris to this park” on each park page.
+              </p>
+            </div>
+            <div className='grid gap-2'>
+              <Label htmlFor='tour-destinations'>Destinations</Label>
+              <MultiCombobox
+                id='tour-destinations'
+                options={options.destinations}
+                value={values.destinationIds}
+                onChange={(next) => form.setFieldValue('destinationIds', next)}
+                placeholder='Select destinations'
+                searchPlaceholder='Search destinations…'
+              />
+            </div>
+            <div className='grid gap-2'>
+              <Label htmlFor='tour-experiences'>Experiences</Label>
+              <MultiCombobox
+                id='tour-experiences'
+                options={options.experiences}
+                value={values.experienceIds}
+                onChange={(next) => form.setFieldValue('experienceIds', next)}
+                placeholder='Select experiences'
+                searchPlaceholder='Search experiences…'
+              />
+            </div>
+            <div className='grid gap-4 sm:grid-cols-2'>
+              <div className='grid gap-2'>
+                <Label htmlFor='tour-accommodations'>Accommodations</Label>
+                <MultiCombobox
+                  id='tour-accommodations'
+                  options={options.accommodations}
+                  value={values.accommodationIds}
+                  onChange={(next) => form.setFieldValue('accommodationIds', next)}
+                  placeholder='Select lodges / camps'
+                  searchPlaceholder='Search accommodations…'
+                />
+              </div>
+              <div className='grid gap-2'>
+                <Label htmlFor='tour-fleet'>Fleet vehicles</Label>
+                <MultiCombobox
+                  id='tour-fleet'
+                  options={options.fleet}
+                  value={values.fleetIds}
+                  onChange={(next) => form.setFieldValue('fleetIds', next)}
+                  placeholder='Select vehicles'
+                  searchPlaceholder='Search fleet…'
+                />
+              </div>
+            </div>
+            <form.AppField name='inclusions'>
+              {(field) => (
+                <HighlightsInput
+                  label='What’s included'
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  placeholder='e.g. Park fees — press Enter to add'
+                />
+              )}
+            </form.AppField>
+            <form.AppField name='exclusions'>
+              {(field) => (
+                <HighlightsInput
+                  label='What’s excluded'
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  placeholder='e.g. International flights — press Enter to add'
+                />
+              )}
+            </form.AppField>
+          </div>
+        ) : null}
+
+        {currentStep === 4 ? (
+          <MediaGalleryField
+            value={values.gallery}
+            onChange={(ids) => form.setFieldValue('gallery', ids)}
+            label='Tour gallery'
+            description='The first image is the cover (also used as the card and social image).'
+          />
+        ) : null}
+
+        {currentStep === 5 ? (
+          <div className='grid gap-4'>
+            <div className='grid gap-2'>
+              <Label htmlFor='tour-overview'>Overview</Label>
+              <RichTextEditor
+                value={values.overview}
+                onChange={(html) => form.setFieldValue('overview', html)}
+                placeholder='The main body shown on the tour page.'
+              />
+            </div>
+            <form.AppField name='importantNotice'>
+              {(field) => (
+                <field.TextareaField
+                  label='Important notice (optional)'
+                  placeholder='A collapsible notice shown above the itinerary.'
+                  rows={3}
+                />
+              )}
+            </form.AppField>
+            <form.AppField name='faqs'>
+              {(field) => (
+                <FaqInput
+                  label='Traveler FAQs'
+                  value={field.state.value}
+                  onChange={field.handleChange}
+                  description='Shown on the public tour page as an accordion.'
+                />
+              )}
+            </form.AppField>
+          </div>
+        ) : null}
+
+        {currentStep === 6 ? (
+          <PricingInput
+            value={values.pricingTiers}
+            onChange={(next) => form.setFieldValue('pricingTiers', next)}
+          />
+        ) : null}
+
+        {currentStep === 7 ? (
+          <div className='grid gap-4 lg:grid-cols-[1fr_320px]'>
+            <div className='grid gap-4'>
+              <form.AppField name='seoTitle'>
+                {(field) => (
+                  <field.TextField
+                    label='SEO title'
+                    placeholder={values.title || 'Defaults to the tour title'}
+                    maxLength={70}
+                  />
+                )}
+              </form.AppField>
+              <form.AppField name='seoDescription'>
+                {(field) => (
+                  <field.TextareaField
+                    label='Meta description'
+                    placeholder='Shown in Google results and social shares.'
+                    rows={3}
+                    maxLength={SEO_LIMITS.metaMax}
+                  />
+                )}
+              </form.AppField>
+
+              <KeywordInput
+                focusKeyword={values.focusKeyword}
+                keywords={values.keywords}
+                onFocusKeywordChange={(value) => form.setFieldValue('focusKeyword', value)}
+                onKeywordsChange={(value) => form.setFieldValue('keywords', value)}
+              />
+            </div>
+
+            <div className='lg:sticky lg:top-4 lg:self-start'>
+              <SeoAnalyzer
+                input={{
+                  title: values.seoTitle || values.title,
+                  metaDescription: values.seoDescription,
+                  slug: values.slug,
+                  focusKeyword: values.focusKeyword,
+                  keywords: values.keywords,
+                  body: `${values.excerpt} ${htmlToText(values.overview)}`,
+                  imageCount: values.gallery.length,
+                  imagesWithAlt
+                }}
+              />
+            </div>
+          </div>
+        ) : null}
+
+        {currentStep === 8 ? <ReviewSummary values={values} options={options} /> : null}
+      </WizardShell>
+    </form.AppForm>
+  );
+}
+
+function countLabels(ids: string[], options: RelationOption[]): string {
+  if (!ids.length) return '';
+  const byValue = new Map(options.map((option) => [option.value, option.label]));
+  return ids.map((id) => byValue.get(id) ?? id).join(', ');
+}
+
+function ReviewSummary({
+  values,
+  options
+}: {
+  values: TourFormValues;
+  options: TourWizardProps['options'];
+}) {
+  const rows: Array<{ label: string; value: string }> = [
+    { label: 'Title', value: values.title },
+    { label: 'Slug', value: values.slug },
+    {
+      label: 'Duration',
+      value: values.days
+        ? `${values.days} days${values.nights ? ` / ${values.nights} nights` : ''}`
+        : ''
+    },
+    { label: 'Price from', value: values.priceFrom ? `$${values.priceFrom}` : '' },
+    {
+      label: 'Route',
+      value: [values.startLocation, values.endLocation].filter(Boolean).join(' → ')
+    },
+    {
+      label: 'Itinerary',
+      value: values.itineraryDays.length ? `${values.itineraryDays.length} day(s)` : ''
+    },
+    { label: 'National parks', value: countLabels(values.parkIds, options.parks) },
+    { label: 'Destinations', value: countLabels(values.destinationIds, options.destinations) },
+    { label: 'Experiences', value: countLabels(values.experienceIds, options.experiences) },
+    {
+      label: 'Accommodations',
+      value: countLabels(values.accommodationIds, options.accommodations)
+    },
+    { label: 'Fleet', value: countLabels(values.fleetIds, options.fleet) },
+    { label: 'Gallery', value: values.gallery.length ? `${values.gallery.length} image(s)` : '' },
+    {
+      label: 'Pricing tiers',
+      value: values.pricingTiers.length ? `${values.pricingTiers.length} tier(s)` : ''
+    },
+    { label: 'Inclusions', value: values.inclusions.join(', ') },
+    { label: 'SEO title', value: values.seoTitle || values.title }
+  ];
+
+  return (
+    <dl className='grid gap-3'>
+      {rows.map((row) => (
+        <div
+          key={row.label}
+          className='grid grid-cols-[160px_1fr] gap-3 border-b py-2 last:border-b-0'
+        >
+          <dt className='text-muted-foreground text-xs font-medium uppercase tracking-wide'>
+            {row.label}
+          </dt>
+          <dd className='text-sm'>{row.value || '—'}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}

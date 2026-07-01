@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation';
 
 import { PublicShell } from '@/components/public/public-shell';
+import { SiteAnalytics } from '@/components/public/site-analytics';
 import { isSupportedLocale, SUPPORTED_LOCALES } from '@/lib/i18n';
 import { buildTravelAgencyJsonLd } from '@/lib/seo';
+import { getPublicSiteSettings } from '@/lib/public/site-data';
 
 import '../../styles/public.css';
 
@@ -21,12 +23,15 @@ export default async function LocaleLayout({ children, params }: LocaleLayoutPro
   const { locale } = await params;
   if (!isSupportedLocale(locale)) notFound();
 
+  const settings = await getPublicSiteSettings();
+
   return (
     <>
       <script
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildTravelAgencyJsonLd()) }}
       />
+      <SiteAnalytics analytics={settings.analytics} />
       <PublicShell locale={locale}>{children}</PublicShell>
     </>
   );

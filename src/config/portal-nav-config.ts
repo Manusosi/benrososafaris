@@ -86,11 +86,29 @@ export const portalNavGroups: NavGroup[] = [
     label: 'Site Management',
     items: [
       {
+        title: 'Subscribers',
+        url: '/portal/subscribers',
+        icon: 'send',
+        access: { minRole: 'editor' },
+        items: []
+      },
+      {
         title: 'Site Settings',
         url: '/portal/settings',
         icon: 'settings',
         access: { superAdminOnly: true },
-        items: []
+        items: [
+          {
+            title: 'General',
+            url: '/portal/settings',
+            items: []
+          },
+          {
+            title: 'Hero Sections',
+            url: '/portal/settings/heroes',
+            items: []
+          }
+        ]
       },
       {
         title: 'Media Library',

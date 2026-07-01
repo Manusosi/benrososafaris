@@ -13,25 +13,24 @@ type Partner = {
  */
 const PARTNERS: Partner[] = [
   { name: 'KATO', logoUrl: '/assets/kato-logo.jpg' },
+  { name: 'ATTA', logoUrl: '/assets/ATTA-Logo-with-Icon-4.jpg' },
   { name: 'TripAdvisor', logoUrl: '/assets/tripadvisor-logo-primary.svg' },
   { name: 'SafariBookings.com', logoUrl: '/assets/safari_bookings.png' },
-  { name: 'KPSGA' },
-  { name: 'Tourism Regulatory Authority' },
-  { name: 'Magical Kenya' },
-  { name: 'Ol Pejeta Conservancy' },
-  { name: 'Maasai Mara Reserve' }
+  { name: 'Magical Kenya', logoUrl: '/assets/magicalkenya.jpg' },
+  { name: 'KPSGA', logoUrl: '/assets/KPSGA.jpg' },
+  { name: 'Tourism Regulatory Authority', logoUrl: '/assets/TRA.png' }
 ];
 
 function PartnerBadge({ partner }: { partner: Partner }) {
   return (
-    <div className='mx-4 flex h-20 w-44 shrink-0 items-center justify-center rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-6'>
+    <div className='mx-8 flex h-24 w-48 shrink-0 items-center justify-center md:mx-12 md:w-52'>
       {partner.logoUrl ? (
         <Image
           alt={partner.name}
-          className='max-h-12 w-auto object-contain'
-          height={48}
+          className='max-h-16 w-auto object-contain transition duration-300 hover:scale-105'
+          height={72}
           src={partner.logoUrl}
-          width={120}
+          width={180}
         />
       ) : (
         <span className='text-center text-sm font-semibold leading-tight text-[var(--benroso-primary)]'>
@@ -46,7 +45,7 @@ export function HomePartners() {
   const loop = [...PARTNERS, ...PARTNERS];
 
   return (
-    <section className='border-y border-[var(--benroso-line)] bg-[var(--benroso-ivory)]'>
+    <section className='border-y border-[var(--benroso-line)] bg-white'>
       <div className='benroso-container py-14 md:py-16'>
         <SectionHeader
           description='Benroso Safaris works alongside the bodies and partners that keep East African travel safe, responsible, and world class.'

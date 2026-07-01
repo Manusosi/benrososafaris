@@ -177,6 +177,12 @@ export function PortalSidebar({ fullName, email, role }: PortalSidebarProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
+                  <Link href='/portal/account'>
+                    <Icons.user className='mr-2 h-4 w-4' />
+                    My Account
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <a href='/en' rel='noopener noreferrer' target='_blank'>
                     <Icons.world className='mr-2 h-4 w-4' />
                     View public site

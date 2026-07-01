@@ -34,6 +34,26 @@ export interface SeoAnalysisInput {
   imageCount?: number;
   /** How many of those images already have alt text. */
   imagesWithAlt?: number;
+  /** Internal links in the body (href starting with `/`). Omit to skip the check. */
+  internalLinkCount?: number;
+  /** Outbound links in the body (absolute http(s) URLs). Omit to skip the check. */
+  outboundLinkCount?: number;
+}
+
+/** Counts internal (`/…`) vs outbound (`http(s)://…`) links in an HTML string. */
+export function countLinks(html: string): { internal: number; outbound: number } {
+  let internal = 0;
+  let outbound = 0;
+  const regex = /href\s*=\s*["']([^"']+)["']/gi;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(html)) !== null) {
+    const href = match[1].trim();
+    if (!href || href.startsWith('#')) continue;
+    if (/^https?:\/\//i.test(href)) outbound += 1;
+    else if (href.startsWith('/')) internal += 1;
+    // mailto:, tel:, and anchors are ignored.
+  }
+  return { internal, outbound };
 }
 
 export interface SeoStats {
@@ -106,7 +126,9 @@ const WEIGHTS: Record<string, number> = {
   'content-length': 1.5,
   'slug-clean': 1,
   'extra-keywords': 1,
-  'image-alt': 1
+  'image-alt': 1,
+  'internal-links': 1,
+  'outbound-links': 1
 };
 
 function ratingFor(score: number): SeoRating {
@@ -430,6 +452,46 @@ export function analyzeSeo(input: SeoAnalysisInput): SeoAnalysis {
       status: 'warn',
       message: `${imageCount - imagesWithAlt} of ${imageCount} images are missing alt text.`
     });
+  }
+
+  // Internal links
+  if (input.internalLinkCount !== undefined) {
+    const count = input.internalLinkCount;
+    checks.push(
+      count > 0
+        ? {
+            id: 'internal-links',
+            label: 'Internal links',
+            status: 'good',
+            message: `${count} internal link${count === 1 ? '' : 's'} to other pages.`
+          }
+        : {
+            id: 'internal-links',
+            label: 'Internal links',
+            status: 'warn',
+            message: 'Add at least one internal link to related content.'
+          }
+    );
+  }
+
+  // Outbound links
+  if (input.outboundLinkCount !== undefined) {
+    const count = input.outboundLinkCount;
+    checks.push(
+      count > 0
+        ? {
+            id: 'outbound-links',
+            label: 'Outbound links',
+            status: 'good',
+            message: `${count} outbound link${count === 1 ? '' : 's'} to external sources.`
+          }
+        : {
+            id: 'outbound-links',
+            label: 'Outbound links',
+            status: 'warn',
+            message: 'Link out to a credible external source.'
+          }
+    );
   }
 
   // Weighted score

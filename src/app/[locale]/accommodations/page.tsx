@@ -11,6 +11,7 @@ import {
   listPublishedAccommodations
 } from '@/features/accommodations/public/service';
 import { localePath } from '@/lib/public/locale-path';
+import { getPageHero } from '@/lib/public/site-data';
 import { absoluteUrl } from '@/lib/seo';
 
 type AccommodationsPageProps = {
@@ -80,6 +81,7 @@ export default async function AccommodationsPage({
     getAccommodationFilterFacets(locale)
   ]);
 
+  const pageHero = await getPageHero('accommodations');
   const hero = BENROSO_PUBLIC_HERO_IMAGES.accommodations;
 
   return (
@@ -90,6 +92,7 @@ export default async function AccommodationsPage({
         description={accommodationsDescription}
         eyebrow='Where You Will Stay'
         eyebrowTone='white'
+        hero={pageHero}
         imageAlt={hero.imageAlt}
         imageUrl={hero.imageUrl}
         showGoldLine={false}

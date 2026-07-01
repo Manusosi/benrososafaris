@@ -21,11 +21,15 @@ const MODULES: Record<ModuleKey, ModuleConfig> = {
   },
   tours: {
     title: 'Safari Tours',
-    publicPath: '/en/tours'
+    publicPath: '/en/tours',
+    newHref: '/portal/tours/new',
+    editBasePath: '/portal/tours'
   },
   packages: {
     title: 'Safari Packages',
-    publicPath: '/en/safari-packages'
+    publicPath: '/en/safari-packages',
+    newHref: '/portal/packages/new',
+    editBasePath: '/portal/packages'
   },
   experiences: {
     title: 'Experiences',

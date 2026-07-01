@@ -6,6 +6,18 @@
 
 @import './theme.css';
 
+/* Brand-colored headers for every data table (shadcn Table, by data-slot).
+   Unlayered so it wins over the `text-foreground` utility on the cells. */
+[data-slot='table-header'] [data-slot='table-head'] {
+  background-color: #3c5142;
+  color: #ffffff;
+  font-weight: 600;
+}
+[data-slot='table-header'] [data-slot='table-row'],
+[data-slot='table-header'] [data-slot='table-row']:hover {
+  background-color: transparent;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

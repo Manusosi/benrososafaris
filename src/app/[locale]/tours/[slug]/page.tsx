@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { TourDetailShell } from '@/components/public/tour-detail-shell';
-import { createClient } from '@/lib/supabase/server';
+import { getPublicTourDetail } from '@/lib/public/site-data';
 import { buildTouristTripJsonLd } from '@/lib/seo';
 
 type TourPageProps = {
@@ -13,19 +13,19 @@ type TourPageProps = {
 
 export default async function TourDetailPage({ params }: TourPageProps) {
   const { locale, slug } = await params;
-  const supabase = await createClient();
-  const { data: tour } = await supabase
-    .from('tour_translations')
-    .select('*, tour:tours!inner(id, status, days, price_from)')
-    .eq('locale', locale)
-    .eq('slug', slug)
-    .eq('tour.status', 'published')
-    .single();
+  const tour = await getPublicTourDetail(locale, slug);
 
   if (!tour) notFound();
 
   const jsonLd = buildTouristTripJsonLd(
-    { ...tour, days: tour.tour?.days, price_from: tour.tour?.price_from },
+    {
+      days: tour.days,
+      excerpt: tour.excerpt,
+      locale,
+      price_from: tour.priceFrom,
+      slug: tour.slug,
+      title: tour.title
+    },
     `/${locale}/tours/${tour.slug}`
   );
 
@@ -35,13 +35,7 @@ export default async function TourDetailPage({ params }: TourPageProps) {
         type='application/ld+json'
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-      <TourDetailShell
-        days={tour.tour?.days}
-        excerpt={tour.excerpt}
-        locale={locale}
-        priceFrom={tour.tour?.price_from}
-        title={tour.title}
-      />
+      <TourDetailShell locale={locale} tour={tour} />
     </>
   );
 }

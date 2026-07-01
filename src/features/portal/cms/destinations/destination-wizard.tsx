@@ -271,7 +271,7 @@ export function DestinationWizard({
                   label='Summary'
                   placeholder='One or two sentences shown on listing cards.'
                   rows={3}
-                  maxLength={280}
+                  maxLength={400}
                 />
               )}
             </form.AppField>
@@ -334,7 +334,7 @@ export function DestinationWizard({
                   <field.TextField
                     label='SEO title'
                     placeholder={values.name || 'Defaults to the destination name'}
-                    maxLength={70}
+                    maxLength={SEO_LIMITS.titleMax}
                     description='Pre-filled from the destination name. Override for a custom search title.'
                   />
                 )}

@@ -155,7 +155,7 @@ export function ExperienceShowcase({
                 </p>
                 <div data-showcase-reveal>
                   <Link
-                    className='mt-7 inline-flex items-center gap-2 rounded-[var(--benroso-button-radius)] bg-[var(--benroso-gold)] px-6 py-3 text-sm font-bold uppercase tracking-[0.08em] text-[var(--benroso-primary-dark)] transition-colors hover:bg-[var(--benroso-gold-hover)]'
+                    className='benroso-fill-hover mt-7 inline-flex items-center gap-2 rounded-[var(--benroso-button-radius)] bg-[var(--benroso-lime)] px-6 py-3 text-sm font-bold uppercase tracking-[0.08em] text-white transition-colors [--benroso-fill:var(--benroso-primary)]'
                     href={localePath(locale, items[activeIndex].href)}
                   >
                     Explore This Safari

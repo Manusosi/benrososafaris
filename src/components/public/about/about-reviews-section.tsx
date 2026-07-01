@@ -13,7 +13,7 @@ function StarRating({ rating }: { rating: number }) {
     <div className='flex gap-0.5' aria-label={`${rating} out of 5 stars`}>
       {Array.from({ length: 5 }).map((_, i) => (
         <Icons.exclusive
-          className={`h-4 w-4 ${i < rating ? 'fill-[var(--benroso-gold)] text-[var(--benroso-gold)]' : 'text-[var(--benroso-line)]'}`}
+          className={`h-4 w-4 ${i < rating ? 'fill-[#FBBC04] text-[#FBBC04]' : 'text-[var(--benroso-line)]'}`}
           key={i}
         />
       ))}

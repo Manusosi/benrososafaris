@@ -11,7 +11,34 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableCell } from '@tiptap/extension-table-cell';
 
 import { Icons } from '@/components/icons';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { getMediaByIds } from '../media/api/client';
+import { MediaPickerDialog } from '../media/components/media-picker';
+import { CMS_SURFACE } from './surface';
+
+/** Common internal destinations offered as quick picks in the link dialog. */
+const INTERNAL_LINK_PRESETS: { label: string; href: string }[] = [
+  { label: 'Home', href: '/en' },
+  { label: 'Destinations', href: '/en/destinations' },
+  { label: 'National Parks', href: '/en/national-parks' },
+  { label: 'Safari Tours', href: '/en/tours' },
+  { label: 'Experiences', href: '/en/experiences' },
+  { label: 'Accommodations', href: '/en/accommodations' },
+  { label: 'Blog', href: '/en/blog' },
+  { label: 'Contact', href: '/en/contact' }
+];
 
 interface RichTextEditorProps {
   /** Initial HTML content. */
@@ -82,6 +109,55 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     }
   }, [editor, value]);
 
+  const [imageOpen, setImageOpen] = React.useState(false);
+  const [linkState, setLinkState] = React.useState<LinkDialogState>({
+    open: false,
+    href: '',
+    newTab: false
+  });
+
+  function openLinkDialog() {
+    if (!editor) return;
+    const attrs = editor.getAttributes('link');
+    setLinkState({
+      open: true,
+      href: (attrs.href as string | undefined) ?? '',
+      newTab: attrs.target === '_blank'
+    });
+  }
+
+  function applyLink(href: string, newTab: boolean) {
+    if (!editor) return;
+    const url = href.trim();
+    if (!url) {
+      editor.chain().focus().extendMarkRange('link').unsetLink().run();
+      return;
+    }
+    editor
+      .chain()
+      .focus()
+      .extendMarkRange('link')
+      .setLink({
+        href: url,
+        target: newTab ? '_blank' : null,
+        rel: newTab ? 'noopener noreferrer' : null
+      })
+      .run();
+  }
+
+  async function insertImageByIds(ids: string[]) {
+    if (!editor || !ids.length) return;
+    const assets = await getMediaByIds(ids);
+    const asset = assets.find((item) => item.url);
+    if (asset?.url) {
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: asset.url, alt: asset.alt ?? undefined })
+        .run();
+    }
+  }
+
   if (!editor) {
     return <div className={cn('h-[244px] rounded-[3px] border border-input', className)} />;
   }
@@ -93,30 +169,159 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         className
       )}
     >
-      <Toolbar editor={editor} />
+      <Toolbar editor={editor} onImage={() => setImageOpen(true)} onLink={openLinkDialog} />
       <EditorContent editor={editor} />
+
+      <MediaPickerDialog
+        open={imageOpen}
+        onOpenChange={setImageOpen}
+        initialSelected={[]}
+        multiple={false}
+        onConfirm={(ids) => void insertImageByIds(ids)}
+      />
+
+      <LinkDialog
+        state={linkState}
+        onOpenChange={(open) => setLinkState((current) => ({ ...current, open }))}
+        onSubmit={(href, newTab) => {
+          applyLink(href, newTab);
+          setLinkState({ open: false, href: '', newTab: false });
+        }}
+      />
     </div>
   );
 }
 
-function Toolbar({ editor }: { editor: Editor }) {
-  function setLink() {
-    const previous = editor.getAttributes('link').href as string | undefined;
-    const url = window.prompt('Link URL', previous ?? 'https://');
-    if (url === null) return;
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run();
-      return;
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-  }
+type LinkDialogState = { open: boolean; href: string; newTab: boolean };
 
-  function addImage() {
-    const url = window.prompt('Image URL', 'https://');
-    if (url === null || url === '') return;
-    editor.chain().focus().setImage({ src: url }).run();
-  }
+function LinkModeButton({
+  active,
+  label,
+  onClick
+}: {
+  active: boolean;
+  label: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      className={cn(
+        'flex-1 rounded-[3px] px-3 py-1.5 text-sm font-medium transition-colors',
+        active ? 'bg-[#3c5142] text-white' : 'text-neutral-700 hover:bg-[#f3f4f6]'
+      )}
+    >
+      {label}
+    </button>
+  );
+}
 
+function LinkDialog({
+  state,
+  onOpenChange,
+  onSubmit
+}: {
+  state: LinkDialogState;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (href: string, newTab: boolean) => void;
+}) {
+  const [mode, setMode] = React.useState<'external' | 'internal'>('external');
+  const [href, setHref] = React.useState('');
+  const [newTab, setNewTab] = React.useState(false);
+
+  // Reseed from the selected link each time the dialog opens.
+  React.useEffect(() => {
+    if (!state.open) return;
+    const isInternal = state.href.startsWith('/');
+    setMode(isInternal ? 'internal' : 'external');
+    setHref(state.href);
+    setNewTab(state.newTab);
+  }, [state.open, state.href, state.newTab]);
+
+  return (
+    <Dialog open={state.open} onOpenChange={onOpenChange}>
+      <DialogContent className={cn(CMS_SURFACE, 'rounded-[3px] shadow-none sm:max-w-md')}>
+        <DialogHeader>
+          <DialogTitle>Insert link</DialogTitle>
+          <DialogDescription>
+            Link to another page on this site (internal) or an external web address (outbound).
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className='flex gap-1 rounded-[3px] border border-[#E5E7EB] p-1'>
+          <LinkModeButton
+            active={mode === 'external'}
+            label='Web address'
+            onClick={() => setMode('external')}
+          />
+          <LinkModeButton
+            active={mode === 'internal'}
+            label='Internal page'
+            onClick={() => setMode('internal')}
+          />
+        </div>
+
+        <div className='grid gap-3'>
+          <div className='grid gap-1.5'>
+            <Label htmlFor='link-href'>{mode === 'internal' ? 'Path' : 'URL'}</Label>
+            <Input
+              id='link-href'
+              value={href}
+              onChange={(event) => setHref(event.target.value)}
+              placeholder={mode === 'internal' ? '/en/blog/your-article' : 'https://example.com'}
+            />
+          </div>
+
+          {mode === 'internal' ? (
+            <div className='flex flex-wrap gap-1.5'>
+              {INTERNAL_LINK_PRESETS.map((preset) => (
+                <button
+                  type='button'
+                  key={preset.href}
+                  onClick={() => setHref(preset.href)}
+                  className='rounded-[3px] border border-[#E5E7EB] px-2 py-1 text-xs text-neutral-700 hover:border-[#3c5142] hover:text-[#3c5142]'
+                >
+                  {preset.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <Label htmlFor='link-newtab' className='flex items-center gap-2 text-sm'>
+              <Checkbox
+                id='link-newtab'
+                checked={newTab}
+                onCheckedChange={(checked) => setNewTab(checked === true)}
+              />
+              Open in a new tab
+            </Label>
+          )}
+        </div>
+
+        <DialogFooter>
+          {state.href ? (
+            <Button type='button' variant='ghost' onClick={() => onSubmit('', false)}>
+              Remove link
+            </Button>
+          ) : null}
+          <Button type='button' onClick={() => onSubmit(href, mode === 'external' && newTab)}>
+            {state.href ? 'Update link' : 'Add link'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Toolbar({
+  editor,
+  onImage,
+  onLink
+}: {
+  editor: Editor;
+  onImage: () => void;
+  onLink: () => void;
+}) {
   function insertTable() {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
   }
@@ -225,7 +430,7 @@ function Toolbar({ editor }: { editor: Editor }) {
         <Icons.paragraph className='size-4' />
       </ToolbarButton>
       <Divider />
-      <ToolbarButton label='Link' active={editor.isActive('link')} onClick={setLink}>
+      <ToolbarButton label='Link' active={editor.isActive('link')} onClick={onLink}>
         <Icons.link className='size-4' />
       </ToolbarButton>
       <ToolbarButton
@@ -234,7 +439,7 @@ function Toolbar({ editor }: { editor: Editor }) {
       >
         <Icons.unlink className='size-4' />
       </ToolbarButton>
-      <ToolbarButton label='Image' onClick={addImage}>
+      <ToolbarButton label='Image' onClick={onImage}>
         <Icons.image className='size-4' />
       </ToolbarButton>
       <ToolbarButton label='Table' onClick={insertTable}>

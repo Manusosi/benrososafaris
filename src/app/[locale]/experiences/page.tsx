@@ -16,6 +16,7 @@ import {
   listPublishedExperiences
 } from '@/features/experiences/public/service';
 import { localePath } from '@/lib/public/locale-path';
+import { getPageHero } from '@/lib/public/site-data';
 import { absoluteUrl } from '@/lib/seo';
 import { cn } from '@/lib/utils';
 
@@ -49,9 +50,10 @@ export default async function ExperiencesPage({ params, searchParams }: Experien
   const { category } = await searchParams;
   const activeCategory = category?.trim() || undefined;
 
-  const [experiences, categories] = await Promise.all([
+  const [experiences, categories, pageHero] = await Promise.all([
     listPublishedExperiences({ category: activeCategory, locale }),
-    getExperienceCategories(locale)
+    getExperienceCategories(locale),
+    getPageHero('experiences')
   ]);
 
   const intro = buildExperienceListingIntro(categories);
@@ -67,6 +69,7 @@ export default async function ExperiencesPage({ params, searchParams }: Experien
         ctaVariant='ghost-hero'
         eyebrow='Unforgettable Wildlife Encounters'
         eyebrowTone='white'
+        hero={pageHero}
         imageAlt={hero.imageAlt}
         imageUrl={hero.imageUrl}
         showGoldLine={false}

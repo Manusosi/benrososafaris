@@ -259,12 +259,35 @@ export async function getPortalEnquiries() {
   return data ?? [];
 }
 
-export async function getPortalTeam() {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from('profiles')
-    .select('id, full_name, role, status, created_at')
-    .order('created_at', { ascending: true });
+export type PortalTeamMember = {
+  id: string;
+  full_name: string | null;
+  role: string;
+  status: string;
+  avatar_url: string | null;
+  email: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+};
 
-  return data ?? [];
+export async function getPortalTeam(): Promise<PortalTeamMember[]> {
+  const supabase = await createClient();
+  // Security-definer RPC joins profiles with auth.users for sign-in metadata
+  // (auth.users is not readable under RLS). Falls back to profiles on error.
+  const { data, error } = await supabase.rpc('get_portal_team');
+
+  if (error || !data) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, full_name, role, status, avatar_url, created_at')
+      .order('created_at', { ascending: true });
+
+    return (profiles ?? []).map((row) => ({
+      ...row,
+      email: null,
+      last_sign_in_at: null
+    }));
+  }
+
+  return data as PortalTeamMember[];
 }

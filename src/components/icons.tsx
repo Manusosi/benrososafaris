@@ -122,7 +122,8 @@ import {
   IconPilcrow,
   IconPhotoPlus,
   IconTable,
-  IconSeparatorHorizontal
+  IconSeparatorHorizontal,
+  IconDownload
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -206,6 +207,7 @@ export const Icons = {
 
   // Actions
   add: IconPlus,
+  download: IconDownload,
   edit: IconEdit,
   upload: IconUpload,
   share: IconShare,

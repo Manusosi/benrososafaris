@@ -4,7 +4,10 @@ import { useRef } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 
+import { HeroMediaBackdrop } from '@/components/public/hero-media-backdrop';
 import { BENROSO_CONTACT_HERO } from '@/config/benroso';
+import { heroHasMedia } from '@/lib/public/page-heroes';
+import type { PageHero } from '@/lib/public/types';
 import { cn } from '@/lib/utils';
 
 gsap.registerPlugin(useGSAP);
@@ -14,6 +17,10 @@ type ContactHeroProps = {
   className?: string;
   description?: string;
   eyebrow?: string;
+  /** Optional per-page hero from Portal > Settings > Hero Sections. */
+  hero?: PageHero | null;
+  /** Background image when no configured hero media is present. */
+  imageUrl?: string;
   title: string;
 };
 
@@ -22,9 +29,16 @@ export function ContactHero({
   className,
   description,
   eyebrow,
+  hero,
+  imageUrl = BENROSO_CONTACT_HERO.imageUrl,
   title
 }: ContactHeroProps) {
   const contentRef = useRef<HTMLDivElement>(null);
+  const hasMedia = heroHasMedia(hero);
+  const overlayAlpha = hero ? hero.overlayOpacity : 0.62;
+  const effectiveEyebrow = hero?.eyebrow ?? eyebrow;
+  const effectiveTitle = hero?.heading ?? title;
+  const effectiveDescription = hero?.subheading ?? description;
 
   useGSAP(
     () => {
@@ -44,12 +58,20 @@ export function ContactHero({
 
   return (
     <section className={cn('relative overflow-hidden text-white', className)}>
+      {hasMedia && hero ? (
+        <HeroMediaBackdrop hero={hero} />
+      ) : (
+        <div
+          aria-hidden
+          className='absolute inset-0 bg-cover bg-center bg-no-repeat'
+          style={{ backgroundImage: `url("${imageUrl}")` }}
+        />
+      )}
       <div
         aria-hidden
-        className='absolute inset-0 bg-cover bg-center bg-no-repeat'
-        style={{ backgroundImage: `url("${BENROSO_CONTACT_HERO.imageUrl}")` }}
+        className='absolute inset-0'
+        style={{ backgroundColor: `rgba(0,0,0,${overlayAlpha})` }}
       />
-      <div aria-hidden className='absolute inset-0 bg-black/62' />
       <div className='relative z-10 benroso-section py-16 md:py-24'>
         <div className='benroso-container'>
           {breadcrumbs?.length ? (
@@ -73,23 +95,23 @@ export function ContactHero({
           ) : null}
 
           <div className='mx-auto max-w-3xl text-center' ref={contentRef}>
-            {eyebrow ? (
+            {effectiveEyebrow ? (
               <p className='text-xs font-bold uppercase tracking-[0.18em] text-white/70'>
-                {eyebrow}
+                {effectiveEyebrow}
               </p>
             ) : null}
             <h1
               className={cn(
                 'font-display text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.1] text-white',
-                eyebrow ? 'mt-4' : 'mt-0'
+                effectiveEyebrow ? 'mt-4' : 'mt-0'
               )}
             >
-              {title}
+              {effectiveTitle}
             </h1>
             <span aria-hidden className='benroso-gold-line benroso-gold-line--brand mt-5' />
-            {description ? (
+            {effectiveDescription ? (
               <p className='mx-auto mt-6 max-w-2xl text-lg leading-8 text-white/85'>
-                {description}
+                {effectiveDescription}
               </p>
             ) : null}
           </div>

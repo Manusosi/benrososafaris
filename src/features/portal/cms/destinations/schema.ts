@@ -26,7 +26,7 @@ export const destinationFormSchema = z.object({
     .string()
     .min(2, 'Slug must be at least 2 characters')
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use lowercase letters, numbers, and hyphens only'),
-  summary: z.string().max(280, 'Keep the summary under 280 characters'),
+  summary: z.string().max(400, 'Keep the summary under 400 characters'),
   description: z.string(),
   // Base
   country: z.string().min(1, 'Country is required'),
@@ -39,7 +39,9 @@ export const destinationFormSchema = z.object({
   /** Ordered media_assets ids; the first is the cover image. */
   gallery: z.array(z.string()),
   // SEO
-  seoTitle: z.string().max(70, 'SEO title should be under 70 characters'),
+  seoTitle: z
+    .string()
+    .max(SEO_LIMITS.titleMax, `SEO title should be under ${SEO_LIMITS.titleMax} characters`),
   seoDescription: z
     .string()
     .max(SEO_LIMITS.metaMax, `SEO description should be under ${SEO_LIMITS.metaMax} characters`),

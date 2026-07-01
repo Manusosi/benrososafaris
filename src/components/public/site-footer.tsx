@@ -75,7 +75,7 @@ export function SiteFooter({ footerColumns, locale, siteSettings }: SiteFooterPr
 
           {/* Newsletter */}
           <div className='md:col-span-2 lg:col-span-4'>
-            <FooterNewsletter />
+            <FooterNewsletter locale={locale} />
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@ export function SiteFooter({ footerColumns, locale, siteSettings }: SiteFooterPr
             />
           </a>
           <p className='inline-flex items-center gap-2 text-sm font-medium text-white/90'>
-            <Icons.badgeCheck className='h-4 w-4 text-[var(--benroso-gold)]' />
+            <Icons.badgeCheck className='h-4 w-4 text-[var(--benroso-lime)]' />
             KATO Registered · Licensed Tour Operator · KPSGA Member
           </p>
         </div>

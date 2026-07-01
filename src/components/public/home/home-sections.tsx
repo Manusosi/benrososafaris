@@ -9,11 +9,11 @@ import { TourCard } from '@/components/public/cards/content-cards';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { ScrollReveal } from '@/components/public/ui/scroll-reveal';
 import { SectionHeader } from '@/components/public/ui/section-header';
+import { TrustedChecklist } from '@/components/public/home/home-trusted-checklist';
 import { Slider } from '@/components/public/ui/slider';
-import { BENROSO_WHATSAPP } from '@/config/benroso';
 import { localePath } from '@/lib/public/locale-path';
-import { whatsAppHref } from '@/lib/public/whatsapp';
-import type { HeroSlide, PublicSiteSettings, PublicTour } from '@/lib/public/types';
+import { youtubeVideoId } from '@/lib/public/page-heroes';
+import type { HeroSlide, PageHero, PublicSiteSettings, PublicTour } from '@/lib/public/types';
 
 const HERO_FALLBACK_SLIDES: HeroSlide[] = [
   {
@@ -60,13 +60,35 @@ const HERO_FALLBACK_SLIDES: HeroSlide[] = [
 
 const HERO_SLIDE_INTERVAL = 6500;
 
-export function HomeHero({ locale, slides }: { locale: string; slides?: HeroSlide[] }) {
+export function HomeHero({
+  locale,
+  hero,
+  slides
+}: {
+  locale: string;
+  hero?: PageHero | null;
+  slides?: HeroSlide[];
+}) {
   const contactHref = localePath(locale, '/contact');
   const toursHref = localePath(locale, '/tours');
-  const heroSlides = slides && slides.length > 0 ? slides : HERO_FALLBACK_SLIDES;
+
+  const configuredSlides = hero?.slides ?? slides;
+  const heroSlides =
+    configuredSlides && configuredSlides.length > 0 ? configuredSlides : HERO_FALLBACK_SLIDES;
+  const videoId = hero?.type === 'youtube' ? youtubeVideoId(hero.youtubeUrl) : null;
+
+  const eyebrow = hero?.eyebrow ?? 'Welcome to Benroso Safaris';
+  const heading = hero?.heading ?? 'Unforgettable East African Safaris, Crafted Around You';
+  const subheading =
+    hero?.subheading ??
+    'For twenty-five years we have guided travelers across Kenya, Tanzania, Uganda, and Rwanda — every itinerary built by people who know these parks firsthand, not from a brochure. Tell us how you like to travel, and we will take care of the rest.';
+  const primaryCtaLabel = hero?.ctaLabel ?? 'Plan My Safari';
+  const primaryCtaHref = hero?.ctaHref ? localePath(locale, hero.ctaHref) : contactHref;
+
   const [activeSlide, setActiveSlide] = useState(0);
 
   useEffect(() => {
+    if (videoId) return;
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced || heroSlides.length <= 1) return;
 
@@ -75,40 +97,63 @@ export function HomeHero({ locale, slides }: { locale: string; slides?: HeroSlid
     }, HERO_SLIDE_INTERVAL);
 
     return () => window.clearInterval(interval);
-  }, [heroSlides.length]);
+  }, [heroSlides.length, videoId]);
 
   return (
     <section className='relative min-h-[min(92vh,960px)] overflow-hidden bg-[var(--benroso-primary-dark)] text-white'>
-      {heroSlides.map((slide, index) => (
-        <div
-          aria-hidden={index !== activeSlide}
-          className='absolute inset-0 transition-opacity duration-1000'
-          key={`${slide.mediaUrl}-${index}`}
-          style={{ opacity: index === activeSlide ? 1 : 0 }}
-        >
-          {slide.mediaType === 'video' ? (
-            <video
-              autoPlay
-              className='h-full w-full object-cover'
-              loop
-              muted
-              playsInline
-              poster={slide.posterUrl ?? undefined}
-            >
-              <source src={slide.mediaUrl} />
-            </video>
-          ) : (
+      {videoId ? (
+        <>
+          {/* Poster fallback under the iframe for first paint / reduced motion */}
+          {heroSlides[0]?.mediaUrl ? (
             <Image
-              alt={slide.alt ?? 'Benroso Safaris'}
+              alt={heroSlides[0].alt ?? 'Benroso Safaris'}
               className='object-cover'
               fill
-              priority={index === 0}
+              priority
               sizes='100vw'
-              src={slide.mediaUrl}
+              src={heroSlides[0].mediaUrl}
             />
-          )}
-        </div>
-      ))}
+          ) : null}
+          <iframe
+            allow='autoplay; encrypted-media'
+            aria-hidden
+            className='pointer-events-none absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.78vh] min-w-full -translate-x-1/2 -translate-y-1/2'
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&loop=1&playlist=${videoId}&playsinline=1&rel=0&modestbranding=1&showinfo=0`}
+            title='Background video'
+          />
+        </>
+      ) : (
+        heroSlides.map((slide, index) => (
+          <div
+            aria-hidden={index !== activeSlide}
+            className='absolute inset-0 transition-opacity duration-1000'
+            key={`${slide.mediaUrl}-${index}`}
+            style={{ opacity: index === activeSlide ? 1 : 0 }}
+          >
+            {slide.mediaType === 'video' ? (
+              <video
+                autoPlay
+                className='h-full w-full object-cover'
+                loop
+                muted
+                playsInline
+                poster={slide.posterUrl ?? undefined}
+              >
+                <source src={slide.mediaUrl} />
+              </video>
+            ) : (
+              <Image
+                alt={slide.alt ?? 'Benroso Safaris'}
+                className='object-cover'
+                fill
+                priority={index === 0}
+                sizes='100vw'
+                src={slide.mediaUrl}
+              />
+            )}
+          </div>
+        ))
+      )}
       <div
         aria-hidden
         className='absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-black/30'
@@ -121,22 +166,21 @@ export function HomeHero({ locale, slides }: { locale: string; slides?: HeroSlid
       <div className='relative z-10 flex min-h-[min(92vh,960px)] flex-col justify-between'>
         <div className='flex flex-1 items-center'>
           <div className='benroso-container py-20'>
-            <p className='inline-flex items-center gap-3 text-xs font-bold uppercase tracking-[0.18em] text-[var(--benroso-gold)]'>
-              <span className='h-px w-10 bg-[var(--benroso-gold)]' />
-              East Africa Safari Specialists Since 2000
+            <p className='text-xs font-bold uppercase tracking-[0.18em] text-[var(--benroso-gold)]'>
+              {eyebrow}
             </p>
             <h1 className='mt-4 max-w-3xl font-display text-[clamp(2.25rem,5vw,3.75rem)] leading-[1.05] text-white'>
-              Twenty Five Years of Safaris Done the Right Way
+              {heading}
             </h1>
-            <p className='mt-6 max-w-2xl text-lg leading-8 text-white/90'>
-              We have guided travelers across Kenya, Tanzania, Uganda, and Rwanda for a quarter of a
-              century. Every itinerary is built by people who know these parks firsthand, not from a
-              brochure.
-            </p>
+            <p className='mt-6 max-w-2xl text-lg leading-8 text-white/90'>{subheading}</p>
             <div className='mt-8 flex flex-wrap gap-4'>
-              <BenrosoButton href={contactHref} variant='accent'>
+              <BenrosoButton
+                className='border-[var(--benroso-lime)] bg-[var(--benroso-lime)] text-white [--benroso-fill:var(--benroso-primary)]'
+                href={primaryCtaHref}
+                variant='accent'
+              >
                 <Icons.compass className='h-4 w-4' />
-                Plan My Safari
+                {primaryCtaLabel}
               </BenrosoButton>
               <BenrosoButton href={toursHref} variant='gold-outline'>
                 View Safari Tours
@@ -174,10 +218,7 @@ export function HomeWhyChooseUs({ locale }: { locale: string }) {
   ];
 
   return (
-    <section
-      className='border-b border-[var(--benroso-line)] bg-[var(--benroso-ivory)]'
-      id='why-choose-us'
-    >
+    <section className='border-b border-[var(--benroso-line)] bg-white' id='why-choose-us'>
       <div className='benroso-container py-16 md:py-20'>
         <div className='grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-14'>
           <ScrollReveal className='relative' from='left'>
@@ -210,17 +251,14 @@ export function HomeWhyChooseUs({ locale }: { locale: string }) {
               by a team that has spent close to thirty years in the field. You get local expertise,
               honest advice, and logistics that simply work.
             </p>
-            <ul className='mt-7 space-y-3.5'>
-              {trustPoints.map((item) => (
-                <li className='flex gap-3 text-sm leading-7 text-[var(--benroso-ink)]' key={item}>
-                  <Icons.circleCheck className='mt-0.5 h-5 w-5 shrink-0 text-[var(--benroso-primary)]' />
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <TrustedChecklist items={trustPoints} />
             <div className='mt-8'>
-              <BenrosoButton href={localePath(locale, '/about')} variant='primary'>
-                <Icons.compass className='h-4 w-4' />
+              <BenrosoButton
+                className='group'
+                href={localePath(locale, '/about')}
+                variant='primary'
+              >
+                <Icons.compass className='h-4 w-4 transition-transform duration-500 ease-out group-hover:rotate-[360deg]' />
                 Discover Our Story
               </BenrosoButton>
             </div>
@@ -349,39 +387,46 @@ export function HomeTrustCta({
   locale: string;
   siteSettings: PublicSiteSettings;
 }) {
-  const whatsappLink = whatsAppHref(
-    siteSettings.whatsappMessage ? siteSettings.phoneSecondary : BENROSO_WHATSAPP.phone,
-    siteSettings.whatsappMessage || BENROSO_WHATSAPP.message
-  );
-
   return (
-    <section className='benroso-section bg-[var(--benroso-ivory)]'>
-      <div className='benroso-container flex justify-center'>
-        <ScrollReveal className='w-full max-w-xl rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-8 md:p-10'>
-          <h3 className='benroso-heading font-display text-2xl'>Ready to Start Planning?</h3>
-          <p className='benroso-body mt-3'>
+    <section
+      className='relative isolate bg-cover bg-center bg-fixed'
+      style={{
+        backgroundImage: "url('/assets/Saruni-Basecamp-The-Great-Migration-river-crossing.jpg')"
+      }}
+    >
+      {/* Dark overlay over the fixed safari backdrop */}
+      <div aria-hidden className='absolute inset-0 bg-black/60' />
+
+      <div className='benroso-container benroso-section relative flex justify-center'>
+        <ScrollReveal className='w-full max-w-lg rounded-[var(--benroso-radius)] bg-white p-8 text-center shadow-2xl md:p-10'>
+          <h3 className='benroso-heading font-display text-[clamp(1.75rem,3vw,2.25rem)] leading-tight'>
+            Ready to Start Planning?
+          </h3>
+          <p className='benroso-body mx-auto mt-3 max-w-md'>
             Tell us your dates, group size, and the parks you want to see. Our planners will respond
             with a tailored proposal, usually within one business day.
           </p>
-          <div className='benroso-body mt-6 space-y-3 text-sm'>
-            <p>{siteSettings.email}</p>
+          <div className='benroso-body mt-6 space-y-1.5 text-sm'>
+            <p>
+              <a
+                className='transition-colors hover:text-[var(--benroso-primary)]'
+                href={`mailto:${siteSettings.email}`}
+              >
+                {siteSettings.email}
+              </a>
+            </p>
             <p>
               {siteSettings.phoneSecondary} / {siteSettings.phonePrimary}
             </p>
           </div>
-          <div className='mt-6 flex flex-wrap gap-3'>
-            <BenrosoButton href={localePath(locale, '/contact')} variant='accent'>
-              Enquire Now
-            </BenrosoButton>
-            <BenrosoButton href={whatsappLink} variant='accent-outline'>
-              <Icons.whatsapp className='h-4 w-4' />
-              WhatsApp Us
-            </BenrosoButton>
+          <div className='mt-7 flex justify-center'>
             <BenrosoButton
-              href={`tel:${siteSettings.phonePrimary.replace(/[^\d+]/g, '')}`}
-              variant='accent-outline'
+              className='border-[var(--benroso-lime)] bg-[var(--benroso-lime)] text-white [--benroso-fill:var(--benroso-primary)]'
+              href={localePath(locale, '/contact')}
+              variant='accent'
             >
-              Call Us
+              Enquire Now
+              <Icons.arrowRight className='h-4 w-4' />
             </BenrosoButton>
           </div>
         </ScrollReveal>

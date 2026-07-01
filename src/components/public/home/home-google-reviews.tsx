@@ -3,42 +3,16 @@
 import { Icons } from '@/components/icons';
 import { ScrollReveal } from '@/components/public/ui/scroll-reveal';
 import { Slider } from '@/components/public/ui/slider';
-import { PLACEHOLDER_TESTIMONIALS } from '@/lib/public/about-placeholders';
+import {
+  FALLBACK_HOME_REVIEWS,
+  type HomeReviewItem,
+  type HomeReviewSource
+} from '@/lib/public/home-reviews';
 
-/**
- * Shape mirrors the Google Places API `reviews` entries so live data can be
- * dropped in later without touching the UI. Map a Places response to this type
- * and pass it as `reviews`. Until then we render real guest review text.
- */
-export type GoogleReview = {
-  authorName: string;
-  authorLocation?: string;
-  rating: number;
-  relativeTime: string;
-  text: string;
-  profilePhotoUrl?: string;
+const SOURCE_LABEL: Record<HomeReviewSource, string> = {
+  google: 'Google',
+  tripadvisor: 'Tripadvisor'
 };
-
-const RELATIVE_TIMES = [
-  '2 weeks ago',
-  'a month ago',
-  '2 months ago',
-  '3 months ago',
-  '5 months ago',
-  '6 months ago'
-];
-
-const FALLBACK_REVIEWS: GoogleReview[] = PLACEHOLDER_TESTIMONIALS.map((item, index) => ({
-  authorName: item.guestName,
-  authorLocation: item.country,
-  rating: item.rating,
-  relativeTime: RELATIVE_TIMES[index % RELATIVE_TIMES.length],
-  text: item.quote
-}));
-
-const AGGREGATE_RATING = 5.0;
-const REVIEW_COUNT = 120;
-const GOOGLE_REVIEWS_URL = 'https://www.google.com/search?q=Benroso+Safaris+Ltd+Nairobi+reviews';
 
 function GoogleGlyph({ className }: { className?: string }) {
   return (
@@ -63,19 +37,55 @@ function GoogleGlyph({ className }: { className?: string }) {
   );
 }
 
-function Stars({ rating }: { rating: number }) {
-  return (
-    <div aria-label={`${rating} out of 5 stars`} className='flex gap-0.5'>
-      {Array.from({ length: 5 }).map((_, i) => {
-        const filled = i < Math.round(rating);
-        return (
-          <Icons.exclusive
-            className={`h-4 w-4 ${filled ? 'text-[#FBBC05]' : 'text-[var(--benroso-line)]'}`}
-            fill={filled ? 'currentColor' : 'none'}
+/** Per-card provider badge — Google "G" or the Tripadvisor owl. */
+function SourceLogo({ source, className }: { source: HomeReviewSource; className?: string }) {
+  if (source === 'tripadvisor') {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        alt='Tripadvisor'
+        className={className}
+        height={20}
+        src='/assets/tripadvisor-logomark.svg'
+        width={20}
+      />
+    );
+  }
+  return <GoogleGlyph className={className} />;
+}
+
+/**
+ * Per-card rating shown the way each platform officially does: gold stars for
+ * Google, green bubbles for Tripadvisor.
+ */
+function Rating({ rating, source }: { rating: number; source: HomeReviewSource }) {
+  const filled = Math.round(rating);
+
+  if (source === 'tripadvisor') {
+    return (
+      <div aria-label={`${rating} out of 5 on Tripadvisor`} className='flex gap-1'>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <span
+            className={`h-3.5 w-3.5 rounded-full ${
+              i < filled ? 'bg-[#00AA6C]' : 'bg-[var(--benroso-line)]'
+            }`}
             key={i}
           />
-        );
-      })}
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div aria-label={`${rating} out of 5 stars on Google`} className='flex gap-0.5'>
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Icons.exclusive
+          className={`h-4 w-4 ${
+            i < filled ? 'fill-[#FBBC04] text-[#FBBC04]' : 'text-[var(--benroso-line)]'
+          }`}
+          key={i}
+        />
+      ))}
     </div>
   );
 }
@@ -89,72 +99,80 @@ function initials(name: string) {
     .toUpperCase();
 }
 
-export function HomeGoogleReviews({ reviews = FALLBACK_REVIEWS }: { reviews?: GoogleReview[] }) {
-  return (
-    <section className='benroso-section bg-[var(--benroso-ivory)]'>
-      <div className='benroso-container'>
-        <div className='flex flex-col items-center gap-6 text-center lg:flex-row lg:items-center lg:justify-between lg:text-left'>
-          <div>
-            <h2 className='benroso-heading font-display text-[clamp(1.5rem,3vw,2.25rem)] leading-tight'>
-              What Our Clients Say
-            </h2>
-          </div>
+export function HomeGoogleReviews({ reviews }: { reviews?: HomeReviewItem[] }) {
+  const items = reviews?.length ? reviews : FALLBACK_HOME_REVIEWS;
 
-          <div className='flex items-center gap-4 rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-6 py-4'>
-            <GoogleGlyph className='h-9 w-9' />
-            <div className='text-left'>
-              <div className='flex items-center gap-2'>
-                <span className='font-display text-2xl font-bold text-[var(--benroso-primary)]'>
-                  {AGGREGATE_RATING.toFixed(1)}
-                </span>
-                <Stars rating={AGGREGATE_RATING} />
-              </div>
-              <p className='mt-0.5 text-xs text-[var(--benroso-muted)]'>
-                Based on {REVIEW_COUNT}+ Google reviews
-              </p>
-            </div>
-            <a
-              className='ml-2 inline-flex items-center gap-1 rounded-[var(--benroso-button-radius)] border border-[var(--benroso-primary)] px-4 py-2 text-xs font-bold uppercase tracking-wide text-[var(--benroso-primary)] transition-colors hover:bg-[var(--benroso-primary)] hover:text-white'
-              href={GOOGLE_REVIEWS_URL}
-              rel='noopener noreferrer'
-              target='_blank'
-            >
-              Read on Google
-              <Icons.externalLink className='h-3.5 w-3.5' />
-            </a>
+  return (
+    <section aria-label='Guest reviews' className='border-t border-[var(--benroso-line)] bg-white'>
+      <div className='benroso-container benroso-section'>
+        {/* Header — descriptive, not boxed */}
+        <div className='mx-auto max-w-2xl text-center'>
+          <p className='benroso-eyebrow'>Do Not Take Our Word For It</p>
+          <h2 className='benroso-heading mt-3 font-display text-[clamp(2rem,4vw,3.25rem)] leading-[1.15]'>
+            What Our Clients Say
+          </h2>
+          <div className='mt-5 flex flex-wrap items-center justify-center gap-x-3 gap-y-2'>
+            <span className='inline-flex items-center gap-0.5'>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Icons.exclusive className='h-5 w-5 fill-[#FBBC04] text-[#FBBC04]' key={i} />
+              ))}
+            </span>
+            <span className='text-sm font-semibold text-[var(--benroso-heading)]'>
+              5 Star Reviews on
+            </span>
+            <GoogleGlyph className='h-5 w-5 shrink-0' />
+            <span className='text-sm font-semibold text-[var(--benroso-muted)]'>+</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              alt='Tripadvisor'
+              className='h-6 w-auto'
+              height={24}
+              src='/assets/tripadvisor-logo-primary.svg'
+              width={158}
+            />
           </div>
         </div>
 
         <ScrollReveal className='mt-12'>
           <Slider autoPlayMs={7000} slideClassName='md:basis-1/2 xl:basis-1/3 md:w-1/2 xl:w-1/3'>
-            {reviews.map((review, index) => (
+            {items.map((review, index) => (
               <article
                 className='flex h-full flex-col rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6'
-                key={`${review.authorName}-${index}`}
+                key={review.id || `${review.authorName}-${index}`}
               >
                 <div className='flex items-center gap-3'>
-                  <span className='flex h-11 w-11 items-center justify-center rounded-full bg-[var(--benroso-primary)] text-sm font-bold text-white'>
-                    {initials(review.authorName)}
-                  </span>
+                  {review.avatarUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      alt={review.authorName}
+                      className='h-11 w-11 shrink-0 rounded-full object-cover'
+                      height={44}
+                      src={review.avatarUrl}
+                      width={44}
+                    />
+                  ) : (
+                    <span className='flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[var(--benroso-primary)] text-sm font-bold text-white'>
+                      {initials(review.authorName)}
+                    </span>
+                  )}
                   <div className='min-w-0 flex-1'>
                     <p className='benroso-heading truncate font-display text-base leading-tight'>
                       {review.authorName}
                     </p>
-                    <p className='text-xs text-[var(--benroso-muted)]'>{review.relativeTime}</p>
+                    <p className='truncate text-xs text-[var(--benroso-muted)]'>
+                      {review.authorLocation
+                        ? `${review.authorLocation} · via ${SOURCE_LABEL[review.source]}`
+                        : `via ${SOURCE_LABEL[review.source]}`}
+                    </p>
                   </div>
-                  <GoogleGlyph className='h-5 w-5 shrink-0' />
+                  <SourceLogo className='h-5 w-5 shrink-0' source={review.source} />
                 </div>
                 <div className='mt-3'>
-                  <Stars rating={review.rating} />
+                  <Rating rating={review.rating} source={review.source} />
                 </div>
                 <p className='benroso-body mt-3 line-clamp-5 flex-1 text-sm leading-7'>
-                  {review.text}
+                  {review.body}
                 </p>
-                {review.authorLocation ? (
-                  <p className='mt-4 border-t border-[var(--benroso-line)] pt-3 text-xs text-[var(--benroso-muted)]'>
-                    {review.authorLocation}
-                  </p>
-                ) : null}
               </article>
             ))}
           </Slider>

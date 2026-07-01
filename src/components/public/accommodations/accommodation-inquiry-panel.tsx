@@ -311,8 +311,8 @@ function AccommodationInquiryForm({
           <form.SubmitButton
             className={cn(
               'w-full min-h-11 rounded-[var(--benroso-button-radius)] text-sm font-semibold uppercase tracking-[0.08em] shadow-none',
-              '!border-[var(--benroso-gold)] !bg-[var(--benroso-gold)] !text-[var(--benroso-primary-dark)]',
-              'hover:!border-[var(--benroso-gold-hover)] hover:!bg-[var(--benroso-gold-hover)] hover:!text-[var(--benroso-primary-dark)]'
+              '!border-[var(--benroso-lime)] !bg-[var(--benroso-lime)] !text-[var(--benroso-primary-dark)]',
+              'hover:!border-[var(--benroso-lime-hover)] hover:!bg-[var(--benroso-lime-hover)] hover:!text-[var(--benroso-primary-dark)]'
             )}
             disabled={mutation.isPending}
             variant='outline'
@@ -389,7 +389,7 @@ export function AccommodationInquiryPanel({
               'inline-flex w-full items-center justify-center gap-2 rounded-[var(--benroso-button-radius)] px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] transition-colors',
               showForm
                 ? 'border border-[var(--benroso-primary)] bg-[var(--benroso-primary)] text-white hover:border-[var(--benroso-primary-dark)] hover:bg-[var(--benroso-primary-dark)]'
-                : 'border border-[var(--benroso-gold)] bg-[var(--benroso-gold)] text-[var(--benroso-primary-dark)] hover:border-[var(--benroso-gold-hover)] hover:bg-[var(--benroso-gold-hover)]'
+                : 'border border-[var(--benroso-lime)] bg-[var(--benroso-lime)] text-[var(--benroso-primary-dark)] hover:border-[var(--benroso-lime-hover)] hover:bg-[var(--benroso-lime-hover)]'
             )}
             onClick={handleToggleForm}
             type='button'

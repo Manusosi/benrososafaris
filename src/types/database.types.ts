@@ -1119,13 +1119,16 @@ export type Database = {
         Row: {
           author_location: string | null;
           author_name: string;
+          avatar_url: string | null;
           body: string;
           created_at: string;
           featured: boolean;
           id: string;
           position: number;
           rating: number;
+          review_date: string | null;
           source: string | null;
+          source_url: string | null;
           status: string;
           title: string | null;
           tour_id: string | null;
@@ -1134,13 +1137,16 @@ export type Database = {
         Insert: {
           author_location?: string | null;
           author_name: string;
+          avatar_url?: string | null;
           body: string;
           created_at?: string;
           featured?: boolean;
           id?: string;
           position?: number;
           rating?: number;
+          review_date?: string | null;
           source?: string | null;
+          source_url?: string | null;
           status?: string;
           title?: string | null;
           tour_id?: string | null;
@@ -1149,13 +1155,16 @@ export type Database = {
         Update: {
           author_location?: string | null;
           author_name?: string;
+          avatar_url?: string | null;
           body?: string;
           created_at?: string;
           featured?: boolean;
           id?: string;
           position?: number;
           rating?: number;
+          review_date?: string | null;
           source?: string | null;
+          source_url?: string | null;
           status?: string;
           title?: string | null;
           tour_id?: string | null;
@@ -1174,10 +1183,18 @@ export type Database = {
       site_settings: {
         Row: {
           address_short: string | null;
+          analytics: Json;
           company_name: string;
           email: string;
+          enquiry_email_enabled: boolean;
+          enquiry_whatsapp_enabled: boolean;
+          favicon_url: string | null;
           id: string;
           kato_address: string | null;
+          logo_url: string | null;
+          notify_emails: string[];
+          og_default_image_url: string | null;
+          page_heroes: Json;
           phone_office: string | null;
           phone_primary: string;
           phone_secondary: string | null;
@@ -1185,15 +1202,26 @@ export type Database = {
           seo_defaults: Json;
           singleton_key: string;
           social_links: Json;
+          tagline: string | null;
+          theme_color: string | null;
           updated_at: string;
           whatsapp_message: string | null;
+          whatsapp_notify_phone: string | null;
         };
         Insert: {
           address_short?: string | null;
+          analytics?: Json;
           company_name?: string;
           email?: string;
+          enquiry_email_enabled?: boolean;
+          enquiry_whatsapp_enabled?: boolean;
+          favicon_url?: string | null;
           id?: string;
           kato_address?: string | null;
+          logo_url?: string | null;
+          notify_emails?: string[];
+          og_default_image_url?: string | null;
+          page_heroes?: Json;
           phone_office?: string | null;
           phone_primary?: string;
           phone_secondary?: string | null;
@@ -1201,15 +1229,26 @@ export type Database = {
           seo_defaults?: Json;
           singleton_key?: string;
           social_links?: Json;
+          tagline?: string | null;
+          theme_color?: string | null;
           updated_at?: string;
           whatsapp_message?: string | null;
+          whatsapp_notify_phone?: string | null;
         };
         Update: {
           address_short?: string | null;
+          analytics?: Json;
           company_name?: string;
           email?: string;
+          enquiry_email_enabled?: boolean;
+          enquiry_whatsapp_enabled?: boolean;
+          favicon_url?: string | null;
           id?: string;
           kato_address?: string | null;
+          logo_url?: string | null;
+          notify_emails?: string[];
+          og_default_image_url?: string | null;
+          page_heroes?: Json;
           phone_office?: string | null;
           phone_primary?: string;
           phone_secondary?: string | null;
@@ -1217,8 +1256,11 @@ export type Database = {
           seo_defaults?: Json;
           singleton_key?: string;
           social_links?: Json;
+          tagline?: string | null;
+          theme_color?: string | null;
           updated_at?: string;
           whatsapp_message?: string | null;
+          whatsapp_notify_phone?: string | null;
         };
         Relationships: [];
       };
@@ -1641,6 +1683,19 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      get_portal_team: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          id: string;
+          full_name: string | null;
+          role: string;
+          status: string;
+          avatar_url: string | null;
+          email: string | null;
+          created_at: string;
+          last_sign_in_at: string | null;
+        }[];
+      };
       staff_has_role: { Args: { allowed_roles: string[] }; Returns: boolean };
       submit_enquiry: {
         Args: {

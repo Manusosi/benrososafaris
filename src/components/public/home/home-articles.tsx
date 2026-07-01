@@ -43,100 +43,77 @@ function toArticles(posts: PublicBlogPost[], locale: string): HomeArticle[] {
   }));
 }
 
+function ArticleCard({ article }: { article: HomeArticle }) {
+  return (
+    <article
+      className='group flex h-full flex-col overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white transition-shadow duration-300 hover:shadow-lg'
+      data-reveal-item
+    >
+      <Link className='relative block aspect-[16/10] overflow-hidden' href={article.href}>
+        <Image
+          alt={article.imageAlt}
+          className='object-cover transition-transform duration-500 group-hover:scale-105'
+          fill
+          sizes='(max-width:768px) 100vw, 33vw'
+          src={article.imageUrl}
+        />
+      </Link>
+      <div className='flex flex-1 flex-col p-6'>
+        <div className='flex items-center gap-2.5 text-xs uppercase tracking-wide'>
+          <span className='font-bold text-[var(--benroso-lime)]'>{article.category}</span>
+          <span className='h-1 w-1 rounded-full bg-[var(--benroso-line)]' />
+          <span className='text-[var(--benroso-muted)]'>{article.date}</span>
+        </div>
+        <h3 className='benroso-heading mt-3 font-display text-xl leading-snug'>
+          <Link
+            className='transition-colors hover:text-[var(--benroso-primary)]'
+            href={article.href}
+          >
+            {article.title}
+          </Link>
+        </h3>
+        {article.excerpt ? (
+          <p className='benroso-body mt-3 line-clamp-3 flex-1 text-sm leading-7'>
+            {article.excerpt}
+          </p>
+        ) : null}
+        <Link
+          className='mt-5 inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[var(--benroso-primary)]'
+          href={article.href}
+        >
+          Read Article
+          <Icons.arrowRight className='h-4 w-4 transition-transform duration-300 group-hover:translate-x-1' />
+        </Link>
+      </div>
+    </article>
+  );
+}
+
 export function HomeArticles({ locale, posts = [] }: { locale: string; posts?: PublicBlogPost[] }) {
-  const articles = toArticles(posts, locale);
+  const articles = toArticles(posts, locale).slice(0, 3);
   if (!articles.length) return null;
 
-  const [featured, ...rest] = articles;
-  const sideArticles = rest.slice(0, 3);
-
   return (
-    <section className='benroso-section relative overflow-hidden bg-white'>
-      <ContourBackground opacity={0.07} />
+    <section className='benroso-section relative overflow-hidden bg-[var(--benroso-ivory)]'>
+      <ContourBackground opacity={0.06} />
       <div className='benroso-container relative'>
-        <div className='flex flex-col gap-4 md:flex-row md:items-end md:justify-between'>
-          <SectionHeader
-            align='left'
-            description='Safari stories, destination guides, and practical travel tips from our team in the field.'
-            title='Latest Articles & Insights'
-          />
-          <div className='shrink-0'>
-            <BenrosoButton href={localePath(locale, '/blog')} variant='accent-outline'>
-              View All Articles
-              <Icons.arrowRight className='h-4 w-4' />
-            </BenrosoButton>
-          </div>
-        </div>
+        <SectionHeader
+          description='Safari stories, destination guides, and practical travel tips from our team in the field.'
+          eyebrow='Safari Journal'
+          title='Latest Articles & Insights'
+        />
 
-        <div className='mt-12 grid gap-6 lg:grid-cols-[1.4fr_1fr]'>
-          {/* Featured */}
-          <ScrollReveal
-            className='group flex flex-col overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white'
-            from='left'
-          >
-            <Link className='relative block aspect-[16/10] overflow-hidden' href={featured.href}>
-              <Image
-                alt={featured.imageAlt}
-                className='object-cover transition-transform duration-500 group-hover:scale-105'
-                fill
-                sizes='(max-width:1024px) 100vw, 55vw'
-                src={featured.imageUrl}
-              />
-              <span className='absolute left-4 top-4 rounded-[var(--benroso-radius)] bg-[var(--benroso-gold)] px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--benroso-primary-dark)]'>
-                {featured.category}
-              </span>
-            </Link>
-            <div className='flex flex-1 flex-col p-6'>
-              <p className='text-xs uppercase tracking-wide text-[var(--benroso-muted)]'>
-                {featured.author}
-              </p>
-              <h3 className='benroso-heading mt-2 font-display text-2xl leading-tight md:text-3xl'>
-                <Link
-                  className='transition-colors hover:text-[var(--benroso-primary)]'
-                  href={featured.href}
-                >
-                  {featured.title}
-                </Link>
-              </h3>
-              {featured.excerpt ? (
-                <p className='benroso-body mt-3 line-clamp-3 flex-1 text-sm leading-7'>
-                  {featured.excerpt}
-                </p>
-              ) : null}
-              <p className='mt-5 text-xs text-[var(--benroso-muted)]'>{featured.date}</p>
-            </div>
-          </ScrollReveal>
+        <ScrollReveal className='mt-12 grid gap-6 md:grid-cols-3 md:gap-8' stagger>
+          {articles.map((article) => (
+            <ArticleCard article={article} key={article.id} />
+          ))}
+        </ScrollReveal>
 
-          {/* Side list */}
-          <ScrollReveal className='flex flex-col gap-4' from='right' stagger>
-            {sideArticles.map((article) => (
-              <Link
-                className='group flex gap-4 rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-3 transition-colors hover:border-[var(--benroso-primary)]'
-                data-reveal-item
-                href={article.href}
-                key={article.id}
-              >
-                <span className='relative block aspect-square w-24 shrink-0 overflow-hidden rounded-[var(--benroso-radius)]'>
-                  <Image
-                    alt={article.imageAlt}
-                    className='object-cover transition-transform duration-500 group-hover:scale-105'
-                    fill
-                    sizes='96px'
-                    src={article.imageUrl}
-                  />
-                </span>
-                <span className='flex min-w-0 flex-col justify-center'>
-                  <span className='text-[11px] font-bold uppercase tracking-wide text-[var(--benroso-gold)]'>
-                    {article.category}
-                  </span>
-                  <span className='benroso-heading mt-1 line-clamp-2 font-display text-base leading-tight'>
-                    {article.title}
-                  </span>
-                  <span className='mt-1.5 text-xs text-[var(--benroso-muted)]'>{article.date}</span>
-                </span>
-              </Link>
-            ))}
-          </ScrollReveal>
+        <div className='mt-12 flex justify-center'>
+          <BenrosoButton href={localePath(locale, '/blog')} variant='accent-outline'>
+            View All Articles
+            <Icons.arrowRight className='h-4 w-4' />
+          </BenrosoButton>
         </div>
       </div>
     </section>

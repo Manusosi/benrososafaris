@@ -26,7 +26,7 @@ import { cn, slugify } from '@/lib/utils';
 import { getMediaByIds } from '../../media/api/client';
 import { mediaKeys } from '../../media/api/queries';
 import { MediaGalleryField } from '../../media/components/media-picker';
-import { SEO_LIMITS } from '../../seo/analyze';
+import { countLinks, SEO_LIMITS } from '../../seo/analyze';
 import { KeywordInput } from '../../seo/components/keyword-input';
 import { SeoAnalyzer } from '../../seo/components/seo-analyzer';
 import { htmlToText, RichTextEditor } from '../../shared/rich-text-editor';
@@ -290,7 +290,9 @@ export function ArticleEditor({
                         keywords: values.keywords,
                         body: `${values.excerpt} ${htmlToText(values.content)}`,
                         imageCount: featuredIds.length,
-                        imagesWithAlt
+                        imagesWithAlt,
+                        internalLinkCount: countLinks(values.content).internal,
+                        outboundLinkCount: countLinks(values.content).outbound
                       }}
                     />
                   </div>

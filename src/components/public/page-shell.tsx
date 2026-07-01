@@ -1,4 +1,7 @@
+import { HeroMediaBackdrop } from '@/components/public/hero-media-backdrop';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { heroHasMedia } from '@/lib/public/page-heroes';
+import type { PageHero as PageHeroConfig } from '@/lib/public/types';
 import { cn } from '@/lib/utils';
 
 type PageHeroProps = {
@@ -6,18 +9,44 @@ type PageHeroProps = {
   className?: string;
   description?: string;
   eyebrow?: string;
+  /** Optional per-page hero from Portal > Settings > Hero Sections. */
+  hero?: PageHeroConfig | null;
   title: string;
 };
 
-export function PageHero({ breadcrumbs, className, description, eyebrow, title }: PageHeroProps) {
+export function PageHero({
+  breadcrumbs,
+  className,
+  description,
+  eyebrow,
+  hero,
+  title
+}: PageHeroProps) {
+  const hasMedia = heroHasMedia(hero);
+  const overlayAlpha = hero ? hero.overlayOpacity : 0.68;
+
+  const effectiveEyebrow = hero?.eyebrow ?? eyebrow;
+  const effectiveTitle = hero?.heading ?? title;
+  const effectiveDescription = hero?.subheading ?? description;
+
   return (
     <section
       className={cn(
-        'border-b border-[var(--benroso-line)] bg-[var(--benroso-primary-dark)] text-white',
+        'relative overflow-hidden border-b border-[var(--benroso-line)] bg-[var(--benroso-primary-dark)] text-white',
         className
       )}
     >
-      <div className='benroso-container py-14 md:py-20'>
+      {hasMedia && hero ? (
+        <>
+          <HeroMediaBackdrop hero={hero} />
+          <div
+            aria-hidden
+            className='absolute inset-0'
+            style={{ backgroundColor: `rgba(47,64,52,${overlayAlpha})` }}
+          />
+        </>
+      ) : null}
+      <div className='benroso-container relative z-10 py-14 md:py-20'>
         {breadcrumbs?.length ? (
           <nav aria-label='Breadcrumb' className='mb-6 flex flex-wrap gap-2 text-sm text-white/70'>
             {breadcrumbs.map((crumb, index) => (
@@ -34,14 +63,16 @@ export function PageHero({ breadcrumbs, className, description, eyebrow, title }
             ))}
           </nav>
         ) : null}
-        {eyebrow ? (
-          <p className='text-xs font-bold uppercase tracking-[0.18em] text-white/70'>{eyebrow}</p>
+        {effectiveEyebrow ? (
+          <p className='text-xs font-bold uppercase tracking-[0.18em] text-white/70'>
+            {effectiveEyebrow}
+          </p>
         ) : null}
         <h1 className='mt-3 max-w-4xl font-display text-[clamp(2.25rem,5vw,4rem)] leading-[1.08]'>
-          {title}
+          {effectiveTitle}
         </h1>
-        {description ? (
-          <p className='mt-5 max-w-3xl text-lg leading-8 text-white/80'>{description}</p>
+        {effectiveDescription ? (
+          <p className='mt-5 max-w-3xl text-lg leading-8 text-white/80'>{effectiveDescription}</p>
         ) : null}
       </div>
     </section>
