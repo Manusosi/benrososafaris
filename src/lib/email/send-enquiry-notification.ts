@@ -1,3 +1,11 @@
+import {
+  enquiryNotificationEmail,
+  enquiryReplyToEmail,
+  isSmtpConfigured,
+  smtpFromAddress
+} from '@/lib/email/smtp-config';
+import { sendMail } from '@/lib/email/mailer';
+
 type EnquiryRecord = {
   adults?: number | null;
   bookingReference?: string | null;
@@ -137,47 +145,29 @@ function buildHtmlBody(enquiry: EnquiryRecord) {
 }
 
 export async function sendEnquiryNotificationEmail(enquiry: EnquiryRecord) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const to =
-    process.env.ENQUIRY_NOTIFICATION_EMAIL ||
-    process.env.BENROSO_ENQUIRY_EMAIL ||
-    'info@benrososafaris.co.ke';
-  const from =
-    process.env.ENQUIRY_NOTIFICATION_FROM ||
-    process.env.RESEND_FROM_EMAIL ||
-    'Benroso Safaris <onboarding@resend.dev>';
-
   if (process.env.ENABLE_ENQUIRY_NOTIFICATIONS !== 'true') {
     return { ok: false, skipped: true as const };
   }
 
-  if (!apiKey) {
-    console.warn('[enquiry-email] RESEND_API_KEY is not set — skipping notification email.');
+  if (!isSmtpConfigured()) {
+    console.warn('[enquiry-email] SMTP is not configured — skipping notification email.');
     return { ok: false, skipped: true as const };
   }
 
   const subject = `[Benroso Safaris] ${enquiryTypeLabel(enquiry.enquiryType)} — ${enquiry.name}`;
-
-  const response = await fetch('https://api.resend.com/emails', {
-    body: JSON.stringify({
-      from,
-      html: buildHtmlBody(enquiry),
-      subject,
-      text: buildPlainTextBody(enquiry),
-      to: [to]
-    }),
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    method: 'POST'
+  const result = await sendMail({
+    authMailbox: 'enquiry',
+    from: smtpFromAddress('enquiry'),
+    html: buildHtmlBody(enquiry),
+    replyTo: enquiryReplyToEmail(),
+    subject,
+    text: buildPlainTextBody(enquiry),
+    to: enquiryNotificationEmail()
   });
 
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error');
-    console.error('[enquiry-email] Failed to send notification:', errorText);
-    return { ok: false, skipped: false as const };
+  if (result.skipped) {
+    return { ok: false, skipped: true as const };
   }
 
-  return { ok: true, skipped: false as const };
+  return { ok: result.ok, skipped: false as const };
 }

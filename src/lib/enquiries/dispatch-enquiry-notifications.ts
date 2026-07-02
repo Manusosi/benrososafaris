@@ -1,4 +1,5 @@
 import { sendEnquiryNotificationEmail } from '@/lib/email/send-enquiry-notification';
+import { isSmtpConfigured } from '@/lib/email/smtp-config';
 import { buildWhatsAppEnquirySummary, notifyWhatsAppTeam } from '@/lib/enquiries/whatsapp-summary';
 
 export type EnquiryNotificationPayload = {
@@ -26,7 +27,7 @@ export type EnquiryNotificationPayload = {
 };
 
 export function shouldSendEnquiryNotifications() {
-  return process.env.ENABLE_ENQUIRY_NOTIFICATIONS === 'true' && Boolean(process.env.RESEND_API_KEY);
+  return process.env.ENABLE_ENQUIRY_NOTIFICATIONS === 'true' && isSmtpConfigured();
 }
 
 export async function dispatchEnquiryNotifications(payload: EnquiryNotificationPayload) {

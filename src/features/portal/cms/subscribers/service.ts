@@ -178,8 +178,8 @@ export async function sendCampaignTest(input: {
 }
 
 /**
- * Persists the campaign, sends it to every active subscriber via Resend, and
- * records the result. Returns the number of recipients accepted by Resend.
+ * Persists the campaign, sends it to every active subscriber via SMTP, and
+ * records the result. Returns the number of recipients successfully sent.
  */
 export async function sendCampaign(input: {
   subject: string;

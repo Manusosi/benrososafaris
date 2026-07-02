@@ -61,7 +61,7 @@ export function CampaignComposer({ subscribedCount, campaigns }: CampaignCompose
     startTest(async () => {
       const result = await sendCampaignTest({ subject, preheader, bodyHtml });
       if (result.skipped) {
-        toast.warning('Email sending is not configured (RESEND_API_KEY missing).');
+        toast.warning('Email sending is not configured (SMTP settings missing).');
       } else if (result.ok) {
         toast.success('Test email sent to your address.');
       } else {
@@ -75,7 +75,7 @@ export function CampaignComposer({ subscribedCount, campaigns }: CampaignCompose
       const result = await sendCampaign({ subject, preheader, bodyHtml });
       setConfirmOpen(false);
       if (result.skipped) {
-        toast.warning('Email sending is not configured (RESEND_API_KEY missing).');
+        toast.warning('Email sending is not configured (SMTP settings missing).');
       } else if (result.ok) {
         toast.success(`Campaign sent to ${result.sent} subscriber(s).`);
         setSubject('');

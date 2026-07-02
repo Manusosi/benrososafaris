@@ -1,14 +1,9 @@
 /**
- * Newsletter campaign delivery via Resend.
- *
- * Mirrors the lightweight `fetch`-based approach in `send-enquiry-notification.ts`
- * (no SDK dependency). Uses Resend's batch endpoint so each recipient gets their
- * own message with a personalised one-click unsubscribe link. Batches are capped
- * at 100 messages per call, so recipients are chunked.
+ * Newsletter campaign delivery via Benroso SMTP (news@benrososafaris.co.ke).
  */
 
-const RESEND_BATCH_ENDPOINT = 'https://api.resend.com/emails/batch';
-const BATCH_SIZE = 100;
+import { sendMail } from '@/lib/email/mailer';
+import { isSmtpConfigured, smtpFromAddress } from '@/lib/email/smtp-config';
 
 export interface CampaignRecipient {
   email: string;
@@ -63,24 +58,19 @@ function buildPlainText(content: CampaignContent, unsubscribeLink: string): stri
     .replace(/<[^>]+>/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return `${body}\n\n—\nUnsubscribe: ${unsubscribeLink}`;
+  return `${body}\n\nUnsubscribe: ${unsubscribeLink}`;
 }
 
 /**
- * Sends a campaign to every recipient. Returns the number successfully accepted
- * by Resend. Skips (without error) when no API key is configured, matching the
- * enquiry-email behaviour.
+ * Sends a campaign to every recipient. Returns the number successfully sent.
+ * Skips (without error) when SMTP is not configured.
  */
 export async function sendNewsletterCampaign(
   content: CampaignContent,
   recipients: CampaignRecipient[]
 ): Promise<SendCampaignResult> {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from =
-    process.env.RESEND_FROM_EMAIL || 'Benroso Safaris <notifications@benrososafaris.co.ke>';
-
-  if (!apiKey) {
-    console.warn('[newsletter] RESEND_API_KEY is not set — skipping campaign send.');
+  if (!isSmtpConfigured()) {
+    console.warn('[newsletter] SMTP is not configured — skipping campaign send.');
     return { ok: false, sent: 0, skipped: true };
   }
 
@@ -88,37 +78,34 @@ export async function sendNewsletterCampaign(
     return { ok: true, sent: 0 };
   }
 
+  const from = smtpFromAddress('newsletter');
   let sent = 0;
-  for (let i = 0; i < recipients.length; i += BATCH_SIZE) {
-    const chunk = recipients.slice(i, i + BATCH_SIZE);
-    const payload = chunk.map((recipient) => {
-      const link = unsubscribeUrl(recipient.unsubscribeToken);
-      return {
-        from,
-        to: [recipient.email],
-        subject: content.subject,
-        html: buildCampaignHtml(content, link),
-        text: buildPlainText(content, link),
-        headers: { 'List-Unsubscribe': `<${link}>` }
-      };
+
+  for (const recipient of recipients) {
+    const link = unsubscribeUrl(recipient.unsubscribeToken);
+    const result = await sendMail({
+      authMailbox: 'newsletter',
+      from,
+      headers: { 'List-Unsubscribe': `<${link}>` },
+      html: buildCampaignHtml(content, link),
+      subject: content.subject,
+      text: buildPlainText(content, link),
+      to: recipient.email
     });
 
-    const response = await fetch(RESEND_BATCH_ENDPOINT, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => 'Unknown error');
-      console.error('[newsletter] Batch send failed:', errorText);
-      return { ok: false, sent, error: 'Resend rejected the campaign. Check the server logs.' };
+    if (result.skipped) {
+      return { ok: false, sent, skipped: true };
     }
 
-    sent += chunk.length;
+    if (!result.ok) {
+      return {
+        ok: false,
+        sent,
+        error: result.error ?? 'SMTP rejected the campaign. Check the server logs.'
+      };
+    }
+
+    sent += 1;
   }
 
   return { ok: true, sent };

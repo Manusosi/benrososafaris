@@ -1,4 +1,6 @@
 import { BENROSO_BRAND_COLORS, BENROSO_CONTACT_DEFAULTS } from '@/config/benroso';
+import { sendMail } from '@/lib/email/mailer';
+import { enquiryReplyToEmail, isSmtpConfigured, smtpFromAddress } from '@/lib/email/smtp-config';
 import { getGuestFirstName } from '@/lib/enquiries/enquiry-comms';
 
 export type GuestEnquiryConfirmationPayload = {
@@ -26,18 +28,19 @@ function buildPlainTextBody(payload: GuestEnquiryConfirmationPayload) {
   const lines = [
     `Hello ${firstName},`,
     '',
-    'Thank you for your enquiry. We will be in touch shortly.',
-    'We listen first and tailor suggestions to your interests, never a hard sell.',
+    'Thank you for reaching out to Benroso Safaris. We have received your enquiry and a member of our team will be in touch shortly.',
     '',
-    'Our safari experts aim to respond within 24 hours with thoughtful guidance — no payment is collected on our website.',
-    ''
+    'We listen first and tailor suggestions to your interests. There is no hard sell, and no payment is collected through our website.',
+    '',
+    'Our safari experts aim to respond within 24 hours with thoughtful guidance based on what you shared.'
   ];
 
   if (reference && reference !== 'BENS-PENDING') {
-    lines.push(`Your enquiry reference: ${reference}`, '');
+    lines.push('', `Your enquiry reference: ${reference}`);
   }
 
   lines.push(
+    '',
     'Warm regards,',
     'The Benroso Safaris Team',
     BENROSO_CONTACT_DEFAULTS.email,
@@ -64,9 +67,9 @@ function buildHtmlBody(payload: GuestEnquiryConfirmationPayload) {
         <h1 style="margin:8px 0 0;font-size:22px;color:${BENROSO_BRAND_COLORS.primary};">${heading}</h1>
       </div>
       <p style="margin:0 0 16px;">Hello ${firstName},</p>
-      <p style="margin:0 0 16px;">Thank you for your enquiry. We will be in touch shortly.</p>
-      <p style="margin:0 0 16px;">We listen first and tailor suggestions to your interests, never a hard sell.</p>
-      <p style="margin:0 0 16px;">Our safari experts aim to respond within 24 hours with thoughtful guidance — no payment is collected on our website.</p>
+      <p style="margin:0 0 16px;">Thank you for reaching out to Benroso Safaris. We have received your enquiry and a member of our team will be in touch shortly.</p>
+      <p style="margin:0 0 16px;">We listen first and tailor suggestions to your interests. There is no hard sell, and no payment is collected through our website.</p>
+      <p style="margin:0 0 16px;">Our safari experts aim to respond within 24 hours with thoughtful guidance based on what you shared.</p>
       ${referenceBlock}
       <p style="margin:24px 0 0;color:#374151;">
         Warm regards,<br />
@@ -93,45 +96,28 @@ export function shouldSendGuestEnquiryConfirmation() {
     return false;
   }
 
-  return Boolean(process.env.RESEND_API_KEY);
+  return isSmtpConfigured();
 }
 
 export async function sendGuestEnquiryConfirmationEmail(payload: GuestEnquiryConfirmationPayload) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from =
-    process.env.GUEST_ENQUIRY_CONFIRMATION_FROM ||
-    process.env.RESEND_FROM_EMAIL ||
-    'Benroso Safaris <onboarding@resend.dev>';
-
   if (!shouldSendGuestEnquiryConfirmation()) {
     return { ok: false, skipped: true as const };
   }
 
-  if (!apiKey) {
-    console.warn('[guest-enquiry-email] RESEND_API_KEY is not set — skipping guest confirmation.');
+  const result = await sendMail({
+    authMailbox: 'guest',
+    from: smtpFromAddress('guest'),
+    html: buildHtmlBody(payload),
+    replyTo: enquiryReplyToEmail(),
+    subject: buildSubject(payload),
+    text: buildPlainTextBody(payload),
+    to: payload.email
+  });
+
+  if (result.skipped) {
+    console.warn('[guest-enquiry-email] SMTP is not configured — skipping guest confirmation.');
     return { ok: false, skipped: true as const };
   }
 
-  const response = await fetch('https://api.resend.com/emails', {
-    body: JSON.stringify({
-      from,
-      html: buildHtmlBody(payload),
-      subject: buildSubject(payload),
-      text: buildPlainTextBody(payload),
-      to: [payload.email]
-    }),
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
-    },
-    method: 'POST'
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text().catch(() => 'Unknown error');
-    console.error('[guest-enquiry-email] Failed to send confirmation:', errorText);
-    return { ok: false, skipped: false as const };
-  }
-
-  return { ok: true, skipped: false as const };
+  return { ok: result.ok, skipped: false as const };
 }
