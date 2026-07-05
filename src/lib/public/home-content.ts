@@ -214,7 +214,9 @@ const HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS = [
 export function sortExperiencesBySearchPopularity<T extends { slug: string }>(
   experiences: T[]
 ): T[] {
-  const rank = new Map(HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS.map((slug, index) => [slug, index]));
+  const rank = new Map<string, number>(
+    HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS.map((slug, index) => [slug, index])
+  );
 
   return [...experiences].sort((a, b) => {
     const aRank = rank.get(a.slug) ?? HOME_EXPERIENCE_SEARCH_POPULARITY_SLUGS.length;
@@ -228,7 +230,9 @@ export function sortExperiencesBySearchPopularity<T extends { slug: string }>(
 export function sortExperienceCategoriesBySearchPopularity(
   categories: HomeExperienceCategory[]
 ): HomeExperienceCategory[] {
-  const rank = new Map(HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS.map((id, index) => [id, index]));
+  const rank = new Map<string, number>(
+    HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS.map((id, index) => [id, index])
+  );
 
   return [...categories].sort((a, b) => {
     const aRank = rank.get(a.id) ?? HOME_EXPERIENCE_FALLBACK_POPULARITY_IDS.length;
