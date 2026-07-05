@@ -4,28 +4,59 @@ import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import type { NationalParkViewMode } from '@/components/public/national-parks/national-park-view-toggle';
+import { localePath } from '@/lib/public/locale-path';
 import type { ParkListItem } from '@/lib/public/national-parks';
+import { formatTourPrice } from '@/lib/public/tour-format';
 import { cn } from '@/lib/utils';
 
 type NationalParkCardProps = {
+  compareChecked?: boolean;
+  compareDisabled?: boolean;
   href: string;
   item: ParkListItem;
+  locale: string;
+  onCompareToggle?: (parkId: string) => void;
   variant?: NationalParkViewMode;
 };
 
 function locationLabel(item: ParkListItem) {
-  return [item.region, item.country].filter(Boolean).join(', ') || 'East Africa';
+  return [item.region, item.country].filter(Boolean).join(', ');
 }
 
-export function NationalParkCard({ href, item, variant = 'grid' }: NationalParkCardProps) {
+function badgeLabel(item: ParkListItem) {
+  return item.country || item.region || null;
+}
+
+function safariStatsLabel(item: ParkListItem) {
+  if (!item.tourCount) return null;
+  const safariLabel = item.tourCount === 1 ? '1 safari' : `${item.tourCount} safaris`;
+  const priceLabel = formatTourPrice(item.priceFrom);
+  if (priceLabel) return `${safariLabel} · From ${priceLabel} pp`;
+  return safariLabel;
+}
+
+export function NationalParkCard({
+  compareChecked = false,
+  compareDisabled = false,
+  href,
+  item,
+  locale,
+  onCompareToggle,
+  variant = 'grid'
+}: NationalParkCardProps) {
   const isList = variant === 'list';
   const wildlife = item.wildlife.slice(0, isList ? 5 : 3);
   const activities = item.activities.slice(0, isList ? 4 : 2);
+  const statsLabel = safariStatsLabel(item);
+  const toursHref = localePath(locale, `/tours?park=${encodeURIComponent(item.slug)}`);
+  const location = locationLabel(item);
+  const badge = badgeLabel(item);
 
   return (
     <article
       className={cn(
         'group overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white shadow-sm transition-shadow hover:shadow-md',
+        compareChecked && 'ring-2 ring-[var(--benroso-primary)] ring-offset-2',
         isList ? 'flex flex-col sm:flex-row' : 'flex h-full flex-col'
       )}
     >
@@ -55,16 +86,36 @@ export function NationalParkCard({ href, item, variant = 'grid' }: NationalParkC
             <Icons.park className='size-12 text-white/25' />
           </div>
         )}
-        <span className='absolute left-3 top-3 rounded-[var(--benroso-radius)] border border-white/20 bg-black/55 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white backdrop-blur'>
-          {item.country || 'Safari Park'}
-        </span>
+        {badge ? (
+          <span className='absolute left-3 top-3 rounded-[var(--benroso-radius)] border border-white/20 bg-black/55 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white backdrop-blur'>
+            {badge}
+          </span>
+        ) : null}
       </Link>
 
       <div className='flex flex-1 flex-col p-5 md:p-6'>
-        <p className='flex items-center gap-1.5 text-sm font-medium text-[var(--benroso-muted)]'>
-          <Icons.mapPin className='size-3.5 shrink-0 text-[var(--benroso-primary)]' />
-          {locationLabel(item)}
-        </p>
+        <div className='flex items-start justify-between gap-3'>
+          {location ? (
+            <p className='flex items-center gap-1.5 text-sm font-medium text-[var(--benroso-muted)]'>
+              <Icons.mapPin className='size-3.5 shrink-0 text-[var(--benroso-primary)]' />
+              {location}
+            </p>
+          ) : (
+            <span />
+          )}
+          {onCompareToggle ? (
+            <label className='flex shrink-0 cursor-pointer items-center gap-2 text-xs font-semibold text-[var(--benroso-primary)]'>
+              <input
+                checked={compareChecked}
+                className='benroso-contact-checkbox-input'
+                disabled={compareDisabled}
+                onChange={() => onCompareToggle(item.id)}
+                type='checkbox'
+              />
+              Compare
+            </label>
+          ) : null}
+        </div>
         <h2
           className={cn(
             'benroso-heading mt-2 font-display leading-tight',
@@ -84,6 +135,13 @@ export function NationalParkCard({ href, item, variant = 'grid' }: NationalParkC
             )}
           >
             {item.summary}
+          </p>
+        ) : null}
+
+        {statsLabel ? (
+          <p className='mt-4 flex items-center gap-2 text-sm font-semibold text-[var(--benroso-primary-dark)]'>
+            <Icons.compass className='size-4 shrink-0 text-[var(--benroso-gold)]' />
+            {statsLabel}
           </p>
         ) : null}
 
@@ -115,9 +173,28 @@ export function NationalParkCard({ href, item, variant = 'grid' }: NationalParkC
           </div>
         ) : null}
 
-        <div className='mt-5 border-t border-[var(--benroso-line)] pt-4'>
-          <BenrosoButton href={href} size='sm' variant='accent-outline'>
+        <div
+          className={cn(
+            'mt-auto border-t border-[var(--benroso-line)] pt-4',
+            isList ? 'flex flex-wrap gap-3' : 'grid grid-cols-2 gap-2'
+          )}
+        >
+          <BenrosoButton
+            className={cn(!isList && 'w-full justify-center px-2')}
+            href={href}
+            size='sm'
+            variant='accent-outline'
+          >
             Explore Park
+            <Icons.arrowRight className='h-3.5 w-3.5' />
+          </BenrosoButton>
+          <BenrosoButton
+            className={cn(!isList && 'w-full justify-center px-2')}
+            href={toursHref}
+            size='sm'
+            variant={item.tourCount ? 'accent' : 'accent-outline'}
+          >
+            View Safaris
             <Icons.arrowRight className='h-3.5 w-3.5' />
           </BenrosoButton>
         </div>

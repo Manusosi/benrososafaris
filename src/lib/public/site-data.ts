@@ -556,7 +556,8 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
     countries: new Map<string, string[]>(),
     destinations: new Map<string, string[]>(),
     experiences: new Map<string, string[]>(),
-    parks: new Map<string, string[]>()
+    parks: new Map<string, string[]>(),
+    parkSlugs: new Map<string, string[]>()
   };
   if (!uniqueIds.length) return empty;
 
@@ -608,7 +609,7 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
     parkIds.length
       ? supabase
           .from('national_park_translations')
-          .select('park_id, name')
+          .select('park_id, name, slug')
           .eq('locale', locale)
           .in('park_id', parkIds)
       : Promise.resolve({ data: [] })
@@ -639,6 +640,9 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
   const parkNameById = new Map(
     (parkNamesResult.data ?? []).map((row) => [row.park_id as string, row.name as string])
   );
+  const parkSlugById = new Map(
+    (parkNamesResult.data ?? []).map((row) => [row.park_id as string, row.slug as string])
+  );
 
   const countries = new Map<string, string[]>();
   const destinations = new Map<string, string[]>();
@@ -661,14 +665,17 @@ async function getTourRelationLabelMaps(locale: string, tourIds: string[]) {
   }
 
   const parks = new Map<string, string[]>();
+  const parkSlugs = new Map<string, string[]>();
   for (const link of parkLinks) {
     const tourId = link.tour_id as string;
     const label = parkNameById.get(link.park_id as string);
+    const slug = parkSlugById.get(link.park_id as string);
     if (!label) continue;
     parks.set(tourId, [...(parks.get(tourId) ?? []), label]);
+    if (slug) parkSlugs.set(tourId, [...(parkSlugs.get(tourId) ?? []), slug]);
   }
 
-  return { countries, destinations, experiences, parks };
+  return { countries, destinations, experiences, parks, parkSlugs };
 }
 
 async function getTourPricingMap(tourIds: string[]) {
@@ -807,6 +814,7 @@ function mapTourListRows(
         minPrice: bounds.min,
         nights: tour.nights,
         parkLabels: relationLabels.parks.get(tour.id) ?? [],
+        parkSlugs: relationLabels.parkSlugs.get(tour.id) ?? [],
         priceFrom: bounds.min ?? tour.price_from,
         pricingTiers,
         slug: row.slug,
@@ -819,6 +827,7 @@ function mapTourListRows(
 function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters) {
   const destinationFilters = filters.destination?.map(normalizeFilterValue) ?? [];
   const experienceFilters = filters.experience?.map(normalizeFilterValue) ?? [];
+  const parkFilters = filters.park?.map(normalizeFilterValue) ?? [];
   const tierFilters = filters.pricingTier ?? [];
 
   if (filters.country) {
@@ -849,6 +858,13 @@ function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters)
     return false;
   }
 
+  if (
+    parkFilters.length &&
+    !tour.parkSlugs?.some((slug) => parkFilters.includes(normalizeFilterValue(slug)))
+  ) {
+    return false;
+  }
+
   if (tierFilters.length && !tour.pricingTiers?.some((tier) => tierFilters.includes(tier.tier))) {
     return false;
   }
@@ -874,11 +890,16 @@ function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters)
 function buildTourCatalogFacets(tours: PublicTour[]): PublicTourCatalogFacets {
   const destinationLabels = new Set<string>();
   const experienceLabels = new Set<string>();
+  const parkOptions = new Map<string, string>();
   const pricingTiers = new Set<PublicTourPricingTier['tier']>();
 
   for (const tour of tours) {
     tour.destinationLabels?.forEach((label) => destinationLabels.add(label));
     tour.experienceLabels?.forEach((label) => experienceLabels.add(label));
+    tour.parkSlugs?.forEach((slug, index) => {
+      const label = tour.parkLabels?.[index] ?? slug;
+      parkOptions.set(slug, label);
+    });
     tour.pricingTiers?.forEach((tier) => pricingTiers.add(tier.tier));
   }
 
@@ -886,6 +907,9 @@ function buildTourCatalogFacets(tours: PublicTour[]): PublicTourCatalogFacets {
     destinationLabels: [...destinationLabels].toSorted((a, b) => a.localeCompare(b)),
     durationBounds: { ...TOUR_CATALOG_DURATION_BOUNDS },
     experienceLabels: [...experienceLabels].toSorted((a, b) => a.localeCompare(b)),
+    parkOptions: [...parkOptions.entries()]
+      .map(([slug, label]) => ({ slug, label }))
+      .toSorted((a, b) => a.label.localeCompare(b.label)),
     priceBounds: { ...TOUR_CATALOG_PRICE_BOUNDS },
     pricingTiers: [...pricingTiers]
   };

@@ -23,6 +23,7 @@ type ToursPageProps = {
     duration_max?: string;
     duration_min?: string;
     experience?: string;
+    park?: string;
     price_max?: string;
     price_min?: string;
     tier?: string;
@@ -86,6 +87,7 @@ export default async function ToursPage({ params, searchParams }: ToursPageProps
     durationMax: query.duration_max?.trim() || undefined,
     durationMin: query.duration_min?.trim() || undefined,
     experience: parseFilterList(query.experience),
+    park: parseFilterList(query.park),
     priceMax: query.price_max?.trim() || undefined,
     priceMin: query.price_min?.trim() || undefined,
     pricingTier: parseTierList(query.tier)
@@ -98,6 +100,7 @@ export default async function ToursPage({ params, searchParams }: ToursPageProps
       durationMax: parsePrice(activeFilters.durationMax),
       durationMin: parsePrice(activeFilters.durationMin),
       experience: activeFilters.experience,
+      park: activeFilters.park,
       priceMax: parsePrice(activeFilters.priceMax),
       priceMin: parsePrice(activeFilters.priceMin),
       pricingTier: activeFilters.pricingTier

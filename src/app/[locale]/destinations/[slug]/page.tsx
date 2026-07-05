@@ -2,9 +2,11 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { DestinationDetailShell } from '@/components/public/destinations/destination-detail-shell';
+import { DestinationParksSection } from '@/components/public/destinations/destination-parks-section';
 import { DestinationTripsSection } from '@/components/public/destinations/destination-trips-section';
 import { ParkScrollTabs, type ParkTab } from '@/components/public/national-parks/park-scroll-tabs';
 import { RouteAccommodationsSection } from '@/components/public/tours/route-accommodations-section';
+import { getDestinationParks } from '@/lib/public/national-parks';
 import {
   getDestinationAccommodations,
   getDestinationTours,
@@ -92,9 +94,10 @@ export default async function DestinationDetailPage(props: DestinationPageProps)
 
   if (!destination) notFound();
 
-  const [tours, accommodations] = await Promise.all([
+  const [tours, accommodations, destinationParks] = await Promise.all([
     getDestinationTours(locale, destination.id),
-    getDestinationAccommodations(locale, destination.id)
+    getDestinationAccommodations(locale, destination.id),
+    getDestinationParks(locale, destination.id)
   ]);
 
   const jsonLd = buildDestinationJsonLd(
@@ -115,6 +118,7 @@ export default async function DestinationDetailPage(props: DestinationPageProps)
   const tabs: ParkTab[] = [
     destination.descriptionHtml ? { id: 'why-go', label: 'Why Go' } : null,
     destination.wildlife.length ? { id: 'where-to-go', label: 'Where To Go' } : null,
+    destinationParks.length ? { id: 'parks', label: 'Parks' } : null,
     destination.bestTime ? { id: 'when-to-go', label: 'When To Go' } : null,
     destination.faqs.length ? { id: 'destination-faqs', label: 'FAQs' } : null,
     accommodations.length ? { id: 'accommodation', label: 'Accommodation' } : null,
@@ -136,6 +140,11 @@ export default async function DestinationDetailPage(props: DestinationPageProps)
       ) : null}
       <ParkScrollTabs tabs={tabs} />
       <DestinationDetailShell destination={destination} locale={locale} />
+      <DestinationParksSection
+        destinationName={destination.name}
+        locale={locale}
+        parks={destinationParks}
+      />
       {accommodations.length ? (
         <section className='benroso-section scroll-mt-36 bg-white' id='accommodation'>
           <div className='benroso-container'>

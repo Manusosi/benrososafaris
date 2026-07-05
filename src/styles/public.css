@@ -29,6 +29,8 @@
   --benroso-contact-input-border: #d9d9d9;
   --benroso-contact-field-radius: 5px;
   --benroso-warm-gray: #f5f4f0;
+  --benroso-surface-soft: #f7f8f7;
+  --benroso-surface-muted: #f0f2f0;
   --benroso-white: #ffffff;
   --benroso-ink: #1a1a1a;
   --benroso-heading: #1a1a1a;
@@ -60,6 +62,19 @@
 .public-site .benroso-container {
   width: var(--benroso-container);
   margin-inline: auto;
+}
+
+.public-site [data-slot='dialog-overlay'] {
+  z-index: 200;
+}
+
+.public-site [data-slot='dialog-content'],
+.team-member-dialog[data-slot='dialog-content'] {
+  z-index: 201;
+}
+
+body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
+  z-index: 200;
 }
 
 .public-site .benroso-section {

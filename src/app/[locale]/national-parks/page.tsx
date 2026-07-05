@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { Icons } from '@/components/icons';
 import { NationalParkFilters } from '@/components/public/national-parks/national-park-filters';
 import { NationalParksResults } from '@/components/public/national-parks/national-parks-results';
 import { ListingShell } from '@/components/public/page-shell';
@@ -21,7 +22,7 @@ type NationalParksPageProps = {
 };
 
 const nationalParksDescription =
-  'Choose the wildlife areas that match your season, route, and travel pace, from classic savannah reserves to quieter parks with room to explore.';
+  'Compare safari parks and reserves across East Africa. Filter by wildlife, season, and region, then jump to bookable tours for each park.';
 
 function parseFilterList(value?: string) {
   if (!value?.trim()) return [];
@@ -90,18 +91,53 @@ export default async function NationalParksPage({ params, searchParams }: Nation
       />
 
       <section className='bg-white'>
-        <div className='benroso-container border-b border-[var(--benroso-line)] py-9'>
-          <div className='max-w-3xl'>
-            <p className='benroso-eyebrow'>Plan by landscape</p>
+        <div className='benroso-container border-b border-[var(--benroso-line)] py-10 md:py-14'>
+          <div className='mx-auto max-w-5xl text-center'>
+            <p className='benroso-eyebrow'>Your park guide</p>
             <h2 className='benroso-heading mt-3 font-display text-[clamp(1.9rem,3vw,2.75rem)] leading-tight'>
-              Find the park that fits the wildlife you want to see and the way you like to travel.
+              Compare parks, filter by what matters, then jump to bookable safaris.
             </h2>
-            <p className='benroso-body mt-4 text-base leading-8'>
-              Use this guide to compare safari parks by country, region, wildlife, activities, and
-              the best time to go. When you are ready, our planners can connect the right parks with
-              tours, stays, and private routes.
+            <p className='benroso-body mx-auto mt-4 max-w-4xl text-base leading-8 md:text-lg md:leading-8'>
+              Browse national parks and reserves across East and Southern Africa. Use the filters to
+              narrow by country, region, wildlife, or activities. Select any two parks to compare
+              seasonality, size, and live safari availability side by side.
             </p>
           </div>
+          <ul className='mt-10 grid grid-cols-1 gap-8 text-left md:mt-12 md:grid-cols-3 lg:gap-12'>
+            <li className='flex gap-4'>
+              <Icons.adjustments className='mt-0.5 size-5 shrink-0 text-[var(--benroso-gold)]' />
+              <div>
+                <p className='text-sm font-semibold text-[var(--benroso-ink)] md:text-base'>
+                  Filter by wildlife & season
+                </p>
+                <p className='mt-1.5 text-sm leading-6 text-[var(--benroso-muted)] md:leading-7'>
+                  Narrow parks by animals, activities, country, or region.
+                </p>
+              </div>
+            </li>
+            <li className='flex gap-4'>
+              <Icons.checks className='mt-0.5 size-5 shrink-0 text-[var(--benroso-gold)]' />
+              <div>
+                <p className='text-sm font-semibold text-[var(--benroso-ink)] md:text-base'>
+                  Compare two parks
+                </p>
+                <p className='mt-1.5 text-sm leading-6 text-[var(--benroso-muted)] md:leading-7'>
+                  Tick Compare on any two cards to see wildlife, size, and best time together.
+                </p>
+              </div>
+            </li>
+            <li className='flex gap-4'>
+              <Icons.compass className='mt-0.5 size-5 shrink-0 text-[var(--benroso-gold)]' />
+              <div>
+                <p className='text-sm font-semibold text-[var(--benroso-ink)] md:text-base'>
+                  View bookable safaris
+                </p>
+                <p className='mt-1.5 text-sm leading-6 text-[var(--benroso-muted)] md:leading-7'>
+                  Each park links to published tours with live prices and availability.
+                </p>
+              </div>
+            </li>
+          </ul>
         </div>
       </section>
 

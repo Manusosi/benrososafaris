@@ -1,54 +1,57 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { AboutOverviewSection } from '@/components/public/about/about-overview-section';
-import { AboutPartnersSection } from '@/components/public/about/about-partners-section';
-import { AboutPeopleSection } from '@/components/public/about/about-people-section';
-import { AboutReviewsSection } from '@/components/public/about/about-reviews-section';
-import { AboutTeamIntro } from '@/components/public/about/about-team-intro';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { AboutAdvantagesSection } from '@/components/public/about/about-advantages-section';
+import { AboutTabBar } from '@/components/public/about/about-tab-bar';
+import { TeamMemberDetailDialog } from '@/components/public/about/team-members-grid';
+import { TeamMembersSection } from '@/components/public/about/team-members-section';
+import { WhoWeAreTab } from '@/components/public/about/who-we-are/who-we-are-tab';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
+import { ABOUT_TEAM_SECTION } from '@/lib/public/about-content';
 import { localePath } from '@/lib/public/locale-path';
-import {
-  ABOUT_TAB_IDS,
-  PLACEHOLDER_DRIVERS,
-  PLACEHOLDER_GUIDES,
-  PLACEHOLDER_PARTNERS,
-  PLACEHOLDER_TEAM,
-  PLACEHOLDER_TESTIMONIALS,
-  type AboutTabId
-} from '@/lib/public/about-placeholders';
-import type { PublicSiteSettings } from '@/lib/public/types';
-import { cn } from '@/lib/utils';
-
-const TAB_CONFIG: Array<{ id: AboutTabId; label: string }> = [
-  { id: 'about', label: 'About Us' },
-  { id: 'team', label: 'Our Team' },
-  { id: 'guides', label: 'Safari Guides' },
-  { id: 'drivers', label: 'Driver-Guides' },
-  { id: 'partners', label: 'Partners' },
-  { id: 'reviews', label: 'Reviews' }
-];
+import { ABOUT_TAB_IDS, type AboutTabId } from '@/lib/public/about-placeholders';
+import { groupTeamMembersByRole, type PublicTeamMember } from '@/lib/public/team';
 
 function isValidTabId(value: string): value is AboutTabId {
   return (ABOUT_TAB_IDS as readonly string[]).includes(value);
 }
 
+function resolveTabFromHash(hash: string): AboutTabId {
+  if (hash === 'who-we-are') return 'about';
+  return isValidTabId(hash) ? hash : 'about';
+}
+
 type AboutTabsProps = {
   locale: string;
-  siteSettings: PublicSiteSettings;
+  teamMembers: PublicTeamMember[];
 };
 
-export function AboutTabs({ locale, siteSettings }: AboutTabsProps) {
+export function AboutTabs({ locale, teamMembers }: AboutTabsProps) {
   const [activeTab, setActiveTab] = useState<AboutTabId>('about');
+  const [bioMember, setBioMember] = useState<PublicTeamMember | null>(null);
+  const [bioOpen, setBioOpen] = useState(false);
 
   const contactHref = localePath(locale, '/contact');
-  const fleetHref = localePath(locale, '/our-fleet');
+
+  const membersByRole = useMemo(() => groupTeamMembersByRole(teamMembers), [teamMembers]);
+
+  const openBio = useCallback((member: PublicTeamMember) => {
+    setBioMember(member);
+    setBioOpen(true);
+  }, []);
+
+  const handleBioOpenChange = useCallback((next: boolean) => {
+    setBioOpen(next);
+    if (!next) {
+      window.setTimeout(() => setBioMember(null), 200);
+    }
+  }, []);
 
   const syncTabFromHash = useCallback(() => {
     const hash = window.location.hash.replace('#', '');
-    if (isValidTabId(hash)) {
-      setActiveTab(hash);
+    if (hash) {
+      setActiveTab(resolveTabFromHash(hash));
     }
   }, []);
 
@@ -67,90 +70,64 @@ export function AboutTabs({ locale, siteSettings }: AboutTabsProps) {
 
   return (
     <Tabs className='gap-0' onValueChange={handleTabChange} value={activeTab}>
-      <div className='sticky top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h))] z-30 border-b border-[var(--benroso-line)] bg-white'>
-        <div className='benroso-container'>
-          <TabsList className='flex h-auto w-full flex-wrap justify-start gap-1 rounded-none bg-transparent p-0 py-3'>
-            {TAB_CONFIG.map((tab) => (
-              <TabsTrigger
-                className={cn(
-                  'rounded-[var(--benroso-radius)] border border-transparent px-4 py-2.5 text-xs font-bold uppercase tracking-wide',
-                  'text-[var(--benroso-muted)] shadow-none transition-colors',
-                  'data-[state=active]:border-[var(--benroso-primary)] data-[state=active]:bg-[var(--benroso-primary)]',
-                  'data-[state=active]:text-white data-[state=active]:shadow-none',
-                  'hover:text-[var(--benroso-primary)] data-[state=active]:hover:text-white'
-                )}
-                key={tab.id}
-                value={tab.id}
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </div>
-      </div>
+      <AboutTabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       <TabsContent className='mt-0' value='about'>
-        <AboutOverviewSection
-          contactHref={contactHref}
-          fleetHref={fleetHref}
-          locale={locale}
-          siteSettings={siteSettings}
-        />
+        <WhoWeAreTab />
       </TabsContent>
 
       <TabsContent className='mt-0' value='team'>
-        <AboutTeamIntro />
-        <AboutPeopleSection
-          contactHref={contactHref}
-          description='Leadership, operations, reservations, and guest care — the Nairobi team that coordinates every safari before your vehicle leaves the city.'
-          eyebrow='Company Team'
-          introImage={{
-            alt: 'Benroso Safaris office and planning team',
-            url: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?auto=format&fit=crop&w=1200&q=80'
-          }}
-          people={PLACEHOLDER_TEAM}
-          title='The People Behind Your Safari'
+        <TeamMembersSection
+          anchorId='team'
+          description={ABOUT_TEAM_SECTION.staff.description}
+          emptyMessage={ABOUT_TEAM_SECTION.staff.emptyMessage}
+          emptyTitle={ABOUT_TEAM_SECTION.staff.emptyTitle}
+          eyebrow={ABOUT_TEAM_SECTION.staff.eyebrow}
+          locale={locale}
+          members={membersByRole.staff}
+          onReadBio={openBio}
+          title={ABOUT_TEAM_SECTION.staff.title}
         />
       </TabsContent>
 
       <TabsContent className='mt-0' value='guides'>
-        <AboutPeopleSection
-          contactHref={contactHref}
-          description='KPSGA-aligned professional guides who bring interpretation, walking safaris, primate trekking expertise, and deep park knowledge to every itinerary.'
-          eyebrow='Safari Guides'
-          introImage={{
-            alt: 'Professional safari guide on a game drive',
-            url: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=1200&q=80'
-          }}
-          people={PLACEHOLDER_GUIDES}
-          showCertifications
-          title='Meet Our Professional Safari Guides'
+        <TeamMembersSection
+          anchorId='guides'
+          description={ABOUT_TEAM_SECTION.safari_guide.description}
+          emptyMessage={ABOUT_TEAM_SECTION.safari_guide.emptyMessage}
+          emptyTitle={ABOUT_TEAM_SECTION.safari_guide.emptyTitle}
+          eyebrow={ABOUT_TEAM_SECTION.safari_guide.eyebrow}
+          locale={locale}
+          members={membersByRole.safari_guide}
+          onReadBio={openBio}
+          title={ABOUT_TEAM_SECTION.safari_guide.title}
         />
       </TabsContent>
 
       <TabsContent className='mt-0' value='drivers'>
-        <AboutPeopleSection
-          contactHref={contactHref}
-          description='Driver-guides are the face of your safari — skilled on bush tracks, expert at wildlife spotting, and trained for guest safety and comfort on every mile.'
-          eyebrow='Driver-Guides'
-          fleetHref={fleetHref}
-          introImage={{
-            alt: 'Driver-guide with safari Land Cruiser',
-            url: 'https://images.unsplash.com/photo-1523805009345-7448845a9e3?auto=format&fit=crop&w=1200&q=80'
-          }}
-          people={PLACEHOLDER_DRIVERS}
-          showCertifications
-          title='Meet Our Driver-Guides'
+        <TeamMembersSection
+          anchorId='drivers'
+          description={ABOUT_TEAM_SECTION.driver.description}
+          emptyMessage={ABOUT_TEAM_SECTION.driver.emptyMessage}
+          emptyTitle={ABOUT_TEAM_SECTION.driver.emptyTitle}
+          eyebrow={ABOUT_TEAM_SECTION.driver.eyebrow}
+          locale={locale}
+          members={membersByRole.driver}
+          onReadBio={openBio}
+          title={ABOUT_TEAM_SECTION.driver.title}
         />
       </TabsContent>
 
-      <TabsContent className='mt-0' value='partners'>
-        <AboutPartnersSection contactHref={contactHref} partners={PLACEHOLDER_PARTNERS} />
-      </TabsContent>
+      <div aria-hidden className='benroso-container bg-white'>
+        <div className='h-px w-full bg-[var(--benroso-line)]' />
+      </div>
+      <AboutAdvantagesSection contactHref={contactHref} />
 
-      <TabsContent className='mt-0' value='reviews'>
-        <AboutReviewsSection contactHref={contactHref} testimonials={PLACEHOLDER_TESTIMONIALS} />
-      </TabsContent>
+      <TeamMemberDetailDialog
+        member={bioMember}
+        onOpenChange={handleBioOpenChange}
+        open={bioOpen}
+      />
     </Tabs>
   );
 }

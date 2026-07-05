@@ -8,9 +8,14 @@ import type {
 } from '@/lib/public/types';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
 import { createClient } from '@/lib/supabase/server';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 
 async function genericClient(): Promise<SupabaseClient> {
   return (await createClient()) as unknown as SupabaseClient;
+}
+
+async function publicClient(): Promise<SupabaseClient> {
+  return createEnquiryPublicClient() as unknown as SupabaseClient;
 }
 
 function parseStringArray(value: unknown): string[] {
@@ -54,6 +59,58 @@ function galleryIds(value: unknown): string[] {
   return Array.isArray(value)
     ? value.filter((item): item is string => typeof item === 'string' && item.length > 0)
     : [];
+}
+
+const FLEET_GALLERY_FALLBACK: PublicDestinationMedia[] = [
+  {
+    id: 'benroso-fleet-lion',
+    url: '/assets/benroso-fleet-lion.png',
+    alt: 'Benroso Safaris four by four with pop up roof near a lion on the plains'
+  },
+  {
+    id: 'benroso-fleet-mara-gate',
+    url: '/assets/benroso-fleet-mara-gate.png',
+    alt: 'Benroso Safaris vehicle at the Masai Mara National Reserve gate'
+  },
+  {
+    id: 'benroso-fleet-branded',
+    url: '/assets/benroso-fleet-branded.png',
+    alt: 'Benroso Safaris Land Cruiser ready for off road game drives'
+  },
+  {
+    id: 'benroso-fleet-guests',
+    url: '/assets/benroso-fleet-guests.png',
+    alt: 'Guests boarding a Benroso Safaris private safari vehicle'
+  }
+];
+
+export async function getFleetGalleryImages(_locale: string): Promise<PublicDestinationMedia[]> {
+  const supabase = await publicClient();
+
+  const { data: galleryRows, error: galleryError } = await supabase
+    .from('fleet_gallery_items')
+    .select('id, media_id, position, created_at')
+    .order('position', { ascending: true })
+    .order('created_at', { ascending: true });
+
+  if (!galleryError && galleryRows?.length) {
+    const mediaIds = galleryRows.map((row) => row.media_id as string);
+    const media = await resolveMedia(supabase, mediaIds);
+    const images = galleryRows.flatMap((row) => {
+      const asset = media.get(row.media_id as string);
+      if (!asset?.url) return [];
+      return [
+        {
+          alt: asset.alt,
+          id: row.id as string,
+          url: asset.url
+        } satisfies PublicDestinationMedia
+      ];
+    });
+    return images;
+  }
+
+  return FLEET_GALLERY_FALLBACK;
 }
 
 export async function getPublishedFleet(locale: string): Promise<PublicFleetVehicle[]> {

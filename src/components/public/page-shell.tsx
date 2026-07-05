@@ -1,3 +1,5 @@
+import type { CSSProperties, ReactNode } from 'react';
+
 import { HeroMediaBackdrop } from '@/components/public/hero-media-backdrop';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { heroHasMedia } from '@/lib/public/page-heroes';
@@ -79,6 +81,10 @@ export function PageHero({
   );
 }
 
+const listingStickyTop = 'calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)';
+const listingStickyMaxHeight =
+  'calc(100vh - var(--benroso-topbar-h) - var(--benroso-header-h) - 2rem)';
+
 export function ListingShell({
   children,
   filterAsideClassName,
@@ -86,31 +92,37 @@ export function ListingShell({
   title,
   className
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   filterAsideClassName?: string;
-  filters?: React.ReactNode;
+  filters?: ReactNode;
   title?: string;
   className?: string;
 }) {
   return (
-    <section className={cn('benroso-section bg-white', className)}>
+    <section className={cn('benroso-section bg-white [content-visibility:visible]', className)}>
       <div className='benroso-container'>
         {title ? (
           <h2 className='benroso-heading mb-8 font-display text-3xl md:hidden'>{title}</h2>
         ) : null}
-        <div className='grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)] lg:gap-10'>
+        <div className='grid items-start gap-8 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)]'>
           {filters ? (
             <aside
               className={cn(
-                'h-fit lg:sticky lg:top-[calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)]',
+                'lg:sticky lg:top-[var(--listing-sticky-top)] lg:max-h-[var(--listing-sticky-max-h)] lg:overflow-y-auto lg:overscroll-contain lg:self-start',
                 filterAsideClassName ??
                   'rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-5'
               )}
+              style={
+                {
+                  '--listing-sticky-top': listingStickyTop,
+                  '--listing-sticky-max-h': listingStickyMaxHeight
+                } as CSSProperties
+              }
             >
               {filters}
             </aside>
           ) : null}
-          <div>{children}</div>
+          <div className='min-w-0'>{children}</div>
         </div>
       </div>
     </section>

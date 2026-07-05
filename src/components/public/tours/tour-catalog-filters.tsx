@@ -22,6 +22,7 @@ type TourCatalogFiltersProps = {
     durationMax?: string;
     durationMin?: string;
     experience: string[];
+    park: string[];
     priceMax?: string;
     priceMin?: string;
     pricingTier: PublicTourPricingTier['tier'][];
@@ -39,6 +40,7 @@ function buildQuery(active: TourCatalogFiltersProps['active']) {
   if (active.country) params.set('country', active.country);
   if (active.destination.length) params.set('destination', active.destination.join(','));
   if (active.experience.length) params.set('experience', active.experience.join(','));
+  if (active.park.length) params.set('park', active.park.join(','));
   if (active.pricingTier.length) params.set('tier', active.pricingTier.join(','));
   if (active.durationMin) params.set('duration_min', active.durationMin);
   if (active.durationMax) params.set('duration_max', active.durationMax);
@@ -275,6 +277,20 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
         </FilterGroup>
       ) : null}
 
+      {facets.parkOptions.length ? (
+        <FilterGroup title='National Parks'>
+          {facets.parkOptions.map((park) => (
+            <FilterCheckbox
+              checked={active.park.includes(park.slug)}
+              id={`tour-park-${park.slug}`}
+              key={park.slug}
+              label={park.label}
+              onCheckedChange={() => update({ park: toggleList(active.park, park.slug) })}
+            />
+          ))}
+        </FilterGroup>
+      ) : null}
+
       {facets.experienceLabels.length ? (
         <FilterGroup title='Safari Adventures'>
           {facets.experienceLabels.map((experience) => (
@@ -349,6 +365,7 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
               country: undefined,
               destination: [],
               experience: [],
+              park: [],
               pricingTier: []
             })
           }

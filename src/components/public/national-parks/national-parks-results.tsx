@@ -1,7 +1,10 @@
 'use client';
 
+import * as React from 'react';
+
 import { EmptyState } from '@/components/public/page-shell';
 import { NationalParkCard } from '@/components/public/national-parks/national-park-card';
+import { NationalParkCompare } from '@/components/public/national-parks/national-park-compare';
 import {
   NationalParkViewToggle,
   useNationalParkView
@@ -15,9 +18,27 @@ type NationalParksResultsProps = {
   parks: ParkListItem[];
 };
 
+const MAX_COMPARE = 2;
+
 export function NationalParksResults({ locale, parks }: NationalParksResultsProps) {
   const [view] = useNationalParkView();
+  const [compareIds, setCompareIds] = React.useState<string[]>([]);
   const countLabel = `${parks.length} ${parks.length === 1 ? 'park or reserve' : 'parks and reserves'} found`;
+  const compareParks = compareIds
+    .map((id) => parks.find((park) => park.id === id))
+    .filter((park): park is ParkListItem => Boolean(park));
+
+  function toggleCompare(parkId: string) {
+    setCompareIds((current) => {
+      if (current.includes(parkId)) {
+        return current.filter((id) => id !== parkId);
+      }
+      if (current.length >= MAX_COMPARE) {
+        return [current[1], parkId];
+      }
+      return [...current, parkId];
+    });
+  }
 
   if (!parks.length) {
     return (
@@ -26,8 +47,8 @@ export function NationalParksResults({ locale, parks }: NationalParksResultsProp
         <EmptyState
           actionHref={localePath(locale, '/contact')}
           actionLabel='Ask a Safari Planner'
-          message='No published park guides match these filters yet. Clear a filter or ask our team which parks fit your dates and wildlife interests.'
-          title='No matching parks found'
+          message='No published national park guides yet. Add and publish parks in the portal under National Parks, or ask our team which reserves fit your dates and wildlife interests.'
+          title='No parks published yet'
         />
       </>
     );
@@ -39,9 +60,20 @@ export function NationalParksResults({ locale, parks }: NationalParksResultsProp
         <div>
           <p className='benroso-eyebrow'>Safari Parks</p>
           <p className='mt-2 text-sm font-medium text-[var(--benroso-muted)]'>{countLabel}</p>
+          <p className='mt-1 text-xs text-[var(--benroso-muted)]'>
+            Select up to two parks to compare wildlife, seasonality, and safari availability.
+          </p>
         </div>
         <NationalParkViewToggle />
       </div>
+
+      {compareParks.length === MAX_COMPARE ? (
+        <NationalParkCompare
+          locale={locale}
+          onClear={() => setCompareIds([])}
+          parks={compareParks}
+        />
+      ) : null}
 
       <div
         className={cn(
@@ -52,9 +84,13 @@ export function NationalParksResults({ locale, parks }: NationalParksResultsProp
       >
         {parks.map((park) => (
           <NationalParkCard
+            compareChecked={compareIds.includes(park.id)}
+            compareDisabled={!compareIds.includes(park.id) && compareIds.length >= MAX_COMPARE}
             href={localePath(locale, `/national-parks/${park.slug}`)}
             item={park}
             key={park.id}
+            locale={locale}
+            onCompareToggle={toggleCompare}
             variant={view}
           />
         ))}

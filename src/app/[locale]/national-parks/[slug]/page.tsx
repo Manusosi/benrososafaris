@@ -116,9 +116,28 @@ export default async function NationalParkDetailPage(props: ParkPageProps) {
             <a className='hover:text-white' href={localePath(locale, '/national-parks')}>
               National Parks
             </a>
+            {park.parentDestination ? (
+              <>
+                <span>/</span>
+                <a className='hover:text-white' href={park.parentDestination.href}>
+                  {park.parentDestination.name}
+                </a>
+              </>
+            ) : null}
             <span>/</span>
             <span className='text-white'>{park.name}</span>
           </nav>
+          {park.parentDestination ? (
+            <p className='mb-3 text-sm text-white/80'>
+              Part of{' '}
+              <a
+                className='font-semibold text-white underline-offset-2 hover:underline'
+                href={park.parentDestination.href}
+              >
+                {park.parentDestination.name}
+              </a>
+            </p>
+          ) : null}
           <p className='text-xs font-bold uppercase tracking-[0.18em] text-[var(--benroso-lime)]'>
             National Park
           </p>
@@ -228,10 +247,24 @@ export default async function NationalParkDetailPage(props: ParkPageProps) {
       {/* Safaris */}
       <section className={`${SECTION_OFFSET} benroso-section bg-white`} id='safaris'>
         <div className='benroso-container'>
-          <p className='benroso-eyebrow'>Safaris</p>
-          <h2 className='benroso-heading mt-3 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] leading-tight'>
-            Safaris That Visit {park.name}
-          </h2>
+          <div className='flex flex-wrap items-end justify-between gap-4'>
+            <div>
+              <p className='benroso-eyebrow'>Safaris</p>
+              <h2 className='benroso-heading mt-3 font-display text-[clamp(1.75rem,3.5vw,2.5rem)] leading-tight'>
+                Safaris That Visit {park.name}
+              </h2>
+            </div>
+            {tours.length ? (
+              <BenrosoButton
+                href={localePath(locale, `/tours?park=${encodeURIComponent(park.slug)}`)}
+                size='sm'
+                variant='accent-outline'
+              >
+                Browse All Safaris
+                <Icons.arrowRight className='h-3.5 w-3.5' />
+              </BenrosoButton>
+            ) : null}
+          </div>
           {tours.length ? (
             <div className='mt-10 grid gap-6 md:grid-cols-2 xl:grid-cols-3'>
               {tours.map((tour) => (

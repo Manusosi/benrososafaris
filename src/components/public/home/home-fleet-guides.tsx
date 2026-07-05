@@ -63,7 +63,7 @@ export function HomeFleetGuides({ locale }: { locale: string }) {
               </BenrosoButton>
               <BenrosoButton
                 className='group'
-                href={localePath(locale, '/safari-guides')}
+                href={localePath(locale, '/about#team')}
                 variant='accent-outline'
               >
                 <Icons.teams className='h-4 w-4 transition-transform duration-500 ease-out group-hover:scale-110' />

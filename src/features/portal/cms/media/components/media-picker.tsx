@@ -98,6 +98,7 @@ interface MediaGalleryFieldProps {
   value: string[];
   onChange: (ids: string[]) => void;
   multiple?: boolean;
+  allowDuplicates?: boolean;
   label?: string;
   description?: string;
   className?: string;
@@ -112,6 +113,7 @@ export function MediaGalleryField({
   value,
   onChange,
   multiple = true,
+  allowDuplicates = false,
   label = 'Gallery',
   description,
   className
@@ -124,9 +126,24 @@ export function MediaGalleryField({
     enabled: value.length > 0
   });
 
-  function removeAt(id: string) {
-    onChange(value.filter((value) => value !== id));
+  const assetById = React.useMemo(
+    () => new Map(assets.map((asset) => [asset.id, asset])),
+    [assets]
+  );
+
+  function removeAt(index: number) {
+    onChange(value.filter((_, itemIndex) => itemIndex !== index));
   }
+
+  function duplicateAt(index: number) {
+    const mediaId = value[index];
+    if (!mediaId) return;
+    onChange([...value.slice(0, index + 1), mediaId, ...value.slice(index + 1)]);
+  }
+
+  const previewItems = allowDuplicates
+    ? value.map((mediaId, index) => ({ asset: assetById.get(mediaId), index, mediaId }))
+    : assets.map((asset, index) => ({ asset, index, mediaId: asset.id }));
 
   return (
     <div className={cn('grid gap-2', className)}>
@@ -152,36 +169,50 @@ export function MediaGalleryField({
         </button>
       ) : (
         <div className='grid grid-cols-3 gap-1.5 sm:grid-cols-5 md:grid-cols-6'>
-          {assets.map((asset, index) => (
-            <div
-              key={asset.id}
-              className='group relative aspect-square overflow-hidden rounded-[3px] border border-[#E5E7EB] bg-muted'
-            >
-              {asset.url ? (
-                <Image
-                  src={asset.url}
-                  alt={asset.alt ?? ''}
-                  fill
-                  sizes='160px'
-                  className='object-cover'
-                  unoptimized
-                />
-              ) : null}
-              {index === 0 ? (
-                <span className='absolute left-1 top-1 rounded-[3px] bg-[#3c5142] px-1 text-[10px] font-medium text-white'>
-                  Cover
-                </span>
-              ) : null}
-              <button
-                type='button'
-                onClick={() => removeAt(asset.id)}
-                className='bg-background/90 absolute right-1 top-1 flex size-5 items-center justify-center rounded-[3px] border border-[#E5E7EB] opacity-0 transition-opacity group-hover:opacity-100'
-                aria-label='Remove image'
+          {previewItems.map(({ asset, index, mediaId }) => {
+            if (!asset) return null;
+
+            return (
+              <div
+                key={`${mediaId}-${index}`}
+                className='group relative aspect-square overflow-hidden rounded-[3px] border border-[#E5E7EB] bg-muted'
               >
-                <Icons.close className='size-3.5' />
-              </button>
-            </div>
-          ))}
+                {asset.url ? (
+                  <Image
+                    src={asset.url}
+                    alt={asset.alt ?? ''}
+                    fill
+                    sizes='160px'
+                    className='object-cover'
+                    unoptimized
+                  />
+                ) : null}
+                {index === 0 ? (
+                  <span className='absolute left-1 top-1 rounded-[3px] bg-[#3c5142] px-1 text-[10px] font-medium text-white'>
+                    Cover
+                  </span>
+                ) : null}
+                {allowDuplicates ? (
+                  <button
+                    type='button'
+                    onClick={() => duplicateAt(index)}
+                    className='bg-background/90 absolute bottom-1 left-1 flex size-5 items-center justify-center rounded-[3px] border border-[#E5E7EB] opacity-0 transition-opacity group-hover:opacity-100'
+                    aria-label='Duplicate image'
+                  >
+                    <Icons.add className='size-3.5' />
+                  </button>
+                ) : null}
+                <button
+                  type='button'
+                  onClick={() => removeAt(index)}
+                  className='bg-background/90 absolute right-1 top-1 flex size-5 items-center justify-center rounded-[3px] border border-[#E5E7EB] opacity-0 transition-opacity group-hover:opacity-100'
+                  aria-label='Remove image'
+                >
+                  <Icons.close className='size-3.5' />
+                </button>
+              </div>
+            );
+          })}
         </div>
       )}
 

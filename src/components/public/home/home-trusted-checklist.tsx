@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 
 import { Icons } from '@/components/icons';
 import { loadGsapRuntime } from '@/lib/gsap/load-runtime';
+import { cn } from '@/lib/utils';
 
 /**
  * Trust points that type themselves in one sentence at a time (GSAP TextPlugin),
@@ -13,11 +14,14 @@ import { loadGsapRuntime } from '@/lib/gsap/load-runtime';
  */
 export function TrustedChecklist({
   items,
-  className = 'mt-7 space-y-3.5'
+  className = 'mt-7 space-y-3.5',
+  itemClassName
 }: {
   items: string[];
   /** Overrides the list layout (e.g. a two-column grid). */
   className?: string;
+  /** Overrides each row’s typography/spacing. */
+  itemClassName?: string;
 }) {
   const rootRef = useRef<HTMLUListElement>(null);
 
@@ -94,9 +98,12 @@ export function TrustedChecklist({
   return (
     <ul className={className} ref={rootRef}>
       {items.map((item) => (
-        <li className='flex gap-3 text-sm leading-7 text-[var(--benroso-ink)]' key={item}>
+        <li
+          className={cn('flex gap-3.5 text-sm leading-7 text-[var(--benroso-ink)]', itemClassName)}
+          key={item}
+        >
           <Icons.circleCheck
-            className='mt-0.5 h-5 w-5 shrink-0 text-[var(--benroso-primary)]'
+            className='mt-1 h-5 w-5 shrink-0 text-[var(--benroso-primary)] md:h-6 md:w-6'
             data-tick
           />
           <span className='min-w-0 flex-1'>

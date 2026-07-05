@@ -73,11 +73,10 @@ export const BENROSO_CONTACT_HERO = {
     'Elephants in Amboseli National Park — plan your East Africa safari with Benroso Safaris'
 } as const;
 
-/** Replace with /assets/about-hero.jpg when a brand team photo is ready. */
+/** Default About page hero — swap for /assets/about-hero.jpg when a dedicated brand photo is ready. */
 export const BENROSO_ABOUT_HERO = {
-  imageUrl:
-    'https://images.unsplash.com/photo-1549366021-9f761d450615?auto=format&fit=crop&w=2200&q=80',
-  imageAlt: 'Benroso Safaris team on safari in East Africa'
+  imageUrl: '/assets/benroso-safaris-kenya.webp',
+  imageAlt: 'Benroso Safaris vehicle on the plains of Kenya'
 } as const;
 
 export const BENROSO_PUBLIC_HERO_IMAGES = {

@@ -272,6 +272,7 @@ export function ExperienceAfricaMap() {
     );
     setRenderFeatures(features);
     setLabels(nextLabels);
+    ScrollTrigger.refresh();
   }, [geoData, mapSize]);
 
   useGSAP(
@@ -280,7 +281,6 @@ export function ExperienceAfricaMap() {
       if (reduced || !sectionRef.current) return;
 
       gsap.from(sectionRef.current.querySelectorAll('[data-map-reveal]'), {
-        opacity: 0,
         y: 28,
         duration: 0.85,
         ease: 'power2.out',

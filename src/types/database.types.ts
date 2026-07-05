@@ -790,6 +790,35 @@ export type Database = {
         };
         Relationships: [];
       };
+      fleet_gallery_items: {
+        Row: {
+          created_at: string;
+          id: string;
+          media_id: string;
+          position: number;
+        };
+        Insert: {
+          created_at?: string;
+          id?: string;
+          media_id: string;
+          position?: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          media_id?: string;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'fleet_gallery_items_media_id_fkey';
+            columns: ['media_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       media_assets: {
         Row: {
           alt: string | null;
@@ -1275,6 +1304,62 @@ export type Database = {
           whatsapp_notify_phone?: string | null;
         };
         Relationships: [];
+      };
+      team_members: {
+        Row: {
+          bio: string;
+          created_at: string;
+          email: string | null;
+          id: string;
+          job_title: string;
+          media_id: string | null;
+          name: string;
+          phone: string | null;
+          position: number;
+          role_type: string;
+          status: string;
+          updated_at: string;
+          years_experience: number | null;
+        };
+        Insert: {
+          bio?: string;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          job_title?: string;
+          media_id?: string | null;
+          name: string;
+          phone?: string | null;
+          position?: number;
+          role_type: string;
+          status?: string;
+          updated_at?: string;
+          years_experience?: number | null;
+        };
+        Update: {
+          bio?: string;
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          job_title?: string;
+          media_id?: string | null;
+          name?: string;
+          phone?: string | null;
+          position?: number;
+          role_type?: string;
+          status?: string;
+          updated_at?: string;
+          years_experience?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'team_members_media_id_fkey';
+            columns: ['media_id'];
+            isOneToOne: false;
+            referencedRelation: 'media_assets';
+            referencedColumns: ['id'];
+          }
+        ];
       };
       tour_accommodations: {
         Row: {

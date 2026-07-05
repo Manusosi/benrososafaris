@@ -120,8 +120,7 @@ export function buildPublicNavigation(
       href: path('/about'),
       items: [
         { label: 'Our Story', href: path('/about') },
-        { label: 'Our Safari Vehicles', href: path('/our-fleet') },
-        { label: 'Our Tour Guides', href: path('/about#guides') }
+        { label: 'Our Safari Vehicles', href: path('/our-fleet') }
       ],
       variant: 'simple'
     },
@@ -140,11 +139,6 @@ export function buildPublicNavigation(
     {
       label: 'Safari Tours',
       href: path('/tours'),
-      items: [
-        { label: 'All Trips & Safaris', href: path('/tours') },
-        { label: 'Safari Experiences', href: path('/experiences') },
-        { label: 'Safari Vehicles', href: path('/our-fleet') }
-      ],
       variant: 'simple'
     },
     {
@@ -195,7 +189,6 @@ export function buildFooterNavigation(
   const companyLinks = uniqueLinks([
     { label: 'About Us', href: path('/about') },
     { label: 'Our Safari Vehicles', href: path('/our-fleet') },
-    { label: 'Our Tour Guides', href: path('/safari-guides') },
     { label: 'Travel Blog', href: path('/blog') },
     { label: 'Contact Us', href: path('/contact') }
   ]);

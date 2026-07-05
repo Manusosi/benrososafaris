@@ -22,12 +22,16 @@ function toggleList(current: string[], value: string) {
   return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
 }
 
+function encodeFilterList(values: string[]) {
+  return values.map((value) => encodeURIComponent(value)).join(',');
+}
+
 function buildQuery(active: NationalParkFiltersProps['active']) {
   const params = new URLSearchParams();
-  if (active.countries.length) params.set('country', active.countries.join(','));
-  if (active.regions.length) params.set('region', active.regions.join(','));
-  if (active.wildlife.length) params.set('wildlife', active.wildlife.join(','));
-  if (active.activities.length) params.set('activity', active.activities.join(','));
+  if (active.countries.length) params.set('country', encodeFilterList(active.countries));
+  if (active.regions.length) params.set('region', encodeFilterList(active.regions));
+  if (active.wildlife.length) params.set('wildlife', encodeFilterList(active.wildlife));
+  if (active.activities.length) params.set('activity', encodeFilterList(active.activities));
   return params.toString();
 }
 
@@ -89,7 +93,7 @@ export function NationalParkFilters({ active, facets, locale }: NationalParkFilt
 
   function navigate(next: NationalParkFiltersProps['active']) {
     const query = buildQuery(next);
-    router.push(query ? `${basePath}?${query}` : basePath);
+    router.push(query ? `${basePath}?${query}` : basePath, { scroll: false });
   }
 
   function update(partial: Partial<NationalParkFiltersProps['active']>) {
@@ -167,7 +171,7 @@ export function NationalParkFilters({ active, facets, locale }: NationalParkFilt
 
       <button
         className='benroso-fill-hover inline-flex min-h-10 w-full items-center justify-center rounded-[var(--benroso-button-radius)] border border-[var(--benroso-primary)] px-4 text-xs font-bold uppercase tracking-[0.08em] text-[var(--benroso-primary)] transition-colors hover:text-white'
-        onClick={() => router.push(basePath)}
+        onClick={() => router.push(basePath, { scroll: false })}
         type='button'
       >
         Clear Filters

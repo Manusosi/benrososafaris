@@ -67,6 +67,13 @@ export const portalNavGroups: NavGroup[] = [
         items: []
       },
       {
+        title: 'Team Members',
+        url: '/portal/team-members',
+        icon: 'profile',
+        access: { minRole: 'editor' },
+        items: []
+      },
+      {
         title: 'Blog',
         url: '/portal/blog',
         icon: 'post',

@@ -153,6 +153,7 @@ export type PublicTour = {
   minPrice?: number | null;
   nights: number | null;
   parkLabels?: string[];
+  parkSlugs?: string[];
   priceFrom: number | null;
   pricingTiers?: PublicTourPricingTier[];
   slug: string;
@@ -214,6 +215,7 @@ export type PublicTourCatalogFacets = {
     min: number;
   };
   experienceLabels: string[];
+  parkOptions: Array<{ label: string; slug: string }>;
   priceBounds: {
     max: number;
     min: number;
@@ -227,6 +229,7 @@ export type PublicTourCatalogFilters = {
   durationMax?: number;
   durationMin?: number;
   experience?: string[];
+  park?: string[];
   priceMax?: number;
   priceMin?: number;
   pricingTier?: PublicTourPricingTier['tier'][];

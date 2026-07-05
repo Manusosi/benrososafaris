@@ -1,7 +1,9 @@
 import { AboutHero } from '@/components/public/about/about-hero';
 import { AboutTabs } from '@/components/public/about/about-tabs';
+import { ABOUT_HERO_DEFAULTS } from '@/lib/public/about-content';
 import { localePath } from '@/lib/public/locale-path';
-import { getPageHero, getPublicSiteSettings } from '@/lib/public/site-data';
+import { getPageHero } from '@/lib/public/site-data';
+import { getPublishedTeamMembers } from '@/lib/public/team';
 
 type AboutPageProps = {
   params: Promise<{ locale: string }>;
@@ -9,21 +11,21 @@ type AboutPageProps = {
 
 export default async function AboutPage({ params }: AboutPageProps) {
   const { locale } = await params;
-  const [siteSettings, pageHero] = await Promise.all([
-    getPublicSiteSettings(),
-    getPageHero('about')
+  const [pageHero, teamMembers] = await Promise.all([
+    getPageHero('about'),
+    getPublishedTeamMembers()
   ]);
 
   return (
     <>
       <AboutHero
         breadcrumbs={[{ href: localePath(locale), label: 'Home' }, { label: 'About Us' }]}
-        description='Experts in lodge and camping safaris — professionally guided, personalized East Africa experiences since 2000.'
-        eyebrow='About Benroso Safaris'
+        description={ABOUT_HERO_DEFAULTS.description}
+        eyebrow={ABOUT_HERO_DEFAULTS.eyebrow}
         hero={pageHero}
-        title={siteSettings.companyName}
+        title={pageHero?.heading ?? ABOUT_HERO_DEFAULTS.title}
       />
-      <AboutTabs locale={locale} siteSettings={siteSettings} />
+      <AboutTabs locale={locale} teamMembers={teamMembers} />
     </>
   );
 }
