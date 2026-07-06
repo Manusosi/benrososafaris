@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import PageContainer from '@/components/layout/page-container';
 import { TourWizard } from '@/features/portal/cms/tours/tour-wizard';
 import { getTour, getTourRelationOptions } from '@/features/portal/cms/tours/service';
+import { toTourFormValues } from '@/features/portal/cms/tours/schema';
 import { requirePortalSession } from '@/lib/auth/portal';
 
 export default async function EditTourPage({ params }: { params: Promise<{ id: string }> }) {
@@ -19,7 +20,7 @@ export default async function EditTourPage({ params }: { params: Promise<{ id: s
       pageTitle={`Edit: ${tour.title || 'Safari tour'}`}
       pageDescription='Update this tour, then save as a draft or publish.'
     >
-      <TourWizard id={tour.id} initialValues={tour} options={options} />
+      <TourWizard id={tour.id} initialValues={toTourFormValues(tour)} options={options} />
     </PageContainer>
   );
 }

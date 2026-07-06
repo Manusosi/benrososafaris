@@ -60,64 +60,105 @@ export async function listTours(params: TourListParams): Promise<TourListResult>
   const from = (page - 1) * TOURS_PAGE_SIZE;
   const to = from + TOURS_PAGE_SIZE - 1;
 
-  let query = supabase
-    .from('tour_translations')
-    .select(
-      'tour_id, title, slug, published_at, tours!inner(id, status, days, nights, updated_at)',
-      { count: 'exact' }
-    )
-    .eq('locale', 'en');
-
-  if (params.status === 'trash') {
-    query = query.eq('tours.status', 'archived');
-  } else {
-    query = query.neq('tours.status', 'archived');
-    if (params.status === 'published') query = query.eq('tours.status', 'published');
-    if (params.status === 'draft') query = query.eq('tours.status', 'draft');
-  }
+  let tourIdsFilter: string[] | null = null;
 
   if (params.search.trim()) {
     const term = `%${params.search.trim()}%`;
-    query = query.or(`title.ilike.${term},slug.ilike.${term}`);
+    const { data: searchRows } = await supabase
+      .from('tour_translations')
+      .select('tour_id')
+      .eq('locale', 'en')
+      .or(`title.ilike.${term},slug.ilike.${term}`);
+    tourIdsFilter = [...new Set((searchRows ?? []).map((row) => row.tour_id as string))];
+    if (!tourIdsFilter.length) {
+      const [counts, months] = await Promise.all([getStatusCounts(), getMonthOptions()]);
+      return {
+        items: [],
+        total: 0,
+        page,
+        pageSize: TOURS_PAGE_SIZE,
+        counts,
+        months
+      };
+    }
   }
 
   const range = monthRange(params.month);
-  if (range) query = query.gte('published_at', range.start).lt('published_at', range.end);
+  if (range && (params.status === 'published' || params.status === 'all')) {
+    const { data: monthRows } = await supabase
+      .from('tour_translations')
+      .select('tour_id')
+      .eq('locale', 'en')
+      .gte('published_at', range.start)
+      .lt('published_at', range.end);
+    const monthIds = [...new Set((monthRows ?? []).map((row) => row.tour_id as string))];
+    tourIdsFilter = tourIdsFilter ? tourIdsFilter.filter((id) => monthIds.includes(id)) : monthIds;
+    if (!tourIdsFilter.length) {
+      const [counts, months] = await Promise.all([getStatusCounts(), getMonthOptions()]);
+      return {
+        items: [],
+        total: 0,
+        page,
+        pageSize: TOURS_PAGE_SIZE,
+        counts,
+        months
+      };
+    }
+  }
 
-  query = query
-    .order('published_at', { ascending: false, nullsFirst: false })
-    .order('title', { ascending: true })
-    .range(from, to);
+  let query = supabase
+    .from('tours')
+    .select(
+      'id, status, days, nights, updated_at, tour_translations(title, slug, published_at, locale)',
+      { count: 'exact' }
+    );
+
+  if (params.status === 'trash') {
+    query = query.eq('status', 'archived');
+  } else {
+    query = query.neq('status', 'archived');
+    if (params.status === 'published') query = query.eq('status', 'published');
+    if (params.status === 'draft') query = query.eq('status', 'draft');
+  }
+
+  if (tourIdsFilter) query = query.in('id', tourIdsFilter);
+
+  query = query.order('updated_at', { ascending: false }).range(from, to);
 
   const { data, count } = await query;
 
   type Row = {
-    tour_id: string;
-    title: string | null;
-    slug: string | null;
-    published_at: string | null;
-    tours: {
-      id: string;
-      status: string;
-      days: number | null;
-      nights: number | null;
-      updated_at: string;
-    } | null;
+    id: string;
+    status: string;
+    days: number | null;
+    nights: number | null;
+    updated_at: string;
+    tour_translations: Array<{
+      title: string | null;
+      slug: string | null;
+      published_at: string | null;
+      locale: string | null;
+    }> | null;
   };
 
-  const items: TourListItem[] = ((data as Row[] | null) ?? [])
-    .filter((row) => row.tours)
-    .map((row) => ({
-      id: row.tour_id,
-      title: row.title ?? 'Untitled',
-      slug: row.slug ?? '',
-      status: displayStatus(row.tours!.status),
-      days: row.tours!.days,
-      nights: row.tours!.nights,
-      publishedAt: row.published_at,
-      updatedAt: row.tours!.updated_at,
-      trashed: row.tours!.status === 'archived'
-    }));
+  const items: TourListItem[] = ((data as Row[] | null) ?? []).map((row) => {
+    const translation =
+      row.tour_translations?.find((entry) => entry.locale === 'en') ??
+      row.tour_translations?.[0] ??
+      null;
+
+    return {
+      id: row.id,
+      title: translation?.title ?? 'Untitled draft',
+      slug: translation?.slug ?? '',
+      status: displayStatus(row.status),
+      days: row.days,
+      nights: row.nights,
+      publishedAt: translation?.published_at ?? null,
+      updatedAt: row.updated_at,
+      trashed: row.status === 'archived'
+    };
+  });
 
   const [counts, months] = await Promise.all([getStatusCounts(), getMonthOptions()]);
 

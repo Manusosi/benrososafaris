@@ -126,9 +126,10 @@ export const tourStepSchemas = [
     nights: true,
     priceFrom: true,
     startLocation: true,
-    endLocation: true
+    endLocation: true,
+    routeLegs: true
   }),
-  tourFormSchema.pick({ itineraryDays: true, routeLegs: true }),
+  tourFormSchema.pick({ itineraryDays: true }),
   tourFormSchema.pick({
     countries: true,
     parkIds: true,
@@ -169,7 +170,7 @@ export const tourStepSchemas = [
 
 export const tourWizardSteps = [
   { title: 'Basics & Route', description: 'Title, duration, price, and map start / end points.' },
-  { title: 'Itinerary Map', description: 'Day-by-day route used by the public trip map.' },
+  { title: 'Itinerary', description: 'Day-by-day plan shown on the public tour page.' },
   {
     title: 'Parks & Links',
     description: 'Safari markets, parks, destinations, experiences, lodges, and inclusions.'
@@ -180,6 +181,26 @@ export const tourWizardSteps = [
   { title: 'SEO', description: 'Search appearance, keywords, and readiness score.' },
   { title: 'Review', description: 'Confirm everything, then save or publish.' }
 ];
+
+/** Minimum fields required to save a draft (title + slug). */
+export const tourDraftGateSchema = tourStepSchemas[0];
+
+/** Strips server-only record fields before passing wizard defaults to the client form. */
+export function toTourFormValues(
+  record: TourFormValues & { id?: string; status?: string }
+): TourFormValues {
+  const { id: _id, status: _status, ...values } = record;
+  return values;
+}
+
+/** Merges partial wizard input with defaults so draft saves persist in-progress work. */
+export function mergeTourDraftValues(input: TourFormValues): TourFormValues {
+  return {
+    ...emptyTourValues,
+    ...input,
+    countries: input.countries.length ? input.countries : emptyTourValues.countries
+  };
+}
 
 export const emptyTourValues: TourFormValues = {
   title: '',

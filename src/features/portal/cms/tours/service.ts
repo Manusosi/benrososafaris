@@ -23,7 +23,13 @@ import {
   type ExperiencePricingTableKey
 } from '@/lib/pricing/experience-to-tour-pricing';
 import type { PublicTourPricingTier } from '@/lib/public/types';
-import { tourFormSchema, type PricingTier, type TourFormValues } from './schema';
+import {
+  tourFormSchema,
+  tourDraftGateSchema,
+  mergeTourDraftValues,
+  type PricingTier,
+  type TourFormValues
+} from './schema';
 
 export type SaveStatus = 'draft' | 'published';
 
@@ -154,6 +160,13 @@ async function replacePricing(supabase: SupabaseClient, tourId: string, tiers: P
   }
 }
 
+function saveValidationMessage(status: SaveStatus, detail?: string): string {
+  if (detail) return detail;
+  return status === 'published'
+    ? 'Fix the highlighted fields before publishing.'
+    : 'Add a title and slug to save a draft.';
+}
+
 export async function saveTour(input: {
   id?: string;
   values: TourFormValues;
@@ -161,9 +174,20 @@ export async function saveTour(input: {
 }): Promise<{ id: string }> {
   await assertCanWrite();
 
-  const values = tourFormSchema.parse(input.values);
+  const gateSchema = input.status === 'published' ? tourFormSchema : tourDraftGateSchema;
+  const gate = gateSchema.safeParse(input.values);
+  if (!gate.success) {
+    throw new Error(saveValidationMessage(input.status, gate.error.issues[0]?.message));
+  }
+
+  const values =
+    input.status === 'published'
+      ? (gate.data as TourFormValues)
+      : mergeTourDraftValues(input.values);
+
   const supabase = await genericClient();
   const now = new Date().toISOString();
+  const isNew = !input.id;
 
   const usesExperiencePricing =
     values.pricingExperienceId.trim().length > 0 && values.pricingTableKeys.length > 0;
@@ -234,7 +258,10 @@ export async function saveTour(input: {
     if (error) throw new Error(error.message);
   } else {
     const { error } = await supabase.from('tour_translations').insert(translationPayload);
-    if (error) throw new Error(error.message);
+    if (error) {
+      if (isNew) await supabase.from('tours').delete().eq('id', tourId);
+      throw new Error(error.message);
+    }
   }
 
   await replaceRelation(supabase, 'tour_national_parks', 'park_id', tourId, values.parkIds);

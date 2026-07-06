@@ -37,6 +37,7 @@ import type { BenrosoCountryId } from '@/features/experiences/public/country-map
 import { ExperiencePricingSelector } from './experience-pricing-selector';
 import {
   emptyTourValues,
+  tourDraftGateSchema,
   tourFormSchema,
   tourStepSchemas,
   tourWizardSteps,
@@ -314,7 +315,7 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
   const imagesWithAlt = galleryAssets.filter((asset) => (asset.alt ?? '').trim().length > 0).length;
 
   async function persist(status: SaveStatus) {
-    const schema = status === 'published' ? tourFormSchema : tourStepSchemas[0];
+    const schema = status === 'published' ? tourFormSchema : tourDraftGateSchema;
     const parsed = schema.safeParse(values);
 
     if (!parsed.success) {
@@ -472,19 +473,10 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
         ) : null}
 
         {currentStep === 2 ? (
-          <div className='grid gap-4'>
-            <ItineraryInput
-              value={values.itineraryDays}
-              onChange={(next) => form.setFieldValue('itineraryDays', next)}
-            />
-            <RouteLegsInput
-              endLocation={values.endLocation}
-              startLocation={values.startLocation}
-              value={values.routeLegs}
-              onChange={(next) => form.setFieldValue('routeLegs', next)}
-            />
-            <RoutePreview destinations={options.destinations} values={values} />
-          </div>
+          <ItineraryInput
+            value={values.itineraryDays}
+            onChange={(next) => form.setFieldValue('itineraryDays', next)}
+          />
         ) : null}
 
         {currentStep === 3 ? (
@@ -547,7 +539,6 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
                 </div>
               )}
             </form.AppField>
-            <RoutePreview destinations={options.destinations} values={values} />
             <div className='grid gap-2'>
               <Label htmlFor='tour-parks'>National parks</Label>
               <MultiCombobox
