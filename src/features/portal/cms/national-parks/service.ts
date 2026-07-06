@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { nationalParkFormSchema, type NationalParkFormValues } from './schema';
 
 export type SaveStatus = 'draft' | 'published';
@@ -124,6 +125,9 @@ export async function saveNationalPark(input: {
   }
 
   revalidatePath('/portal/national-parks');
+  if (input.status === 'published') {
+    notifyPublishedContent({ pathPrefix: 'national-parks', slug: values.slug });
+  }
   return { id: parkId };
 }
 

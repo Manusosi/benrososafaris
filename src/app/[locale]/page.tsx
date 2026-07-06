@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 
@@ -17,6 +18,23 @@ import {
   getPublicSiteSettings,
   getPublicTours
 } from '@/lib/public/site-data';
+import { buildListingPageMetadata } from '@/lib/seo/listing-metadata';
+
+type HomePageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+export async function generateMetadata({ params }: HomePageProps): Promise<Metadata> {
+  const { locale } = await params;
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}`,
+    defaultDescription:
+      'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.',
+    defaultTitle: 'Benroso Safaris | Kenya & Tanzania Safari Holidays',
+    heroKey: 'home',
+    locale
+  });
+}
 
 const HomeWhyChooseUs = dynamic(
   () =>
@@ -105,12 +123,6 @@ const HomeTrustCta = dynamic(
     })),
   { loading: () => null }
 );
-
-type HomePageProps = {
-  params: Promise<{
-    locale: string;
-  }>;
-};
 
 export const revalidate = 300;
 

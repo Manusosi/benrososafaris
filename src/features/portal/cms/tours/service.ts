@@ -6,6 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import {
   BENROSO_OPERATING_COUNTRIES,
   type BenrosoCountryId
@@ -341,6 +342,9 @@ export async function saveTour(input: {
 
     revalidatePath('/portal/tours');
     revalidateTourPublicPaths();
+    if (input.status === 'published') {
+      notifyPublishedContent({ pathPrefix: 'tours', slug: values.slug });
+    }
     return { ok: true, id: tourId };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Could not save tour.';

@@ -5,6 +5,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { packageFormSchema, type PackageFormValues } from './schema';
 
 export type SaveStatus = 'draft' | 'published';
@@ -113,6 +114,9 @@ export async function savePackage(input: {
 
   revalidatePath('/portal/packages');
   revalidatePath('/en/safari-packages');
+  if (input.status === 'published') {
+    notifyPublishedContent({ pathPrefix: 'safari-packages', slug: values.slug });
+  }
   return { id: packageId };
 }
 

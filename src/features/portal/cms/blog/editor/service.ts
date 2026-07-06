@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
+
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { slugify } from '@/lib/utils';
@@ -137,6 +139,9 @@ export async function saveArticle(input: {
   await supabase.from('blog_posts').update({ published_at: publishedAt }).eq('id', postId);
 
   revalidatePath('/portal/blog');
+  if (input.status === 'published') {
+    notifyPublishedContent({ pathPrefix: 'blog', slug: values.slug });
+  }
   return { id: postId };
 }
 

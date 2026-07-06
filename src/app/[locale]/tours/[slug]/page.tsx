@@ -1,8 +1,10 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { TourDetailShell } from '@/components/public/tour-detail-shell';
 import { getPublicTourDetail, getSimilarToursForTour } from '@/lib/public/site-data';
-import { buildTouristTripJsonLd } from '@/lib/seo';
+import { buildAlternates, buildMetadata, buildTouristTripJsonLd } from '@/lib/seo';
+import { createClient } from '@/lib/supabase/server';
 
 type TourPageProps = {
   params: Promise<{
@@ -10,6 +12,56 @@ type TourPageProps = {
     slug: string;
   }>;
 };
+
+export async function generateMetadata(props: TourPageProps): Promise<Metadata> {
+  const { locale, slug } = await props.params;
+  const supabase = await createClient();
+
+  const { data: tour } = await supabase
+    .from('tour_translations')
+    .select(
+      `
+      slug,
+      locale,
+      title,
+      excerpt,
+      seo_title,
+      seo_description,
+      tour:tours!inner(id, status),
+      og_image:media_assets!tour_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .eq('slug', slug)
+    .eq('tour.status', 'published')
+    .not('published_at', 'is', null)
+    .maybeSingle();
+
+  if (!tour) return {};
+
+  const parent = Array.isArray(tour.tour) ? tour.tour[0] : tour.tour;
+  if (!parent?.id) return {};
+
+  const title = tour.seo_title || `${tour.title} | Safari Tour`;
+  const description = tour.seo_description || tour.excerpt;
+  const languages = await buildAlternates({
+    parentId: parent.id,
+    parentKey: 'tour_id',
+    pathBuilder: (item) => `/${item.locale}/tours/${item.slug}`,
+    table: 'tour_translations'
+  });
+  const ogImage = tour.og_image as { alt?: string | null; url?: string | null } | null;
+
+  return buildMetadata({
+    canonicalPath: `/${locale}/tours/${slug}`,
+    description,
+    imageAlt: ogImage?.alt ?? tour.title,
+    imageUrl: ogImage?.url ?? undefined,
+    languages,
+    title,
+    type: 'website'
+  });
+}
 
 export default async function TourDetailPage({ params }: TourPageProps) {
   const { locale, slug } = await params;

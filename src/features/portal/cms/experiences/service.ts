@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { experienceFormSchema, type ExperienceFormValues } from './schema';
 
 export type SaveStatus = 'draft' | 'published';
@@ -114,6 +115,9 @@ export async function saveExperience(input: {
 
   revalidatePath('/portal/experiences');
   revalidateExperiencePublicPaths();
+  if (input.status === 'published') {
+    notifyPublishedContent({ pathPrefix: 'experiences', slug: values.slug });
+  }
   return { id: experienceId };
 }
 

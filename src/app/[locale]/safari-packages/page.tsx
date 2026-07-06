@@ -1,13 +1,28 @@
+import type { Metadata } from 'next';
+
 import { PackageCard } from '@/components/public/cards/content-cards';
 import { EmptyState, ListingShell } from '@/components/public/page-shell';
 import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicPackages } from '@/lib/public/site-data';
+import { buildListingPageMetadata } from '@/lib/seo/listing-metadata';
 
 type SafariPackagesPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: SafariPackagesPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}/safari-packages`,
+    defaultDescription:
+      'Compare comfort-level packages linked to Benroso safari routes, then choose the budget, mid-range, or luxury style that fits your trip.',
+    defaultTitle: 'Safari Packages',
+    heroKey: 'packages',
+    locale
+  });
+}
 
 export default async function SafariPackagesPage({ params }: SafariPackagesPageProps) {
   const { locale } = await params;

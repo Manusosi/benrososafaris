@@ -9,7 +9,7 @@ import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicTourCatalog } from '@/lib/public/site-data';
 import { TOUR_CATALOG_COUNTRIES } from '@/lib/public/tour-format';
 import type { PublicTourPricingTier } from '@/lib/public/types';
-import { absoluteUrl } from '@/lib/seo';
+import { buildListingPageMetadata, hasSearchParams } from '@/lib/seo/listing-metadata';
 
 const toursPageTitle = 'Safari Tours & Itineraries';
 const toursPageDescription =
@@ -57,25 +57,21 @@ function parseCountry(value?: string) {
   return TOUR_CATALOG_COUNTRIES.some((item) => item.slug === slug) ? slug : undefined;
 }
 
-export async function generateMetadata({ params }: ToursPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+  searchParams
+}: ToursPageProps): Promise<Metadata> {
   const { locale } = await params;
-  const pageHero = await getPageHero('tours');
-  const title = pageHero?.heading ?? toursPageTitle;
-  const description = pageHero?.subheading ?? toursPageDescription;
-  const metaTitle = title.includes('Benroso') ? title : `${title} | Benroso Safaris`;
-  const canonical = absoluteUrl(`/${locale}/tours`);
+  const query = await searchParams;
 
-  return {
-    title: metaTitle,
-    description,
-    alternates: { canonical },
-    openGraph: {
-      title: metaTitle,
-      description,
-      url: canonical,
-      type: 'website'
-    }
-  };
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}/tours`,
+    defaultDescription: toursPageDescription,
+    defaultTitle: toursPageTitle,
+    hasFilters: hasSearchParams(query),
+    heroKey: 'tours',
+    locale
+  });
 }
 
 export default async function ToursPage({ params, searchParams }: ToursPageProps) {

@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 
 import { absoluteUrl } from './absolute-url';
 
+const SITE_NAME = 'Benroso Safaris';
+
 type BuildMetadataInput = {
   canonicalPath: string;
   description?: string | null;
@@ -12,6 +14,13 @@ type BuildMetadataInput = {
   title: string;
   type?: 'article' | 'website';
 };
+
+function toAbsoluteLanguages(languages?: Record<string, string>) {
+  if (!languages) return undefined;
+  return Object.fromEntries(
+    Object.entries(languages).map(([locale, path]) => [locale, absoluteUrl(path)])
+  );
+}
 
 export function buildMetadata({
   canonicalPath,
@@ -25,13 +34,15 @@ export function buildMetadata({
 }: BuildMetadataInput): Metadata {
   const canonical = absoluteUrl(canonicalPath);
   const safeDescription = description || 'Plan a tailored East Africa safari with Benroso Safaris.';
+  const ogImages = imageUrl ? [{ url: imageUrl, alt: imageAlt || title }] : undefined;
+  const absoluteLanguages = toAbsoluteLanguages(languages);
 
   return {
     title,
     description: safeDescription,
     alternates: {
       canonical,
-      languages
+      languages: absoluteLanguages
     },
     robots: noIndex
       ? {
@@ -43,8 +54,15 @@ export function buildMetadata({
       title,
       description: safeDescription,
       url: canonical,
+      siteName: SITE_NAME,
       type,
-      images: imageUrl ? [{ url: imageUrl, alt: imageAlt || title }] : []
+      images: ogImages
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description: safeDescription,
+      images: imageUrl ? [imageUrl] : undefined
     }
   };
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { accommodationFormSchema, type AccommodationFormValues } from './schema';
 
 export type SaveStatus = 'draft' | 'published';
@@ -113,6 +114,9 @@ export async function saveAccommodation(input: {
 
   revalidatePath('/portal/accommodations');
   revalidatePath('/en/accommodations');
+  if (input.status === 'published') {
+    notifyPublishedContent({ pathPrefix: 'accommodations', slug: values.slug });
+  }
   return { id: accommodationId };
 }
 

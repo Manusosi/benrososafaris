@@ -1,15 +1,38 @@
+import type { Metadata } from 'next';
+
 import { DestinationCard } from '@/components/public/cards/content-cards';
 import { EmptyState, ListingShell } from '@/components/public/page-shell';
 import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicDestinations } from '@/lib/public/site-data';
+import { buildListingPageMetadata, hasSearchParams } from '@/lib/seo/listing-metadata';
 import { cn } from '@/lib/utils';
 
 type DestinationsPageProps = {
   params: Promise<{ locale: string }>;
   searchParams: Promise<{ country?: string }>;
 };
+
+const destinationsDescription =
+  'Explore East Africa safari destinations across Kenya, Tanzania, Uganda, and Rwanda with Benroso Safaris.';
+
+export async function generateMetadata({
+  params,
+  searchParams
+}: DestinationsPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  const query = await searchParams;
+
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}/destinations`,
+    defaultDescription: destinationsDescription,
+    defaultTitle: 'Safari Destinations',
+    hasFilters: hasSearchParams(query),
+    heroKey: 'destinations',
+    locale
+  });
+}
 
 function slugifyCountry(country: string) {
   return country.trim().toLowerCase().replace(/\s+/g, '-');

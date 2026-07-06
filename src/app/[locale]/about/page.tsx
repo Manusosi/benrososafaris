@@ -1,13 +1,27 @@
+import type { Metadata } from 'next';
+
 import { AboutHero } from '@/components/public/about/about-hero';
 import { AboutTabs } from '@/components/public/about/about-tabs';
 import { ABOUT_HERO_DEFAULTS } from '@/lib/public/about-content';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero } from '@/lib/public/site-data';
 import { getPublishedTeamMembers } from '@/lib/public/team';
+import { buildListingPageMetadata } from '@/lib/seo/listing-metadata';
 
 type AboutPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: AboutPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}/about`,
+    defaultDescription: ABOUT_HERO_DEFAULTS.description,
+    defaultTitle: ABOUT_HERO_DEFAULTS.title,
+    heroKey: 'about',
+    locale
+  });
+}
 
 export default async function AboutPage({ params }: AboutPageProps) {
   const { locale } = await params;

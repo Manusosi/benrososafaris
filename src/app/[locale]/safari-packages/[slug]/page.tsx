@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import { TourPricingTable } from '@/components/public/tours/tour-pricing-table';
@@ -9,6 +10,8 @@ import { localePath } from '@/lib/public/locale-path';
 import { formatComfortTierLabel } from '@/lib/public/site-data';
 import { formatTourDuration, formatTourPrice } from '@/lib/public/tour-format';
 import { getPublicPackageDetail } from '@/lib/public/site-data';
+import { buildAlternates, buildMetadata } from '@/lib/seo';
+import { createClient } from '@/lib/supabase/server';
 
 type SafariPackageDetailPageProps = {
   params: Promise<{
@@ -16,6 +19,57 @@ type SafariPackageDetailPageProps = {
     slug: string;
   }>;
 };
+
+export async function generateMetadata(props: SafariPackageDetailPageProps): Promise<Metadata> {
+  const { locale, slug } = await props.params;
+  const supabase = await createClient();
+
+  const { data: safariPackage } = await supabase
+    .from('package_translations')
+    .select(
+      `
+      slug,
+      locale,
+      title,
+      excerpt,
+      seo_title,
+      seo_description,
+      package:packages!inner(id, status),
+      og_image:media_assets!package_translations_og_image_id_fkey(url, alt)
+    `
+    )
+    .eq('locale', locale)
+    .eq('slug', slug)
+    .eq('package.status', 'published')
+    .not('published_at', 'is', null)
+    .maybeSingle();
+
+  if (!safariPackage) return {};
+
+  const parent = Array.isArray(safariPackage.package)
+    ? safariPackage.package[0]
+    : safariPackage.package;
+  if (!parent?.id) return {};
+
+  const title = safariPackage.seo_title || `${safariPackage.title} | Safari Package`;
+  const description = safariPackage.seo_description || safariPackage.excerpt;
+  const languages = await buildAlternates({
+    parentId: parent.id,
+    parentKey: 'package_id',
+    pathBuilder: (item) => `/${item.locale}/safari-packages/${item.slug}`,
+    table: 'package_translations'
+  });
+  const ogImage = safariPackage.og_image as { alt?: string | null; url?: string | null } | null;
+
+  return buildMetadata({
+    canonicalPath: `/${locale}/safari-packages/${slug}`,
+    description,
+    imageAlt: ogImage?.alt ?? safariPackage.title,
+    imageUrl: ogImage?.url ?? undefined,
+    languages,
+    title
+  });
+}
 
 export default async function SafariPackageDetailPage({ params }: SafariPackageDetailPageProps) {
   const { locale, slug } = await params;

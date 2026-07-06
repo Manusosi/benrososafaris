@@ -1,12 +1,27 @@
+import type { Metadata } from 'next';
+
 import { ContactFormSection } from '@/components/public/contact/contact-form-section';
 import { ContactHero } from '@/components/public/contact/contact-hero';
 import { ContactKatoSection } from '@/components/public/contact/contact-kato-section';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicSiteSettings } from '@/lib/public/site-data';
+import { buildListingPageMetadata } from '@/lib/seo/listing-metadata';
 
 type ContactPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: ContactPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}/contact`,
+    defaultDescription:
+      'Tell us about your dream East Africa safari and receive a free, no-obligation quote from our expert planners.',
+    defaultTitle: 'Request a Free Safari Quote',
+    heroKey: 'contact',
+    locale
+  });
+}
 
 export default async function ContactPage({ params }: ContactPageProps) {
   const { locale } = await params;

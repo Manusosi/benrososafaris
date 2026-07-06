@@ -1,11 +1,26 @@
+import type { Metadata } from 'next';
+
 import { BlogList } from '@/components/public/blog/blog-list';
 import { ContactHero } from '@/components/public/contact/contact-hero';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicBlogPosts } from '@/lib/public/site-data';
+import { buildListingPageMetadata } from '@/lib/seo/listing-metadata';
 
 type BlogPageProps = {
   params: Promise<{ locale: string }>;
 };
+
+export async function generateMetadata({ params }: BlogPageProps): Promise<Metadata> {
+  const { locale } = await params;
+  return buildListingPageMetadata({
+    canonicalPath: `/${locale}/blog`,
+    defaultDescription:
+      'Safari travel insights, destination guides, and planning tips from the Benroso Safaris team.',
+    defaultTitle: 'Safari Travel Insights',
+    heroKey: 'blog',
+    locale
+  });
+}
 
 export default async function BlogPage({ params }: BlogPageProps) {
   const { locale } = await params;

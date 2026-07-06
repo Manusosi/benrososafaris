@@ -18,8 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSiteSettings();
   const { analytics } = settings;
   const favicon = settings.faviconUrl ?? BENROSO_FAVICON_PATH;
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.com';
 
   return {
+    metadataBase: new URL(siteUrl),
     title: {
       default: 'Benroso Safaris | Kenya & Tanzania Safari Holidays',
       template: '%s | Benroso Safaris'

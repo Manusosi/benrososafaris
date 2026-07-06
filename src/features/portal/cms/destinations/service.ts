@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { destinationFormSchema, type DestinationFormValues } from './schema';
 
 export type SaveStatus = 'draft' | 'published';
@@ -107,6 +108,9 @@ export async function saveDestination(input: {
   }
 
   revalidatePath('/portal/destinations');
+  if (input.status === 'published') {
+    notifyPublishedContent({ pathPrefix: 'destinations', slug: values.slug });
+  }
   return { id: destinationId };
 }
 
