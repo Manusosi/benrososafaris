@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 import { createClient } from '@/lib/supabase/server';
+import { autoTranslateExperienceById } from '@/lib/i18n/auto-translate-content';
+import { scheduleAutoTranslate } from '@/lib/i18n/schedule-auto-translate';
 import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { experienceFormSchema, type ExperienceFormValues } from './schema';
 
@@ -117,6 +119,7 @@ export async function saveExperience(input: {
   revalidateExperiencePublicPaths();
   if (input.status === 'published') {
     notifyPublishedContent({ pathPrefix: 'experiences', slug: values.slug });
+    scheduleAutoTranslate(() => autoTranslateExperienceById(experienceId));
   }
   return { id: experienceId };
 }

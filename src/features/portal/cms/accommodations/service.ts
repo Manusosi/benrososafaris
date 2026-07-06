@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
+import { autoTranslateAccommodationById } from '@/lib/i18n/auto-translate-content';
+import { scheduleAutoTranslate } from '@/lib/i18n/schedule-auto-translate';
 import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { accommodationFormSchema, type AccommodationFormValues } from './schema';
 
@@ -116,6 +118,7 @@ export async function saveAccommodation(input: {
   revalidatePath('/en/accommodations');
   if (input.status === 'published') {
     notifyPublishedContent({ pathPrefix: 'accommodations', slug: values.slug });
+    scheduleAutoTranslate(() => autoTranslateAccommodationById(accommodationId));
   }
   return { id: accommodationId };
 }

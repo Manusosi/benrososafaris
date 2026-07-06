@@ -6,6 +6,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import { autoTranslateTourById } from '@/lib/i18n/auto-translate-content';
+import { scheduleAutoTranslate } from '@/lib/i18n/schedule-auto-translate';
 import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import {
   BENROSO_OPERATING_COUNTRIES,
@@ -344,6 +346,7 @@ export async function saveTour(input: {
     revalidateTourPublicPaths();
     if (input.status === 'published') {
       notifyPublishedContent({ pathPrefix: 'tours', slug: values.slug });
+      scheduleAutoTranslate(() => autoTranslateTourById(tourId));
     }
     return { ok: true, id: tourId };
   } catch (error) {

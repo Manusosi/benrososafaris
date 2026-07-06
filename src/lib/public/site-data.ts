@@ -1449,10 +1449,12 @@ export async function getPublicBlogPosts(locale: string, limit = 3): Promise<Pub
 
 async function fetchPublicBlogPosts(locale: string, limit = 3): Promise<PublicBlogPost[]> {
   const supabase = createEnquiryPublicClient();
-  const { data } = await supabase
-    .from('blog_translations')
-    .select(
-      `
+
+  async function queryPosts(resolvedLocale: string) {
+    const { data } = await supabase
+      .from('blog_translations')
+      .select(
+        `
       slug,
       title,
       excerpt,
@@ -1465,32 +1467,38 @@ async function fetchPublicBlogPosts(locale: string, limit = 3): Promise<PublicBl
       ),
       og_image:media_assets!blog_translations_og_image_id_fkey(url, alt)
     `
-    )
-    .eq('locale', locale)
-    .not('published_at', 'is', null)
-    .order('published_at', { ascending: false })
-    .limit(limit * 3);
+      )
+      .eq('locale', resolvedLocale)
+      .not('published_at', 'is', null)
+      .order('published_at', { ascending: false })
+      .limit(limit * 3);
 
-  return (data ?? [])
-    .flatMap((row) => {
-      const post = unwrapRelation(row.post);
-      if (!post || post.status !== 'published' || post.deleted_at) return [];
+    return (data ?? [])
+      .flatMap((row) => {
+        const post = unwrapRelation(row.post);
+        if (!post || post.status !== 'published' || post.deleted_at) return [];
 
-      return [
-        {
-          category: unwrapRelation(post.primary_category)?.name ?? null,
-          excerpt: row.excerpt,
-          href: localePath(locale, `/blog/${row.slug}`),
-          id: post.id,
-          imageAlt: mediaAlt(row.og_image, row.title),
-          imageUrl: mediaUrl(row.og_image),
-          publishedAt: row.published_at,
-          slug: row.slug,
-          title: row.title
-        }
-      ];
-    })
-    .slice(0, limit);
+        return [
+          {
+            category: unwrapRelation(post.primary_category)?.name ?? null,
+            excerpt: row.excerpt,
+            href: localePath(locale, `/blog/${row.slug}`),
+            id: post.id,
+            imageAlt: mediaAlt(row.og_image, row.title),
+            imageUrl: mediaUrl(row.og_image),
+            publishedAt: row.published_at,
+            slug: row.slug,
+            title: row.title
+          }
+        ];
+      })
+      .slice(0, limit);
+  }
+
+  const localized = await queryPosts(locale);
+  if (localized.length || locale === DEFAULT_LOCALE) return localized;
+
+  return queryPosts(DEFAULT_LOCALE);
 }
 
 export async function getHomeReviews(limit = 8): Promise<HomeReviewItem[]> {

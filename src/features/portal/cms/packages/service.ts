@@ -5,6 +5,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
+import { autoTranslatePackageById } from '@/lib/i18n/auto-translate-content';
+import { scheduleAutoTranslate } from '@/lib/i18n/schedule-auto-translate';
 import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { packageFormSchema, type PackageFormValues } from './schema';
 
@@ -116,6 +118,7 @@ export async function savePackage(input: {
   revalidatePath('/en/safari-packages');
   if (input.status === 'published') {
     notifyPublishedContent({ pathPrefix: 'safari-packages', slug: values.slug });
+    scheduleAutoTranslate(() => autoTranslatePackageById(packageId));
   }
   return { id: packageId };
 }

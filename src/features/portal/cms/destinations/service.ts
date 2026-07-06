@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
+import { autoTranslateDestinationById } from '@/lib/i18n/auto-translate-content';
+import { scheduleAutoTranslate } from '@/lib/i18n/schedule-auto-translate';
 import { notifyPublishedContent } from '@/lib/seo/publish-notify';
 import { destinationFormSchema, type DestinationFormValues } from './schema';
 
@@ -110,6 +112,7 @@ export async function saveDestination(input: {
   revalidatePath('/portal/destinations');
   if (input.status === 'published') {
     notifyPublishedContent({ pathPrefix: 'destinations', slug: values.slug });
+    scheduleAutoTranslate(() => autoTranslateDestinationById(destinationId));
   }
   return { id: destinationId };
 }

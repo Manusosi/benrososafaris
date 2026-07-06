@@ -7,6 +7,7 @@ import { requireSuperAdmin } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
 import type { Tables } from '@/types/database.types';
 import { SiteSettingsForm } from '@/features/portal/cms/settings/site-settings-form';
+import { TranslationBackfillCard } from '@/features/portal/cms/settings/translation-backfill-card';
 import { settingsFromRow } from '@/features/portal/cms/settings/schema';
 
 export default async function PortalSettingsPage() {
@@ -33,7 +34,10 @@ export default async function PortalSettingsPage() {
         </Button>
       }
     >
-      <SiteSettingsForm initial={initial} />
+      <div className='space-y-6'>
+        <TranslationBackfillCard />
+        <SiteSettingsForm initial={initial} />
+      </div>
     </PageContainer>
   );
 }
