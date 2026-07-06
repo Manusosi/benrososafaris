@@ -594,6 +594,7 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
           <ExperiencePricingSelector
             experienceIds={values.experienceIds}
             experienceOptions={options.experiences}
+            priceFrom={values.priceFrom}
             pricingExperienceId={values.pricingExperienceId}
             pricingTableKeys={values.pricingTableKeys}
             pricingTiers={values.pricingTiers}

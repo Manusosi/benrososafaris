@@ -1,24 +1,14 @@
 'use client';
 
 import { ContourBackground } from '@/components/public/contour-background';
-import { PackageCard, TourCard } from '@/components/public/cards/content-cards';
+import { TourCard } from '@/components/public/cards/content-cards';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { ScrollReveal } from '@/components/public/ui/scroll-reveal';
 import { SectionHeader } from '@/components/public/ui/section-header';
 import { localePath } from '@/lib/public/locale-path';
-import type { PublicPackage, PublicTour } from '@/lib/public/types';
+import type { PublicTour } from '@/lib/public/types';
 
-export function HomeFeaturedTours({
-  locale,
-  packages = [],
-  tours
-}: {
-  locale: string;
-  packages?: PublicPackage[];
-  tours: PublicTour[];
-}) {
-  const hasItems = tours.length > 0 || packages.length > 0;
-
+export function HomeFeaturedTours({ locale, tours }: { locale: string; tours: PublicTour[] }) {
   return (
     <section className='benroso-section relative overflow-hidden bg-white'>
       <ContourBackground opacity={0.07} />
@@ -28,31 +18,24 @@ export function HomeFeaturedTours({
           title='Popular Safari Tours & Packages'
         />
         <ScrollReveal className='mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-3' stagger>
-          {hasItems ? (
-            <>
-              {tours.map((tour) => (
-                <div data-reveal-item key={`tour-${tour.id}`}>
-                  <TourCard
-                    item={{
-                      days: tour.days,
-                      excerpt: tour.excerpt,
-                      href: tour.href,
-                      imageAlt: tour.imageAlt,
-                      imageUrl: tour.imageUrl,
-                      nights: tour.nights,
-                      priceFrom: tour.priceFrom,
-                      regionLabel: 'Safari',
-                      title: tour.title
-                    }}
-                  />
-                </div>
-              ))}
-              {packages.map((pkg) => (
-                <div data-reveal-item key={`package-${pkg.id}`}>
-                  <PackageCard item={pkg} />
-                </div>
-              ))}
-            </>
+          {tours.length ? (
+            tours.map((tour) => (
+              <div data-reveal-item key={tour.id}>
+                <TourCard
+                  item={{
+                    days: tour.days,
+                    excerpt: tour.excerpt,
+                    href: tour.href,
+                    imageAlt: tour.imageAlt,
+                    imageUrl: tour.imageUrl,
+                    nights: tour.nights,
+                    priceFrom: tour.priceFrom,
+                    regionLabel: 'Safari',
+                    title: tour.title
+                  }}
+                />
+              </div>
+            ))
           ) : (
             <div className='col-span-full rounded-[var(--benroso-radius)] border border-dashed border-[var(--benroso-line)] bg-[var(--benroso-ivory)] px-8 py-14 text-center'>
               <p className='benroso-heading font-display text-2xl'>Safari tours coming soon</p>

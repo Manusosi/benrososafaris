@@ -6,7 +6,7 @@ import type { PublicTourPricingTier } from '@/lib/public/types';
 import { cn } from '@/lib/utils';
 
 type TourPricingTableProps = {
-  locale: string;
+  locale?: string;
   tiers: PublicTourPricingTier[];
 };
 

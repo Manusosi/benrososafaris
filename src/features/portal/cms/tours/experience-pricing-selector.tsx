@@ -29,6 +29,7 @@ import {
 type ExperiencePricingSelectorProps = {
   experienceIds: string[];
   experienceOptions: RelationOption[];
+  priceFrom: string;
   pricingExperienceId: string;
   pricingTableKeys: ExperiencePricingTableKey[];
   pricingTiers: PricingTier[];
@@ -51,6 +52,7 @@ function tierBadgeVariant(tier: ReturnType<typeof mapExperienceKeyToTourTier>) {
 export function ExperiencePricingSelector({
   experienceIds,
   experienceOptions,
+  priceFrom,
   pricingExperienceId,
   pricingTableKeys,
   pricingTiers,
@@ -67,10 +69,19 @@ export function ExperiencePricingSelector({
     experienceIds.includes(option.value)
   );
 
+  const autoSelectedExperienceRef = React.useRef(false);
+  const onPricingExperienceIdChangeRef = React.useRef(onPricingExperienceIdChange);
+  const onPriceFromChangeRef = React.useRef(onPriceFromChange);
+
+  onPricingExperienceIdChangeRef.current = onPricingExperienceIdChange;
+  onPriceFromChangeRef.current = onPriceFromChange;
+
   React.useEffect(() => {
     if (pricingExperienceId || linkedExperienceOptions.length !== 1) return;
-    onPricingExperienceIdChange(linkedExperienceOptions[0].value);
-  }, [linkedExperienceOptions, onPricingExperienceIdChange, pricingExperienceId]);
+    if (autoSelectedExperienceRef.current) return;
+    autoSelectedExperienceRef.current = true;
+    onPricingExperienceIdChangeRef.current(linkedExperienceOptions[0].value);
+  }, [linkedExperienceOptions, pricingExperienceId]);
 
   const { data: tableOptions = [], isLoading } = useQuery({
     queryKey: ['experience-pricing-tables', pricingExperienceId],
@@ -86,10 +97,13 @@ export function ExperiencePricingSelector({
 
   React.useEffect(() => {
     const minPrice = minPriceFromTourTiers(previewTiers);
-    if (minPrice != null && pricingTableKeys.length) {
-      onPriceFromChange(String(minPrice));
-    }
-  }, [onPriceFromChange, previewTiers, pricingTableKeys.length]);
+    if (minPrice == null || !pricingTableKeys.length) return;
+
+    const nextPrice = String(minPrice);
+    if (nextPrice === priceFrom) return;
+
+    onPriceFromChangeRef.current(nextPrice);
+  }, [previewTiers, priceFrom, pricingTableKeys.length]);
 
   function toggleTableKey(key: ExperiencePricingTableKey, checked: boolean) {
     if (checked) {
@@ -203,7 +217,7 @@ export function ExperiencePricingSelector({
       {previewTiers.length ? (
         <div className='grid gap-2'>
           <Label>Preview</Label>
-          <TourPricingTable locale='en' tiers={previewTiers} />
+          <TourPricingTable tiers={previewTiers} />
         </div>
       ) : null}
 
