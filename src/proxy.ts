@@ -2,11 +2,26 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { detectLocale, pathnameHasLocale } from '@/lib/i18n';
+import {
+  getPortalHost,
+  getPortalUrl,
+  getRequestHost,
+  getSiteUrl,
+  isPortalRequestHost
+} from '@/lib/portal-url';
 
 const PUBLIC_FILE = /\.(.*)$/;
 
+function redirectTo(url: string | URL) {
+  return NextResponse.redirect(url, 302);
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const search = request.nextUrl.search;
+  const requestHost = getRequestHost(request);
+  const onPortalHost = isPortalRequestHost(requestHost);
+  const portalHostConfigured = Boolean(getPortalHost());
 
   let response = NextResponse.next({ request });
 
@@ -22,7 +37,38 @@ export async function proxy(request: NextRequest) {
 
   if (isAdminRoute) {
     const target = pathname.replace(/^\/admin/, '/portal') || '/portal';
-    return NextResponse.redirect(new URL(target, request.url));
+    return redirectTo(new URL(`${target}${search}`, request.url));
+  }
+
+  if (!onPortalHost && portalHostConfigured && isPortalRoute) {
+    return redirectTo(new URL(`${pathname}${search}`, getPortalUrl()));
+  }
+
+  if (onPortalHost) {
+    if (pathnameHasLocale(pathname)) {
+      return redirectTo(new URL(`${pathname}${search}`, getSiteUrl()));
+    }
+
+    if (pathname === '/') {
+      return redirectTo(new URL(`/portal${search}`, request.url));
+    }
+
+    if (pathname === '/login' || pathname.startsWith('/login/')) {
+      const target = pathname.replace(/^\/login/, '/portal/login') || '/portal/login';
+      return redirectTo(new URL(`${target}${search}`, request.url));
+    }
+
+    const isPortalHostExempt =
+      pathname.startsWith('/_next') ||
+      pathname.startsWith('/api') ||
+      pathname.startsWith('/auth') ||
+      pathname.startsWith('/portal') ||
+      pathname.startsWith('/monitoring') ||
+      PUBLIC_FILE.test(pathname);
+
+    if (!isPortalHostExempt) {
+      return redirectTo(new URL(`${pathname}${search}`, getSiteUrl()));
+    }
   }
 
   if (isPortalRoute || pathname.startsWith('/api')) {
@@ -56,7 +102,7 @@ export async function proxy(request: NextRequest) {
     if (isPortalRoute && !isLoginRoute && !user) {
       const loginUrl = new URL('/portal/login', request.url);
       loginUrl.searchParams.set('next', pathname);
-      return NextResponse.redirect(loginUrl);
+      return redirectTo(loginUrl);
     }
 
     return response;

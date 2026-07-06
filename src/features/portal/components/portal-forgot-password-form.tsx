@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { PortalAuthButton } from '@/features/portal/components/portal-auth-button';
 import { PortalAuthLogo } from '@/features/portal/components/portal-auth-logo';
 import { PortalAuthShell } from '@/features/portal/components/portal-auth-shell';
+import { portalAbsoluteUrl } from '@/lib/portal-url';
 import { createClient } from '@/lib/supabase/browser';
 
 const fieldClassName =
@@ -28,7 +29,7 @@ export function PortalForgotPasswordForm() {
     setIsLoading(true);
 
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/portal/login/reset-password`;
+    const redirectTo = portalAbsoluteUrl('/portal/login/reset-password');
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo
     });
