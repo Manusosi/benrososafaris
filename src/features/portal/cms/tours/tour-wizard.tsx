@@ -330,14 +330,16 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
 
     setPendingAction(status === 'published' ? 'publish' : 'draft');
     try {
-      await saveTour({ id, values, status });
+      const result = await saveTour({ id, values, status });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(status === 'published' ? 'Tour published.' : 'Draft saved.');
       router.push('/portal/tours');
       router.refresh();
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Something went wrong. Please try again.'
-      );
+    } catch {
+      toast.error('Something went wrong. Please try again.');
     } finally {
       setPendingAction(null);
     }

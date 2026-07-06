@@ -33,6 +33,8 @@ import {
 
 export type SaveStatus = 'draft' | 'published';
 
+export type SaveTourResult = { ok: true; id: string } | { ok: false; error: string };
+
 export interface TourRecord extends TourFormValues {
   id: string;
   status: string;
@@ -160,6 +162,19 @@ async function replacePricing(supabase: SupabaseClient, tourId: string, tiers: P
   }
 }
 
+function mapTourDbError(message: string): string {
+  if (message.includes('tour_translations_locale_slug_key')) {
+    return 'This URL slug is already used by another tour. Choose a different slug.';
+  }
+  if (message.includes('og_image_id') && message.includes('foreign key')) {
+    return 'A gallery image could not be linked. Re-select images in the Gallery step.';
+  }
+  if (message.includes('Could not find the') && message.includes('column')) {
+    return 'The database is missing a required column. Contact support or redeploy the latest migrations.';
+  }
+  return message;
+}
+
 function saveValidationMessage(status: SaveStatus, detail?: string): string {
   if (detail) return detail;
   return status === 'published'
@@ -167,141 +182,170 @@ function saveValidationMessage(status: SaveStatus, detail?: string): string {
     : 'Add a title and slug to save a draft.';
 }
 
+async function resolveOgImageId(
+  supabase: SupabaseClient,
+  gallery: string[]
+): Promise<string | null> {
+  const candidate = gallery[0]?.trim();
+  if (!candidate) return null;
+
+  const { data } = await supabase
+    .from('media_assets')
+    .select('id')
+    .eq('id', candidate)
+    .maybeSingle();
+  return (data?.id as string | undefined) ?? null;
+}
+
 export async function saveTour(input: {
   id?: string;
   values: TourFormValues;
   status: SaveStatus;
-}): Promise<{ id: string }> {
-  await assertCanWrite();
+}): Promise<SaveTourResult> {
+  try {
+    await assertCanWrite();
 
-  let values: TourFormValues;
+    let values: TourFormValues;
 
-  if (input.status === 'published') {
-    const parsed = tourFormSchema.safeParse(input.values);
-    if (!parsed.success) {
-      throw new Error(saveValidationMessage(input.status, parsed.error.issues[0]?.message));
+    if (input.status === 'published') {
+      const parsed = tourFormSchema.safeParse(input.values);
+      if (!parsed.success) {
+        return {
+          ok: false,
+          error: saveValidationMessage(input.status, parsed.error.issues[0]?.message)
+        };
+      }
+      values = parsed.data;
+    } else {
+      const gate = tourDraftGateSchema.safeParse(input.values);
+      if (!gate.success) {
+        return {
+          ok: false,
+          error: saveValidationMessage(input.status, gate.error.issues[0]?.message)
+        };
+      }
+      values = mergeTourDraftValues(input.values);
     }
-    values = parsed.data;
-  } else {
-    const gate = tourDraftGateSchema.safeParse(input.values);
-    if (!gate.success) {
-      throw new Error(saveValidationMessage(input.status, gate.error.issues[0]?.message));
+
+    const supabase = await genericClient();
+    const now = new Date().toISOString();
+    const isNew = !input.id;
+
+    const usesExperiencePricing =
+      values.pricingExperienceId.trim().length > 0 && values.pricingTableKeys.length > 0;
+
+    const basePayload = {
+      days: toNumberOrNull(values.days),
+      nights: toNumberOrNull(values.nights),
+      price_from: toNumberOrNull(values.priceFrom),
+      start_location: values.startLocation || null,
+      end_location: values.endLocation || null,
+      important_notice: values.importantNotice || null,
+      itinerary_days: values.itineraryDays,
+      route_waypoints: values.routeLegs,
+      inclusions: values.inclusions,
+      exclusions: values.exclusions,
+      gallery: values.gallery,
+      countries: values.countries,
+      pricing_experience_id: usesExperiencePricing ? values.pricingExperienceId : null,
+      pricing_table_keys: usesExperiencePricing ? values.pricingTableKeys : [],
+      status: input.status,
+      updated_at: now
+    };
+
+    let tourId = input.id;
+
+    if (tourId) {
+      const { error } = await supabase.from('tours').update(basePayload).eq('id', tourId);
+      if (error) throw new Error(error.message);
+    } else {
+      const { data, error } = await supabase
+        .from('tours')
+        .insert(basePayload)
+        .select('id')
+        .single();
+      if (error) throw new Error(error.message);
+      tourId = data.id as string;
     }
-    values = mergeTourDraftValues(input.values);
-  }
 
-  const supabase = await genericClient();
-  const now = new Date().toISOString();
-  const isNew = !input.id;
-
-  const usesExperiencePricing =
-    values.pricingExperienceId.trim().length > 0 && values.pricingTableKeys.length > 0;
-
-  const basePayload = {
-    days: toNumberOrNull(values.days),
-    nights: toNumberOrNull(values.nights),
-    price_from: toNumberOrNull(values.priceFrom),
-    start_location: values.startLocation || null,
-    end_location: values.endLocation || null,
-    important_notice: values.importantNotice || null,
-    itinerary_days: values.itineraryDays,
-    route_waypoints: values.routeLegs,
-    inclusions: values.inclusions,
-    exclusions: values.exclusions,
-    gallery: values.gallery,
-    countries: values.countries,
-    pricing_experience_id: usesExperiencePricing ? values.pricingExperienceId : null,
-    pricing_table_keys: usesExperiencePricing ? values.pricingTableKeys : [],
-    status: input.status,
-    updated_at: now
-  };
-
-  let tourId = input.id;
-
-  if (tourId) {
-    const { error } = await supabase.from('tours').update(basePayload).eq('id', tourId);
-    if (error) throw new Error(error.message);
-  } else {
-    const { data, error } = await supabase.from('tours').insert(basePayload).select('id').single();
-    if (error) throw new Error(error.message);
-    tourId = data.id as string;
-  }
-
-  const { data: existing } = await supabase
-    .from('tour_translations')
-    .select('id, published_at')
-    .eq('tour_id', tourId)
-    .eq('locale', 'en')
-    .maybeSingle();
-
-  const publishedAt = input.status === 'published' ? (existing?.published_at ?? now) : null;
-  // The first gallery image doubles as the OG / card image.
-  const ogImageId = values.gallery[0] ?? null;
-
-  const translationPayload = {
-    tour_id: tourId,
-    locale: 'en',
-    slug: values.slug,
-    title: values.title,
-    excerpt: values.excerpt || null,
-    overview: values.overview ? { html: values.overview } : null,
-    og_image_id: ogImageId,
-    faqs: normalizeDirectAnswers(values.faqs),
-    seo_title: values.seoTitle || values.title,
-    seo_description: values.seoDescription || null,
-    focus_keyword: values.focusKeyword || null,
-    keywords: values.keywords,
-    published_at: publishedAt,
-    updated_at: now
-  };
-
-  if (existing) {
-    const { error } = await supabase
+    const { data: existing } = await supabase
       .from('tour_translations')
-      .update(translationPayload)
-      .eq('id', existing.id);
-    if (error) throw new Error(error.message);
-  } else {
-    const { error } = await supabase.from('tour_translations').insert(translationPayload);
-    if (error) {
-      if (isNew) await supabase.from('tours').delete().eq('id', tourId);
-      throw new Error(error.message);
+      .select('id, published_at')
+      .eq('tour_id', tourId)
+      .eq('locale', 'en')
+      .maybeSingle();
+
+    const publishedAt = input.status === 'published' ? (existing?.published_at ?? now) : null;
+    const ogImageId = await resolveOgImageId(supabase, values.gallery);
+
+    const translationPayload = {
+      tour_id: tourId,
+      locale: 'en',
+      slug: values.slug,
+      title: values.title,
+      excerpt: values.excerpt || null,
+      overview: values.overview ? { html: values.overview } : null,
+      og_image_id: ogImageId,
+      faqs: normalizeDirectAnswers(values.faqs),
+      seo_title: values.seoTitle || values.title,
+      seo_description: values.seoDescription || null,
+      focus_keyword: values.focusKeyword || null,
+      keywords: values.keywords,
+      published_at: publishedAt,
+      updated_at: now
+    };
+
+    if (existing) {
+      const { error } = await supabase
+        .from('tour_translations')
+        .update(translationPayload)
+        .eq('id', existing.id);
+      if (error) throw new Error(error.message);
+    } else {
+      const { error } = await supabase.from('tour_translations').insert(translationPayload);
+      if (error) {
+        if (isNew) await supabase.from('tours').delete().eq('id', tourId);
+        throw new Error(error.message);
+      }
     }
+
+    await replaceRelation(supabase, 'tour_national_parks', 'park_id', tourId, values.parkIds);
+    await replaceRelation(
+      supabase,
+      'tour_destinations',
+      'destination_id',
+      tourId,
+      values.destinationIds
+    );
+    const experienceIds = [
+      ...new Set([
+        ...values.experienceIds,
+        ...(usesExperiencePricing && values.pricingExperienceId ? [values.pricingExperienceId] : [])
+      ])
+    ];
+    await replaceRelation(supabase, 'tour_experiences', 'experience_id', tourId, experienceIds);
+    await replaceRelation(
+      supabase,
+      'tour_accommodations',
+      'accommodation_id',
+      tourId,
+      values.accommodationIds
+    );
+    await replaceRelation(supabase, 'tour_fleet', 'vehicle_id', tourId, values.fleetIds);
+
+    if (usesExperiencePricing) {
+      await supabase.from('tour_pricing_tiers').delete().eq('tour_id', tourId);
+    } else {
+      await replacePricing(supabase, tourId, values.pricingTiers);
+    }
+
+    revalidatePath('/portal/tours');
+    revalidateTourPublicPaths();
+    return { ok: true, id: tourId };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Could not save tour.';
+    return { ok: false, error: mapTourDbError(message) };
   }
-
-  await replaceRelation(supabase, 'tour_national_parks', 'park_id', tourId, values.parkIds);
-  await replaceRelation(
-    supabase,
-    'tour_destinations',
-    'destination_id',
-    tourId,
-    values.destinationIds
-  );
-  const experienceIds = [
-    ...new Set([
-      ...values.experienceIds,
-      ...(usesExperiencePricing && values.pricingExperienceId ? [values.pricingExperienceId] : [])
-    ])
-  ];
-  await replaceRelation(supabase, 'tour_experiences', 'experience_id', tourId, experienceIds);
-  await replaceRelation(
-    supabase,
-    'tour_accommodations',
-    'accommodation_id',
-    tourId,
-    values.accommodationIds
-  );
-  await replaceRelation(supabase, 'tour_fleet', 'vehicle_id', tourId, values.fleetIds);
-
-  if (usesExperiencePricing) {
-    await supabase.from('tour_pricing_tiers').delete().eq('tour_id', tourId);
-  } else {
-    await replacePricing(supabase, tourId, values.pricingTiers);
-  }
-
-  revalidatePath('/portal/tours');
-  revalidateTourPublicPaths();
-  return { id: tourId };
 }
 
 async function pricingTiers(supabase: SupabaseClient, tourId: string): Promise<PricingTier[]> {
