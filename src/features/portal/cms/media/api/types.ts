@@ -23,4 +23,4 @@ export interface MediaListResult {
 }
 
 export const MEDIA_BUCKET = 'media';
-export const MEDIA_PAGE_SIZE = 24;
+export const MEDIA_PAGE_SIZE = 100;

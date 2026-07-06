@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { Icons } from '@/components/icons';
@@ -24,8 +24,8 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { deleteMediaAsset, updateMediaAsset, uploadMediaFile } from '../api/client';
-import { mediaKeys, mediaListQueryOptions } from '../api/queries';
-import { MEDIA_PAGE_SIZE, type MediaAsset } from '../api/types';
+import { mediaInfiniteListQueryOptions, mediaKeys } from '../api/queries';
+import type { MediaAsset } from '../api/types';
 import { CMS_SURFACE } from '../../shared/surface';
 
 interface MediaLibraryProps {
@@ -68,13 +68,15 @@ export function MediaLibrary({
   const queryClient = useQueryClient();
   const [searchInput, setSearchInput] = React.useState('');
   const search = useDebounced(searchInput);
-  const [limit, setLimit] = React.useState(MEDIA_PAGE_SIZE);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [isUploading, setUploading] = React.useState(false);
 
-  const { data, isLoading } = useQuery(mediaListQueryOptions({ search, page: 1, pageSize: limit }));
-  const items = data?.items ?? [];
-  const total = data?.total ?? 0;
+  const { data, isLoading, isFetchingNextPage, fetchNextPage, hasNextPage } = useInfiniteQuery(
+    mediaInfiniteListQueryOptions(search)
+  );
+  const items = data?.pages.flatMap((page) => page.items) ?? [];
+  const total = data?.pages[0]?.total ?? 0;
+  const showInitialLoading = isLoading && items.length === 0;
   const activeAsset = items.find((item) => item.id === activeId) ?? null;
 
   const selectable = Boolean(onSelectedChange);
@@ -153,7 +155,7 @@ export function MediaLibrary({
         >
           <input {...getInputProps()} />
 
-          {isLoading ? (
+          {showInitialLoading ? (
             <div className='text-muted-foreground flex h-40 items-center justify-center text-sm'>
               <Icons.spinner className='mr-2 size-4 animate-spin' />
               Loading media…
@@ -184,15 +186,16 @@ export function MediaLibrary({
 
         <div className={cn('flex items-center justify-between', scrollable && 'shrink-0')}>
           <p className='text-muted-foreground text-xs'>
-            {total} {total === 1 ? 'asset' : 'assets'}
+            Showing {items.length} of {total} {total === 1 ? 'asset' : 'assets'}
             {selectable && selectedIds.length > 0 ? ` · ${selectedIds.length} selected` : ''}
           </p>
-          {items.length < total ? (
+          {hasNextPage ? (
             <Button
               type='button'
               variant='ghost'
               size='sm'
-              onClick={() => setLimit((value) => value + MEDIA_PAGE_SIZE)}
+              isLoading={isFetchingNextPage}
+              onClick={() => void fetchNextPage()}
             >
               Load more
             </Button>
