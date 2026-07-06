@@ -174,16 +174,21 @@ export async function saveTour(input: {
 }): Promise<{ id: string }> {
   await assertCanWrite();
 
-  const gateSchema = input.status === 'published' ? tourFormSchema : tourDraftGateSchema;
-  const gate = gateSchema.safeParse(input.values);
-  if (!gate.success) {
-    throw new Error(saveValidationMessage(input.status, gate.error.issues[0]?.message));
-  }
+  let values: TourFormValues;
 
-  const values =
-    input.status === 'published'
-      ? (gate.data as TourFormValues)
-      : mergeTourDraftValues(input.values);
+  if (input.status === 'published') {
+    const parsed = tourFormSchema.safeParse(input.values);
+    if (!parsed.success) {
+      throw new Error(saveValidationMessage(input.status, parsed.error.issues[0]?.message));
+    }
+    values = parsed.data;
+  } else {
+    const gate = tourDraftGateSchema.safeParse(input.values);
+    if (!gate.success) {
+      throw new Error(saveValidationMessage(input.status, gate.error.issues[0]?.message));
+    }
+    values = mergeTourDraftValues(input.values);
+  }
 
   const supabase = await genericClient();
   const now = new Date().toISOString();
