@@ -17,6 +17,7 @@ import '../styles/globals.css';
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSiteSettings();
   const { analytics } = settings;
+  const favicon = settings.faviconUrl ?? BENROSO_FAVICON_PATH;
 
   return {
     title: {
@@ -26,8 +27,12 @@ export async function generateMetadata(): Promise<Metadata> {
     description:
       'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.',
     icons: {
-      icon: settings.faviconUrl ?? BENROSO_FAVICON_PATH,
-      apple: settings.faviconUrl ?? BENROSO_FAVICON_PATH
+      icon: [
+        { url: favicon, type: 'image/png', sizes: '512x512' },
+        { url: favicon, type: 'image/png', sizes: '32x32' }
+      ],
+      apple: [{ url: favicon, sizes: '180x180', type: 'image/png' }],
+      shortcut: favicon
     },
     openGraph: settings.ogImage ? { images: [settings.ogImage] } : undefined,
     verification:
