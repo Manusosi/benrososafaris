@@ -136,23 +136,13 @@ function RouteLegsInput({
     onChange(value.filter((_, i) => i !== index));
   }
 
-  const mapSrc = buildWizardMapSrc(value, startLocation, endLocation);
-
   return (
-    <div className='rounded-lg border bg-muted/20 p-4'>
-      <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div>
-          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-            Google route search
-          </p>
-          <h3 className='mt-1 text-sm font-semibold'>Map route legs</h3>
-          <p className='mt-1 text-sm text-muted-foreground'>
-            Enter each path as from where to where. The public map uses these directions first.
-          </p>
-        </div>
+    <div className='rounded-lg border p-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <h3 className='text-sm font-semibold'>Route legs</h3>
         <Button type='button' size='sm' variant='outline' onClick={addLeg}>
           <Icons.add className='mr-2 size-4' />
-          Add route leg
+          Add leg
         </Button>
       </div>
 
@@ -194,23 +184,10 @@ function RouteLegsInput({
           ))}
         </div>
       ) : (
-        <p className='mt-4 rounded-md border border-dashed bg-background p-3 text-sm text-muted-foreground'>
-          No custom route legs yet. The map preview will use the basic start and end locations.
+        <p className='mt-4 text-sm text-muted-foreground'>
+          Optional — add legs for multi-stop routes, or rely on start/end above.
         </p>
       )}
-
-      {mapSrc ? (
-        <div className='mt-4 overflow-hidden rounded-md border bg-background'>
-          <iframe
-            className='h-64 w-full'
-            loading='lazy'
-            referrerPolicy='no-referrer-when-downgrade'
-            sandbox='allow-forms allow-popups allow-scripts'
-            src={mapSrc}
-            title='Google route preview'
-          />
-        </div>
-      ) : null}
     </div>
   );
 }
@@ -226,17 +203,14 @@ function RoutePreview({
   const mapSrc = buildWizardMapSrc(values.routeLegs, values.startLocation, values.endLocation);
 
   return (
-    <div className='rounded-lg border bg-muted/25 p-4'>
-      <div className='flex flex-wrap items-start justify-between gap-3'>
-        <div>
-          <p className='text-xs font-semibold uppercase tracking-wide text-muted-foreground'>
-            Public route map preview
-          </p>
-          <h3 className='mt-1 text-sm font-semibold'>How this trip route will appear</h3>
-        </div>
-        <span className='rounded-md border bg-background px-2 py-1 text-xs text-muted-foreground'>
-          {stops.length || 0} route point{stops.length === 1 ? '' : 's'}
-        </span>
+    <div className='rounded-lg border bg-muted/20 p-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <h3 className='text-sm font-semibold'>Route preview</h3>
+        {stops.length ? (
+          <span className='text-xs text-muted-foreground'>
+            {stops.length} stop{stops.length === 1 ? '' : 's'}
+          </span>
+        ) : null}
       </div>
       {stops.length ? (
         <ol className='mt-4 grid gap-3 sm:grid-cols-2'>
@@ -256,14 +230,9 @@ function RoutePreview({
         </ol>
       ) : (
         <p className='mt-3 text-sm text-muted-foreground'>
-          Add the start point, destination links, itinerary day titles, and end point to build the
-          public trip map.
+          Fill in start/end locations or route legs to see the map.
         </p>
       )}
-      <p className='mt-3 text-xs text-muted-foreground'>
-        The public trip page uses this route preview beside the itinerary and cost tables, so keep
-        the start/end locations human-readable and make day titles location-aware.
-      </p>
       {mapSrc ? (
         <div className='mt-4 overflow-hidden rounded-md border bg-background'>
           <iframe
@@ -486,6 +455,8 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
 
   const autoSlugRef = React.useRef(!id);
   const autoTitleRef = React.useRef(!id);
+  const autoDaysRef = React.useRef(!id);
+  const autoNightsRef = React.useRef(!id);
 
   const {
     currentStep,
@@ -566,6 +537,13 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
                 onChange: ({ value }) => {
                   if (autoSlugRef.current) form.setFieldValue('slug', slugify(value));
                   if (autoTitleRef.current) form.setFieldValue('seoTitle', value);
+                  const parsedDays = parseDaysFromTitle(value);
+                  if (parsedDays !== null) {
+                    if (autoDaysRef.current) form.setFieldValue('days', String(parsedDays));
+                    if (autoNightsRef.current) {
+                      form.setFieldValue('nights', String(Math.max(0, parsedDays - 1)));
+                    }
+                  }
                 }
               }}
             >
@@ -590,7 +568,6 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
                   label='URL slug'
                   required
                   placeholder='auto-generated-from-title'
-                  description='Auto-generated from the title. Edit only if you need a custom URL.'
                 />
               )}
             </form.AppField>
@@ -605,10 +582,31 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
               )}
             </form.AppField>
             <div className='grid gap-4 sm:grid-cols-3'>
-              <form.AppField name='days'>
+              <form.AppField
+                name='days'
+                listeners={{
+                  onChange: ({ value }) => {
+                    const parsed = parseDaysFromTitle(form.getFieldValue('title'));
+                    if (parsed === null ? value !== '' : value !== String(parsed)) {
+                      autoDaysRef.current = false;
+                    }
+                  }
+                }}
+              >
                 {(field) => <field.TextField label='Days' placeholder='7' inputMode='numeric' />}
               </form.AppField>
-              <form.AppField name='nights'>
+              <form.AppField
+                name='nights'
+                listeners={{
+                  onChange: ({ value }) => {
+                    const parsed = parseDaysFromTitle(form.getFieldValue('title'));
+                    const expected = parsed !== null ? String(Math.max(0, parsed - 1)) : '';
+                    if (expected ? value !== expected : value !== '') {
+                      autoNightsRef.current = false;
+                    }
+                  }
+                }}
+              >
                 {(field) => <field.TextField label='Nights' placeholder='6' inputMode='numeric' />}
               </form.AppField>
               <form.AppField name='priceFrom'>
@@ -623,22 +621,10 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
             </div>
             <div className='grid gap-4 sm:grid-cols-2'>
               <form.AppField name='startLocation'>
-                {(field) => (
-                  <field.TextField
-                    label='Starts in'
-                    placeholder='e.g. Nairobi'
-                    description='Shown on the trip sidebar and as the first route-map point.'
-                  />
-                )}
+                {(field) => <field.TextField label='Starts in' placeholder='e.g. Nairobi' />}
               </form.AppField>
               <form.AppField name='endLocation'>
-                {(field) => (
-                  <field.TextField
-                    label='Ends in'
-                    placeholder='e.g. Nairobi'
-                    description='Shown on the trip sidebar and as the final route-map point.'
-                  />
-                )}
+                {(field) => <field.TextField label='Ends in' placeholder='e.g. Nairobi' />}
               </form.AppField>
             </div>
             <RouteLegsInput
@@ -653,17 +639,17 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
 
         {currentStep === 2 ? (
           <div className='grid gap-4'>
-            <RoutePreview destinations={options.destinations} values={values} />
+            <ItineraryInput
+              value={values.itineraryDays}
+              onChange={(next) => form.setFieldValue('itineraryDays', next)}
+            />
             <RouteLegsInput
               endLocation={values.endLocation}
               startLocation={values.startLocation}
               value={values.routeLegs}
               onChange={(next) => form.setFieldValue('routeLegs', next)}
             />
-            <ItineraryInput
-              value={values.itineraryDays}
-              onChange={(next) => form.setFieldValue('itineraryDays', next)}
-            />
+            <RoutePreview destinations={options.destinations} values={values} />
           </div>
         ) : null}
 
@@ -681,9 +667,6 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
                 searchPlaceholder='Search parks…'
                 emptyText='No national parks yet. Add them under National Parks.'
               />
-              <p className='text-muted-foreground text-xs'>
-                Selected parks list this tour under “Safaris to this park” on each park page.
-              </p>
             </div>
             <div className='grid gap-2'>
               <Label htmlFor='tour-destinations'>Destinations</Label>
@@ -854,6 +837,13 @@ export function TourWizard({ id, initialValues, options }: TourWizardProps) {
       </WizardShell>
     </form.AppForm>
   );
+}
+
+function parseDaysFromTitle(title: string): number | null {
+  const match = title.match(/^(\d+)\s*[- ]?\s*days?\b/i);
+  if (!match) return null;
+  const days = Number.parseInt(match[1], 10);
+  return days > 0 ? days : null;
 }
 
 function countLabels(ids: string[], options: RelationOption[]): string {
