@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { requireSuperAdmin } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
@@ -40,6 +40,7 @@ async function persist(patch: SiteSettingsUpdate): Promise<void> {
   }
 
   // Settings feed the public layout, footer, and metadata across every route.
+  revalidateTag('site-settings', 'max');
   revalidatePath('/', 'layout');
   revalidatePath('/portal/settings');
 }

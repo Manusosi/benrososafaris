@@ -4,9 +4,9 @@ import { fontVariables } from '@/components/themes/font.config';
 import { DEFAULT_THEME, THEMES } from '@/components/themes/theme.config';
 import { MetaThemeColorSync } from '@/components/themes/meta-theme-color-sync';
 import ThemeProvider from '@/components/themes/theme-provider';
-import { BENROSO_FAVICON_PATH } from '@/config/benroso';
 import { cn } from '@/lib/utils';
 import { getPublicSiteSettings } from '@/lib/public/site-data';
+import { buildFaviconMetadataIcons } from '@/lib/site-favicon';
 import { getTheme } from '@teispace/next-themes/server';
 import type { Metadata, Viewport } from 'next';
 import { cookies } from 'next/headers';
@@ -17,7 +17,6 @@ import '../styles/globals.css';
 export async function generateMetadata(): Promise<Metadata> {
   const settings = await getPublicSiteSettings();
   const { analytics } = settings;
-  const favicon = settings.faviconUrl ?? BENROSO_FAVICON_PATH;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.com';
 
   return {
@@ -28,14 +27,7 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.',
-    icons: {
-      icon: [
-        { url: favicon, type: 'image/png', sizes: '512x512' },
-        { url: favicon, type: 'image/png', sizes: '32x32' }
-      ],
-      apple: [{ url: favicon, sizes: '180x180', type: 'image/png' }],
-      shortcut: favicon
-    },
+    icons: buildFaviconMetadataIcons(settings.faviconUrl),
     openGraph: settings.ogImage ? { images: [settings.ogImage] } : undefined,
     verification:
       analytics.googleSiteVerification || analytics.bingSiteVerification
