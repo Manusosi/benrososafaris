@@ -201,30 +201,34 @@ function LocationMapPanel({ mapQuery }: { mapQuery: string }) {
   const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
 
   return (
-    <div className='overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white shadow-sm'>
-      <div className='border-b border-[var(--benroso-line)] px-4 py-3'>
-        <h2 className='benroso-heading font-display text-lg'>Location</h2>
-        <p className='mt-1 text-sm text-[var(--benroso-muted)]'>{mapQuery}</p>
-      </div>
-      <iframe
-        allowFullScreen
-        className='h-44 w-full border-0'
-        loading='lazy'
-        referrerPolicy='no-referrer-when-downgrade'
-        sandbox='allow-scripts allow-same-origin allow-popups'
-        src={mapSrc}
-        title='Property location map'
-      />
-      <div className='border-t border-[var(--benroso-line)] px-4 py-3'>
-        <a
-          className='inline-flex items-center gap-1.5 text-sm font-medium text-[var(--benroso-primary)] hover:underline'
-          href={mapsUrl}
-          rel='noopener noreferrer'
-          target='_blank'
-        >
-          Open in Google Maps
-          <Icons.externalLink className='size-3.5' />
-        </a>
+    <div className='benroso-contact-advantages-block'>
+      <h2 className='benroso-contact-sidebar-heading benroso-contact-sidebar-heading--sm'>
+        Location
+      </h2>
+      <div className='benroso-contact-credentials-box overflow-hidden !p-0'>
+        <div className='border-b border-[rgb(60_81_66/8%)] px-4 py-3'>
+          <p className='text-sm text-[var(--benroso-muted)]'>{mapQuery}</p>
+        </div>
+        <iframe
+          allowFullScreen
+          className='h-44 w-full border-0'
+          loading='lazy'
+          referrerPolicy='no-referrer-when-downgrade'
+          sandbox='allow-scripts allow-same-origin allow-popups'
+          src={mapSrc}
+          title='Property location map'
+        />
+        <div className='border-t border-[rgb(60_81_66/8%)] px-4 py-3'>
+          <a
+            className='inline-flex items-center gap-1.5 text-sm font-medium text-[var(--benroso-primary)] hover:underline'
+            href={mapsUrl}
+            rel='noopener noreferrer'
+            target='_blank'
+          >
+            Open in Google Maps
+            <Icons.externalLink className='size-3.5' />
+          </a>
+        </div>
       </div>
     </div>
   );

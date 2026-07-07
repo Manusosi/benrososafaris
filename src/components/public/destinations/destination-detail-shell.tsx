@@ -17,21 +17,25 @@ function DestinationQuickFacts({ facts }: DestinationQuickFactsProps) {
   if (!facts.length) return null;
 
   return (
-    <div className='benroso-contact-credentials-box'>
-      <h2 className='benroso-heading font-display text-lg'>Quick facts</h2>
-      <dl className='mt-4 space-y-3'>
-        {facts.map((fact) => (
-          <div
-            className='flex items-start justify-between gap-3 border-b border-[var(--benroso-line)] pb-3 last:border-b-0 last:pb-0'
-            key={fact.label}
-          >
-            <dt className='text-sm text-[var(--benroso-muted)]'>{fact.label}</dt>
-            <dd className='text-right text-sm font-semibold text-[var(--benroso-ink)]'>
-              {fact.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+    <div className='benroso-contact-advantages-block'>
+      <h2 className='benroso-contact-sidebar-heading benroso-contact-sidebar-heading--sm'>
+        Quick facts
+      </h2>
+      <div className='benroso-contact-credentials-box'>
+        <dl className='space-y-3'>
+          {facts.map((fact) => (
+            <div
+              className='flex items-start justify-between gap-3 border-b border-[rgb(60_81_66/8%)] pb-3 last:border-b-0 last:pb-0'
+              key={fact.label}
+            >
+              <dt className='text-sm text-[var(--benroso-muted)]'>{fact.label}</dt>
+              <dd className='text-right text-sm font-semibold text-[var(--benroso-ink)]'>
+                {fact.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </div>
     </div>
   );
 }

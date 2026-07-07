@@ -600,6 +600,277 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   padding: 1rem 1.25rem;
 }
 
+/* Reusable soft panel — matches sidebar advantages card (no hard borders/shadows) */
+.public-site .benroso-soft-panel {
+  background-color: var(--benroso-contact-cream);
+  border: 0;
+  border-radius: var(--benroso-contact-field-radius);
+  box-shadow: none;
+}
+
+.public-site .benroso-inclusion-panel {
+  border: 0;
+  border-radius: var(--benroso-radius);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.public-site .benroso-inclusion-panel--included {
+  background-color: #f6f9f6;
+}
+
+.public-site .benroso-inclusion-panel--excluded {
+  background-color: #faf8f6;
+}
+
+.public-site .benroso-inclusion-panel__title {
+  border-bottom: 1px solid rgb(60 81 66 / 8%);
+  color: var(--benroso-heading);
+  font-family: var(--font-playfair-display), Georgia, 'Times New Roman', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+  padding: 1rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-inclusion-panel__title {
+    font-size: 1.375rem;
+    padding: 1.125rem 1.375rem;
+  }
+}
+
+.public-site .benroso-inclusion-panel__list {
+  margin: 0;
+  padding: 0 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-inclusion-panel__list {
+    padding: 0 1.375rem;
+  }
+}
+
+.public-site .benroso-inclusion-panel__item {
+  border-bottom: 1px solid rgb(60 81 66 / 7%);
+  color: var(--benroso-muted);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 1rem;
+  line-height: 1.5;
+  padding: 1rem 0;
+}
+
+.public-site .benroso-inclusion-panel__item:last-child {
+  border-bottom: 0;
+}
+
+.public-site .benroso-inclusion-panel__empty {
+  color: var(--benroso-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+/* Pricing tier cards — soft shell with inset table */
+.public-site .benroso-pricing-tier {
+  background-color: var(--benroso-contact-cream);
+  border: 0;
+  border-radius: var(--benroso-radius);
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.public-site .benroso-pricing-tier__intro {
+  border-bottom: 1px solid rgb(60 81 66 / 8%);
+  padding: 1rem 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-pricing-tier__intro {
+    padding: 1.125rem 1.375rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__table-shell {
+  background-color: #fff;
+  border-radius: var(--benroso-radius);
+  margin: 0 0.875rem 0.875rem;
+  overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-pricing-tier__table-shell {
+    margin: 0 1rem 1rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__table {
+  table-layout: fixed;
+  width: 100%;
+}
+
+.public-site .benroso-pricing-tier__head th {
+  background-color: var(--pricing-head-bg, var(--benroso-primary));
+  color: var(--pricing-head-fg, #fff);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  padding: 0.7rem 0.45rem;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-pricing-tier__head th {
+    font-size: 0.6875rem;
+    padding: 0.8rem 0.55rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__head th:first-child {
+  padding-left: 0.875rem;
+  text-align: left;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-pricing-tier__head th:first-child {
+    padding-left: 1rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__head th:not(:first-child) {
+  text-align: center;
+}
+
+.public-site .benroso-pricing-tier__row {
+  border-bottom: 1px solid rgb(60 81 66 / 8%);
+}
+
+.public-site .benroso-pricing-tier__row:last-child {
+  border-bottom: 0;
+}
+
+.public-site .benroso-pricing-tier__row:nth-child(even) {
+  background-color: rgb(248 245 239 / 55%);
+}
+
+.public-site .benroso-pricing-tier__row:hover {
+  background-color: rgb(248 245 239 / 90%);
+}
+
+.public-site .benroso-pricing-tier__season {
+  color: var(--benroso-ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  padding: 0.875rem 0.75rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-pricing-tier__season {
+    font-size: 0.875rem;
+    padding: 1rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__price {
+  padding: 0.875rem 0.4rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-pricing-tier__price {
+    padding: 1rem 0.5rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__action {
+  padding: 0.875rem 0.4rem;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.public-site .benroso-pricing-tier--table-only {
+  padding-top: 0.875rem;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-pricing-tier--table-only {
+    padding-top: 1rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__notes {
+  border-top: 1px solid rgb(60 81 66 / 8%);
+  color: var(--benroso-muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+  padding: 0.875rem 1.25rem 1rem;
+}
+
+.public-site .benroso-itinerary-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.public-site .benroso-itinerary-timeline__track {
+  bottom: 2.75rem;
+  left: 1.5rem;
+  pointer-events: none;
+  position: absolute;
+  top: 1.35rem;
+  transform: translateX(-50%);
+  width: 2px;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-itinerary-timeline__track {
+    left: 1.625rem;
+  }
+}
+
+.public-site .benroso-itinerary-timeline__track-bg {
+  background-color: var(--benroso-line);
+  border-radius: 1px;
+  inset: 0;
+  position: absolute;
+}
+
+.public-site .benroso-itinerary-timeline__track-fill {
+  background-color: var(--benroso-primary);
+  border-radius: 1px;
+  height: 100%;
+  left: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform-origin: top center;
+  will-change: transform;
+}
+
+.public-site .benroso-itinerary-timeline__item {
+  padding-top: 0.25rem;
+}
+
+.public-site .benroso-itinerary-timeline__item:not(:last-child) {
+  padding-bottom: 0.25rem;
+}
+
+@media (min-width: 768px) {
+  .public-site .benroso-inclusion-panel__empty {
+    padding: 1.125rem 1.375rem 1.375rem;
+  }
+}
+
 @media (min-width: 768px) {
   .public-site .benroso-contact-credentials-box {
     padding: 1.125rem 1.375rem;
@@ -941,6 +1212,35 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
 
 .public-site .benroso-travel-date-carousel::-webkit-scrollbar {
   display: none;
+}
+
+.public-site .benroso-thin-scrollbar {
+  scrollbar-color: rgb(60 81 66 / 18%) transparent;
+  scrollbar-width: thin;
+}
+
+.public-site .benroso-thin-scrollbar::-webkit-scrollbar {
+  height: 4px;
+  width: 4px;
+}
+
+.public-site .benroso-thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.public-site .benroso-thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgb(60 81 66 / 16%);
+  border-radius: 999px;
+}
+
+.public-site .benroso-thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgb(60 81 66 / 28%);
+}
+
+.public-site .benroso-thin-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  height: 0;
+  width: 0;
 }
 
 .public-site .benroso-travel-date-card {

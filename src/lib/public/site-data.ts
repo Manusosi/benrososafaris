@@ -88,11 +88,22 @@ function parseItineraryDays(value: unknown): PublicTourItineraryDay[] {
   return value.flatMap((item, index) => {
     if (!item || typeof item !== 'object') return [];
     const record = item as Record<string, unknown>;
+    const accommodationRaw = record.accommodationOptions ?? record.accommodation_options;
     return [
       {
         day: typeof record.day === 'number' ? record.day : index + 1,
         title: typeof record.title === 'string' ? record.title : `Day ${index + 1}`,
-        description: typeof record.description === 'string' ? record.description : ''
+        description: typeof record.description === 'string' ? record.description : '',
+        imageId: typeof record.imageId === 'string' ? record.imageId : '',
+        imageUrl: null,
+        imageAlt: null,
+        accommodationOptions: parseStringArray(accommodationRaw),
+        mealPlan:
+          typeof record.mealPlan === 'string'
+            ? record.mealPlan
+            : typeof record.meal_plan === 'string'
+              ? record.meal_plan
+              : ''
       }
     ];
   });
@@ -275,9 +286,12 @@ async function fetchHeroSlides(): Promise<HeroSlide[]> {
   }
 }
 
+/** Published destinations for nav mega-menu, listings, and filters — fetch all, not a teaser subset. */
+export const PUBLIC_DESTINATIONS_FETCH_LIMIT = 250;
+
 export async function getPublicDestinations(
   locale: string,
-  limit = 12
+  limit = PUBLIC_DESTINATIONS_FETCH_LIMIT
 ): Promise<PublicDestination[]> {
   return unstable_cache(
     () => fetchPublicDestinations(locale, limit),
@@ -289,7 +303,10 @@ export async function getPublicDestinations(
   )();
 }
 
-async function fetchPublicDestinations(locale: string, limit = 12): Promise<PublicDestination[]> {
+async function fetchPublicDestinations(
+  locale: string,
+  limit = PUBLIC_DESTINATIONS_FETCH_LIMIT
+): Promise<PublicDestination[]> {
   const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('destination_translations')
@@ -1273,10 +1290,20 @@ export async function getPublicTourDetail(
   if (!summary || !tour) return null;
 
   const galleryIds = parseStringArray(tour.gallery);
-  const mediaById = await resolveMediaByIds(galleryIds);
+  const itineraryDaysRaw = parseItineraryDays(tour.itinerary_days);
+  const itineraryImageIds = itineraryDaysRaw.map((day) => day.imageId).filter(Boolean);
+  const mediaById = await resolveMediaByIds([...new Set([...galleryIds, ...itineraryImageIds])]);
   const gallery = galleryIds.flatMap((id) => {
     const asset = mediaById.get(id);
     return asset?.url ? [asset] : [];
+  });
+  const itineraryDays = itineraryDaysRaw.map((day) => {
+    const asset = day.imageId ? mediaById.get(day.imageId) : null;
+    return {
+      ...day,
+      imageUrl: asset?.url ?? null,
+      imageAlt: asset?.alt ?? null
+    };
   });
 
   return {
@@ -1289,7 +1316,7 @@ export async function getPublicTourDetail(
     gallery,
     importantNotice: tour.important_notice ?? null,
     inclusions: parseStringArray(tour.inclusions),
-    itineraryDays: parseItineraryDays(tour.itinerary_days),
+    itineraryDays,
     routeLegs: parseRouteLegs(tour.route_waypoints),
     startLocation: tour.start_location ?? null
   };

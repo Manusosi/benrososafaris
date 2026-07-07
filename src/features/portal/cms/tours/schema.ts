@@ -14,10 +14,41 @@ const faqItemSchema = z.object({
 const itineraryDaySchema = z.object({
   day: z.number(),
   title: z.string(),
-  description: z.string()
+  description: z.string(),
+  /** media_assets id — public page falls back to gallery when empty */
+  imageId: z.string(),
+  accommodationOptions: z.array(z.string()),
+  mealPlan: z.string()
 });
 
 export type ItineraryDay = z.infer<typeof itineraryDaySchema>;
+
+/** Normalizes stored jsonb itinerary rows for the wizard form. */
+export function normalizeItineraryDays(value: unknown): ItineraryDay[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item, index) => {
+    if (!item || typeof item !== 'object') return [];
+    const record = item as Record<string, unknown>;
+    const accommodationRaw = record.accommodationOptions ?? record.accommodation_options;
+    return [
+      {
+        day: typeof record.day === 'number' ? record.day : index + 1,
+        title: typeof record.title === 'string' ? record.title : '',
+        description: typeof record.description === 'string' ? record.description : '',
+        imageId: typeof record.imageId === 'string' ? record.imageId : '',
+        accommodationOptions: Array.isArray(accommodationRaw)
+          ? accommodationRaw.filter((entry): entry is string => typeof entry === 'string')
+          : [],
+        mealPlan:
+          typeof record.mealPlan === 'string'
+            ? record.mealPlan
+            : typeof record.meal_plan === 'string'
+              ? record.meal_plan
+              : ''
+      }
+    ];
+  });
+}
 
 const routeLegSchema = z.object({
   from: z.string(),

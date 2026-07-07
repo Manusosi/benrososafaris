@@ -364,7 +364,7 @@ export function AccommodationInquiryPanel({
 
   return (
     <div className='space-y-4'>
-      <div className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm'>
+      <div className='benroso-contact-credentials-box'>
         {price ? (
           <div>
             <p className='text-xs font-semibold uppercase tracking-wide text-[var(--benroso-muted)]'>
@@ -403,10 +403,7 @@ export function AccommodationInquiryPanel({
       </div>
 
       {showForm ? (
-        <div
-          className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm'
-          ref={formRef}
-        >
+        <div className='benroso-contact-credentials-box' ref={formRef}>
           <h2 className='benroso-heading font-display text-lg'>Check availability</h2>
           <p className='mt-1 text-sm text-[var(--benroso-muted)]'>
             Enquiring about{' '}

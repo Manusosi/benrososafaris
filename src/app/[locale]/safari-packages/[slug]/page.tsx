@@ -164,27 +164,29 @@ export default async function SafariPackageDetailPage({ params }: SafariPackageD
               ) : null}
             </article>
 
-            <aside className='h-fit rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-6 shadow-sm lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
-              <p className='text-xs font-bold uppercase tracking-[0.14em] text-[var(--benroso-muted)]'>
-                Package from
-              </p>
-              <strong className='mt-2 block font-display text-3xl text-[var(--benroso-brown)]'>
-                {packagePrice ?? 'Custom quote'}
-              </strong>
-              <p className='benroso-body mt-4 text-sm leading-6'>
-                Request the exact quote for your dates, preferred comfort level, and number of
-                travelers.
-              </p>
-              <BenrosoButtonGroup className='mt-5'>
-                <BenrosoButton href={localePath(locale, '/contact')}>
-                  Enquire About Package
-                </BenrosoButton>
-                {linkedTour ? (
-                  <BenrosoButton href={linkedTour.href} variant='accent-outline'>
-                    View Full Trip
+            <aside className='h-fit lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
+              <div className='benroso-contact-credentials-box'>
+                <p className='text-xs font-bold uppercase tracking-[0.14em] text-[var(--benroso-muted)]'>
+                  Package from
+                </p>
+                <strong className='mt-2 block font-display text-3xl text-[var(--benroso-brown)]'>
+                  {packagePrice ?? 'Custom quote'}
+                </strong>
+                <p className='benroso-body mt-4 text-sm leading-6'>
+                  Request the exact quote for your dates, preferred comfort level, and number of
+                  travelers.
+                </p>
+                <BenrosoButtonGroup className='mt-5'>
+                  <BenrosoButton href={localePath(locale, '/contact')}>
+                    Enquire About Package
                   </BenrosoButton>
-                ) : null}
-              </BenrosoButtonGroup>
+                  {linkedTour ? (
+                    <BenrosoButton href={linkedTour.href} variant='accent-outline'>
+                      View Full Trip
+                    </BenrosoButton>
+                  ) : null}
+                </BenrosoButtonGroup>
+              </div>
             </aside>
           </div>
         </div>

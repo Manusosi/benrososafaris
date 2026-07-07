@@ -67,14 +67,44 @@ function ItineraryInput({
   value: ItineraryDay[];
   onChange: (next: ItineraryDay[]) => void;
 }) {
+  function emptyDay(dayNumber: number): ItineraryDay {
+    return {
+      day: dayNumber,
+      title: '',
+      description: '',
+      imageId: '',
+      accommodationOptions: [],
+      mealPlan: ''
+    };
+  }
+
   function addDay() {
-    onChange([...value, { day: value.length + 1, title: '', description: '' }]);
+    onChange([...value, emptyDay(value.length + 1)]);
   }
   function updateDay(index: number, patch: Partial<ItineraryDay>) {
     onChange(value.map((day, i) => (i === index ? { ...day, ...patch } : day)));
   }
   function removeDay(index: number) {
     onChange(value.filter((_, i) => i !== index).map((day, i) => ({ ...day, day: i + 1 })));
+  }
+
+  function updateAccommodationOption(dayIndex: number, optionIndex: number, nextValue: string) {
+    const options = value[dayIndex]?.accommodationOptions ?? [];
+    updateDay(dayIndex, {
+      accommodationOptions: options.map((option, i) => (i === optionIndex ? nextValue : option))
+    });
+  }
+
+  function addAccommodationOption(dayIndex: number) {
+    const options = value[dayIndex]?.accommodationOptions ?? [];
+    updateDay(dayIndex, { accommodationOptions: [...options, ''] });
+  }
+
+  function removeAccommodationOption(dayIndex: number, optionIndex: number) {
+    const options = value[dayIndex]?.accommodationOptions ?? [];
+    updateDay(dayIndex, {
+      accommodationOptions: options.filter((_, i) => i !== optionIndex)
+    });
   }
 
   return (
@@ -87,18 +117,96 @@ function ItineraryInput({
               <Icons.trash className='size-4' />
             </Button>
           </div>
-          <div className='grid gap-3'>
+          <div className='grid gap-4'>
             <Input
               value={day.title}
               onChange={(event) => updateDay(index, { title: event.target.value })}
               placeholder='Day title — e.g. Nairobi to Masai Mara'
             />
-            <Textarea
-              value={day.description}
-              onChange={(event) => updateDay(index, { description: event.target.value })}
-              placeholder='What happens on this day…'
-              rows={3}
+            <div className='grid gap-2'>
+              <Label htmlFor={`itinerary-description-${index}`}>Day description</Label>
+              <Textarea
+                id={`itinerary-description-${index}`}
+                value={day.description}
+                onChange={(event) => updateDay(index, { description: event.target.value })}
+                placeholder={
+                  'Write paragraphs or bullet lists. Start lines with "- " for bullet points.'
+                }
+                rows={6}
+              />
+              <p className='text-muted-foreground text-xs'>
+                Use blank lines for paragraphs, or prefix lines with &quot;- &quot; for activity
+                lists.
+              </p>
+            </div>
+
+            <MediaGalleryField
+              label='Day image'
+              description='Optional. The public page uses a gallery image when this is empty.'
+              multiple={false}
+              value={day.imageId ? [day.imageId] : []}
+              onChange={(ids) => updateDay(index, { imageId: ids[0] ?? '' })}
             />
+
+            <div className='grid gap-3 rounded-md border bg-muted/20 p-4'>
+              <div className='flex flex-wrap items-center justify-between gap-3'>
+                <div>
+                  <p className='text-sm font-medium'>Accommodation options</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Shown after the description as Option 1, Option 2, and so on.
+                  </p>
+                </div>
+                <Button
+                  type='button'
+                  size='sm'
+                  variant='outline'
+                  onClick={() => addAccommodationOption(index)}
+                >
+                  <Icons.add className='mr-2 size-4' />
+                  Add option
+                </Button>
+              </div>
+              {day.accommodationOptions.length ? (
+                <div className='grid gap-2'>
+                  {day.accommodationOptions.map((option, optionIndex) => (
+                    <div className='flex items-center gap-2' key={optionIndex}>
+                      <span className='text-muted-foreground w-20 shrink-0 text-xs font-semibold uppercase'>
+                        Option {optionIndex + 1}
+                      </span>
+                      <Input
+                        value={option}
+                        onChange={(event) =>
+                          updateAccommodationOption(index, optionIndex, event.target.value)
+                        }
+                        placeholder='e.g. Sentrim Amboseli Camp'
+                      />
+                      <Button
+                        type='button'
+                        size='icon'
+                        variant='ghost'
+                        onClick={() => removeAccommodationOption(index, optionIndex)}
+                      >
+                        <Icons.trash className='size-4' />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className='text-muted-foreground text-sm'>
+                  No lodge options yet. Add one or more accommodation choices for this night.
+                </p>
+              )}
+            </div>
+
+            <div className='grid gap-2'>
+              <Label htmlFor={`itinerary-meal-plan-${index}`}>Meal plan</Label>
+              <Input
+                id={`itinerary-meal-plan-${index}`}
+                value={day.mealPlan}
+                onChange={(event) => updateDay(index, { mealPlan: event.target.value })}
+                placeholder='e.g. Breakfast, Picnic Lunch & Dinner'
+              />
+            </div>
           </div>
         </div>
       ))}

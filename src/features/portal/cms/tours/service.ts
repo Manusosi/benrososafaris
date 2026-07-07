@@ -30,6 +30,7 @@ import {
   tourFormSchema,
   tourDraftGateSchema,
   mergeTourDraftValues,
+  normalizeItineraryDays,
   type PricingTier,
   type TourFormValues
 } from './schema';
@@ -468,7 +469,7 @@ export async function getTour(id: string): Promise<TourRecord | null> {
     endLocation: base.end_location ?? '',
     routeLegs: Array.isArray(base.route_waypoints) ? base.route_waypoints : [],
     importantNotice: base.important_notice ?? '',
-    itineraryDays: Array.isArray(base.itinerary_days) ? base.itinerary_days : [],
+    itineraryDays: normalizeItineraryDays(base.itinerary_days),
     inclusions: Array.isArray(base.inclusions) ? (base.inclusions as string[]) : [],
     exclusions: Array.isArray(base.exclusions) ? (base.exclusions as string[]) : [],
     pricingTiers: pricing,

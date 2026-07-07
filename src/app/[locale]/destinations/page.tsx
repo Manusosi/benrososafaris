@@ -44,7 +44,7 @@ export default async function DestinationsPage({ params, searchParams }: Destina
   const activeCountry = countryParam?.toLowerCase() ?? null;
 
   const [destinations, pageHero] = await Promise.all([
-    getPublicDestinations(locale, 60),
+    getPublicDestinations(locale),
     getPageHero('destinations')
   ]);
   const hero = BENROSO_PUBLIC_HERO_IMAGES.destinations;

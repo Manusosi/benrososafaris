@@ -167,6 +167,11 @@ export type PublicTourItineraryDay = {
   day: number;
   title: string;
   description: string;
+  imageId: string;
+  imageUrl: string | null;
+  imageAlt: string | null;
+  accommodationOptions: string[];
+  mealPlan: string;
 };
 
 export type PublicTourRouteLeg = {

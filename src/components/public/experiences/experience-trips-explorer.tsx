@@ -71,7 +71,7 @@ export function ExperienceTripsExplorer({
       </div>
 
       <div className='mt-12 grid gap-8 border-t border-[var(--benroso-line)] pt-8 lg:grid-cols-[240px_minmax(0,1fr)]'>
-        <aside className='h-fit rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white p-5 lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
+        <aside className='benroso-contact-credentials-box h-fit lg:sticky lg:top-[calc(var(--benroso-header-h)+5.25rem)]'>
           <div className='space-y-6'>
             <FilterGroup label='Duration'>
               {durationOptions.map((option) => (

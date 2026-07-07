@@ -68,16 +68,16 @@ function tierTheme(key: PublicExperiencePackageLevel['key']) {
     return {
       Icon: Icons.package,
       active: 'border-emerald-600 bg-emerald-600 text-white',
-      inactive: 'border-emerald-600/25 text-emerald-700 hover:border-emerald-600',
-      table: 'bg-emerald-700 text-white'
+      headBg: '#047857',
+      inactive: 'border-emerald-600/25 text-emerald-700 hover:border-emerald-600'
     };
   }
   if (key === 'budget') {
     return {
       Icon: Icons.badgeCheck,
       active: 'border-[#5f8a3d] bg-[#5f8a3d] text-white',
-      inactive: 'border-[#5f8a3d]/25 text-[#5f8a3d] hover:border-[#5f8a3d]',
-      table: 'bg-[#5f8a3d] text-white'
+      headBg: '#5f8a3d',
+      inactive: 'border-[#5f8a3d]/25 text-[#5f8a3d] hover:border-[#5f8a3d]'
     };
   }
   if (key === 'luxury') {
@@ -85,26 +85,27 @@ function tierTheme(key: PublicExperiencePackageLevel['key']) {
       Icon: Icons.pro,
       active:
         'border-[var(--benroso-gold)] bg-[var(--benroso-gold)] text-[var(--benroso-primary-dark)]',
+      headBg: 'var(--benroso-gold)',
+      headFg: 'var(--benroso-primary-dark)',
       inactive:
-        'border-[var(--benroso-gold)]/40 text-[var(--benroso-brown)] hover:border-[var(--benroso-gold)]',
-      table: 'bg-[var(--benroso-gold)] text-[var(--benroso-primary-dark)]'
+        'border-[var(--benroso-gold)]/40 text-[var(--benroso-brown)] hover:border-[var(--benroso-gold)]'
     };
   }
   if (key === 'high_end') {
     return {
       Icon: Icons.sparkles,
       active: 'border-[var(--benroso-primary-dark)] bg-[var(--benroso-primary-dark)] text-white',
+      headBg: 'var(--benroso-primary-dark)',
       inactive:
-        'border-[var(--benroso-primary-dark)]/25 text-[var(--benroso-primary-dark)] hover:border-[var(--benroso-primary-dark)]',
-      table: 'bg-[var(--benroso-primary-dark)] text-white'
+        'border-[var(--benroso-primary-dark)]/25 text-[var(--benroso-primary-dark)] hover:border-[var(--benroso-primary-dark)]'
     };
   }
   return {
     Icon: Icons.exclusive,
     active: 'border-[var(--benroso-primary)] bg-[var(--benroso-primary)] text-white',
+    headBg: 'var(--benroso-primary)',
     inactive:
-      'border-[var(--benroso-primary)]/25 text-[var(--benroso-primary)] hover:border-[var(--benroso-primary)]',
-    table: 'bg-[var(--benroso-primary)] text-white'
+      'border-[var(--benroso-primary)]/25 text-[var(--benroso-primary)] hover:border-[var(--benroso-primary)]'
   };
 }
 
@@ -117,27 +118,24 @@ function formatPriceValue(value: number) {
 
 function PriceCell({ currency, price }: { currency: string; price: number | null | undefined }) {
   if (!price) {
-    return <span className='text-sm text-[var(--benroso-muted)]'>On request</span>;
+    return <span className='text-xs text-[var(--benroso-muted)]'>On request</span>;
   }
 
   return (
-    <span className='inline-flex min-w-[104px] flex-col leading-none'>
-      <span>
-        <span className='mr-1 align-baseline text-[11px] font-medium uppercase tracking-[0.08em] text-[var(--benroso-muted)]'>
-          {currency || 'USD'}
-        </span>
-        <strong className='font-display text-xl font-bold text-[var(--benroso-heading)]'>
-          {formatPriceValue(price)}
-        </strong>
+    <span className='inline-flex flex-col items-center leading-tight'>
+      <strong className='font-display text-base font-bold text-[var(--benroso-heading)] sm:text-[1.05rem]'>
+        {currency || 'USD'} {formatPriceValue(price)}
+      </strong>
+      <span className='mt-1 text-[10px] font-normal text-[var(--benroso-muted)] sm:text-[11px]'>
+        per person
       </span>
-      <span className='mt-2 text-xs font-normal text-[var(--benroso-muted)]'>per person</span>
     </span>
   );
 }
 
 function EmptyPackageGuide({ locale }: { locale: string }) {
   return (
-    <div className='rounded-[var(--benroso-radius)] border border-dashed border-[var(--benroso-line)] bg-white p-6'>
+    <div className='benroso-contact-credentials-box'>
       <h3 className='benroso-heading font-display text-2xl'>Package Prices On Request</h3>
       <p className='benroso-body mt-3 max-w-2xl text-sm leading-7'>
         This experience can be shaped around economy, mid-range, luxury, or high-end comfort levels.
@@ -171,6 +169,12 @@ export function ExperiencePackageTabs({ levels, locale }: ExperiencePackageTabsP
 
   const bands = collectBands(activeLevel);
   const activeTheme = tierTheme(activeLevel.key);
+  const seasonWidth = bands.length > 4 ? 24 : 26;
+  const paxWidth = bands.length ? (100 - seasonWidth) / bands.length : 0;
+  const headStyle = {
+    '--pricing-head-bg': activeTheme.headBg,
+    '--pricing-head-fg': activeTheme.headFg ?? '#fff'
+  } as React.CSSProperties;
 
   return (
     <div>
@@ -218,49 +222,46 @@ export function ExperiencePackageTabs({ levels, locale }: ExperiencePackageTabsP
           </p>
         </div>
 
-        <div className='overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white'>
+        <div className='benroso-pricing-tier benroso-pricing-tier--table-only'>
           {bands.length && activeLevel.seasons.length ? (
-            <div className='overflow-x-auto'>
-              <table className='w-full min-w-[760px] text-left text-sm'>
-                <thead>
-                  <tr
-                    className={cn(
-                      'border-b border-[var(--benroso-line)] text-xs font-bold uppercase tracking-[0.08em]',
-                      activeTheme.table
-                    )}
-                  >
-                    <th className='px-5 py-4'>Travel period</th>
+            <div className='benroso-thin-scrollbar overflow-x-auto lg:overflow-x-visible'>
+              <div className='benroso-pricing-tier__table-shell'>
+                <table className='benroso-pricing-tier__table text-left text-sm'>
+                  <colgroup>
+                    <col style={{ width: `${seasonWidth}%` }} />
                     {bands.map((band) => (
-                      <th className='px-5 py-4' key={band}>
-                        {formatBandLabel(band)}
-                      </th>
+                      <col key={band} style={{ width: `${paxWidth}%` }} />
                     ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {activeLevel.seasons.map((season) => (
-                    <tr
-                      className='border-b border-[var(--benroso-line)] last:border-b-0 even:bg-[var(--benroso-ivory)]/35 hover:bg-[var(--benroso-ivory)]/65'
-                      key={season.label}
-                    >
-                      <th className='w-[190px] px-5 py-5 font-semibold text-[var(--benroso-ink)]'>
-                        {season.label}
-                      </th>
-                      {bands.map((band) => {
-                        const cell = season.cells.find((item) => item.groupBand === band);
-                        return (
-                          <td
-                            className='px-5 py-5 tabular-nums text-[var(--benroso-muted)]'
-                            key={band}
-                          >
-                            <PriceCell currency={activeLevel.currency} price={cell?.price} />
-                          </td>
-                        );
-                      })}
+                  </colgroup>
+                  <thead className='benroso-pricing-tier__head' style={headStyle}>
+                    <tr>
+                      <th scope='col'>Travel period</th>
+                      {bands.map((band) => (
+                        <th key={band} scope='col'>
+                          {formatBandLabel(band)}
+                        </th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {activeLevel.seasons.map((season) => (
+                      <tr className='benroso-pricing-tier__row' key={season.label}>
+                        <th className='benroso-pricing-tier__season' scope='row'>
+                          {season.label}
+                        </th>
+                        {bands.map((band) => {
+                          const cell = season.cells.find((item) => item.groupBand === band);
+                          return (
+                            <td className='benroso-pricing-tier__price tabular-nums' key={band}>
+                              <PriceCell currency={activeLevel.currency} price={cell?.price} />
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           ) : (
             <div className='flex min-h-48 flex-col items-center justify-center gap-3 p-6 text-center'>
@@ -272,7 +273,7 @@ export function ExperiencePackageTabs({ levels, locale }: ExperiencePackageTabsP
           )}
         </div>
 
-        <div className='mt-5 flex flex-col gap-3 border-t border-[var(--benroso-line)] pt-5 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='mt-5 flex flex-col gap-3 border-t border-[rgb(60_81_66/8%)] pt-5 sm:flex-row sm:items-center sm:justify-between'>
           <p className='text-sm leading-6 text-[var(--benroso-muted)]'>
             Prices are per person and vary by travel period, rooming, park fees, and lodge
             availability.

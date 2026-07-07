@@ -39,7 +39,11 @@ function getDropdownPositionClass(label: string) {
     return 'left-0 translate-x-0';
   }
 
-  if (label === 'Destinations' || label === 'Experiences') {
+  if (label === 'Destinations') {
+    return 'left-0 translate-x-0';
+  }
+
+  if (label === 'Experiences') {
     return 'left-1/2 -translate-x-1/2';
   }
 
@@ -432,6 +436,19 @@ function ExperiencesMegaPanel({ sections }: { sections: NonNullable<PublicNavIte
   );
 }
 
+const DESTINATIONS_FIRST_COLUMN_COUNT = 10;
+
+function splitDestinationLinks<T>(items: T[], firstColumnCount = DESTINATIONS_FIRST_COLUMN_COUNT) {
+  if (items.length <= firstColumnCount) {
+    return { primary: items, secondary: [] as T[] };
+  }
+
+  return {
+    primary: items.slice(0, firstColumnCount),
+    secondary: items.slice(firstColumnCount)
+  };
+}
+
 function DestinationsMegaPanel({
   menu,
   viewAllHref
@@ -446,100 +463,148 @@ function DestinationsMegaPanel({
     return null;
   }
 
+  const { primary, secondary } = splitDestinationLinks(activeColumn.destinations);
+  const usesTwoColumns = secondary.length > 0;
+
   return (
-    <div
-      className={cn(
-        'absolute left-1/2 top-full z-50 w-screen max-w-[100vw] -translate-x-1/2',
-        getDropdownPositionClass('Destinations')
-      )}
-    >
-      <div className='mx-auto w-[min(520px,calc(100vw-2rem))] px-4'>
-        <div className='overflow-hidden rounded-b-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white text-left shadow-2xl'>
-          <div className='flex max-h-[min(320px,55vh)]'>
-            <nav
-              aria-label='Safari countries'
-              className='w-[132px] shrink-0 border-r border-[var(--benroso-line)] bg-[var(--benroso-ivory)]/50 py-1.5'
-            >
-              <ul>
-                {menu.columns.map((column, index) => {
-                  const isActive = index === activeIndex;
+    <div className={cn('absolute top-full z-50 pt-2', getDropdownPositionClass('Destinations'))}>
+      <div className='w-[min(720px,calc(100vw-2rem))] overflow-hidden rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white text-left shadow-[0_24px_60px_-28px_rgba(15,35,24,0.45)]'>
+        <div className='flex max-h-[min(420px,62vh)]'>
+          <nav
+            aria-label='Safari countries'
+            className='w-[148px] shrink-0 border-r border-[var(--benroso-line)] bg-[var(--benroso-ivory)]/70 py-2'
+          >
+            <ul>
+              {menu.columns.map((column, index) => {
+                const isActive = index === activeIndex;
+                const destinationCount = column.destinations.length;
 
-                  return (
-                    <li key={column.country}>
-                      <button
-                        className={cn(
-                          'flex w-full items-center px-3 py-2 text-left text-[13px] transition-colors',
-                          isActive
-                            ? 'bg-white font-semibold text-[var(--benroso-primary)] shadow-[inset_3px_0_0_var(--benroso-lime)]'
-                            : 'text-[var(--benroso-muted)] hover:bg-white/70 hover:text-[var(--benroso-primary)]'
-                        )}
-                        onMouseEnter={() => setActiveIndex(index)}
-                        type='button'
-                      >
+                return (
+                  <li key={column.country}>
+                    <button
+                      className={cn(
+                        'flex w-full items-center justify-between gap-2 px-3 py-2.5 text-left text-[13px] transition-colors',
+                        isActive
+                          ? 'bg-white font-semibold text-[var(--benroso-primary)] shadow-[inset_3px_0_0_var(--benroso-lime)]'
+                          : 'text-[var(--benroso-muted)] hover:bg-white/80 hover:text-[var(--benroso-primary)]'
+                      )}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      type='button'
+                    >
+                      <span className='flex min-w-0 items-center gap-2'>
+                        {column.flag ? (
+                          <span aria-hidden className='text-base leading-none'>
+                            {column.flag}
+                          </span>
+                        ) : null}
                         <span className='truncate'>{column.country}</span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-            </nav>
+                      </span>
+                      {destinationCount ? (
+                        <span
+                          className={cn(
+                            'shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums',
+                            isActive
+                              ? 'bg-[var(--benroso-primary)]/10 text-[var(--benroso-primary)]'
+                              : 'bg-white text-[var(--benroso-muted)]'
+                          )}
+                        >
+                          {destinationCount}
+                        </span>
+                      ) : null}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
 
-            <div className='min-w-0 flex-1 overflow-y-auto px-4 py-3'>
+          <div className='benroso-thin-scrollbar min-w-0 flex-1 overflow-y-auto px-5 py-4'>
+            <div className='mb-3 flex items-center justify-between gap-3 border-b border-[var(--benroso-line)] pb-3'>
               <Link
-                className='mb-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+                className='inline-flex items-center gap-1.5 font-display text-lg font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
                 href={activeColumn.href}
               >
                 {activeColumn.country}
-                <Icons.chevronRight className='h-3.5 w-3.5' />
+                <Icons.chevronRight className='h-4 w-4' />
               </Link>
               {activeColumn.destinations.length ? (
-                <ul className='grid gap-x-5 gap-y-0.5 sm:grid-cols-2'>
-                  {activeColumn.destinations.map((destination) => (
+                <span className='text-xs font-medium uppercase tracking-[0.08em] text-[var(--benroso-muted)]'>
+                  {activeColumn.destinations.length} guides
+                </span>
+              ) : null}
+            </div>
+
+            {activeColumn.destinations.length ? (
+              <div className={cn(usesTwoColumns && 'grid grid-cols-2 gap-x-10')}>
+                <ul className='space-y-0.5'>
+                  {primary.map((destination) => (
                     <li key={destination.href}>
                       <Link
-                        className='block py-1.5 text-[14px] leading-snug text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-lime)]'
+                        className='group/link flex items-center gap-2 rounded-[var(--benroso-radius)] px-2 py-2 text-[14px] leading-snug text-[var(--benroso-muted)] transition-colors hover:bg-[var(--benroso-ivory)] hover:text-[var(--benroso-primary)]'
                         href={destination.href}
                       >
+                        <span
+                          aria-hidden
+                          className='h-1 w-1 shrink-0 rounded-full bg-[var(--benroso-lime)] opacity-0 transition-opacity group-hover/link:opacity-100'
+                        />
                         {destination.label}
                       </Link>
                     </li>
                   ))}
                 </ul>
-              ) : (
-                <div className='py-2'>
-                  <p className='text-sm text-[var(--benroso-muted)]'>
-                    Safari routes for {activeColumn.country} are being added.
-                  </p>
-                  <Link
-                    className='mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
-                    href={activeColumn.href}
-                  >
-                    Explore {activeColumn.country}
-                    <Icons.arrowRight className='h-3.5 w-3.5' />
-                  </Link>
-                </div>
-              )}
-            </div>
+                {usesTwoColumns ? (
+                  <ul className='space-y-0.5'>
+                    {secondary.map((destination) => (
+                      <li key={destination.href}>
+                        <Link
+                          className='group/link flex items-center gap-2 rounded-[var(--benroso-radius)] px-2 py-2 text-[14px] leading-snug text-[var(--benroso-muted)] transition-colors hover:bg-[var(--benroso-ivory)] hover:text-[var(--benroso-primary)]'
+                          href={destination.href}
+                        >
+                          <span
+                            aria-hidden
+                            className='h-1 w-1 shrink-0 rounded-full bg-[var(--benroso-lime)] opacity-0 transition-opacity group-hover/link:opacity-100'
+                          />
+                          {destination.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            ) : (
+              <div className='py-2'>
+                <p className='text-sm text-[var(--benroso-muted)]'>
+                  Safari routes for {activeColumn.country} are being added.
+                </p>
+                <Link
+                  className='mt-2 inline-flex items-center gap-1 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+                  href={activeColumn.href}
+                >
+                  Explore {activeColumn.country}
+                  <Icons.arrowRight className='h-3.5 w-3.5' />
+                </Link>
+              </div>
+            )}
           </div>
+        </div>
 
-          <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-[var(--benroso-line)] bg-[var(--benroso-ivory)]/30 px-4 py-2'>
+        <div className='flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-t border-[var(--benroso-line)] bg-[var(--benroso-ivory)]/40 px-5 py-2.5'>
+          <Link
+            className='group/all inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
+            href={viewAllHref}
+          >
+            View all destinations
+            <Icons.arrowRight className='h-3.5 w-3.5 transition-transform duration-300 group-hover/all:translate-x-1' />
+          </Link>
+          {menu.featured ? (
             <Link
-              className='group/all inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--benroso-primary)] transition-colors hover:text-[var(--benroso-lime)]'
-              href={viewAllHref}
+              className='inline-flex items-center gap-1 text-xs text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-primary)]'
+              href={menu.featured.href}
             >
-              View all destinations
-              <Icons.arrowRight className='h-3.5 w-3.5 transition-transform duration-300 group-hover/all:translate-x-1' />
+              {menu.featured.cta}
+              <Icons.arrowRight className='h-3 w-3' />
             </Link>
-            {menu.featured ? (
-              <Link
-                className='inline-flex items-center gap-1 text-xs text-[var(--benroso-muted)] transition-colors hover:text-[var(--benroso-primary)]'
-                href={menu.featured.href}
-              >
-                {menu.featured.cta}
-                <Icons.arrowRight className='h-3 w-3' />
-              </Link>
-            ) : null}
-          </div>
+          ) : null}
         </div>
       </div>
     </div>
