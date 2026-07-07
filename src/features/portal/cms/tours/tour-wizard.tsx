@@ -35,6 +35,7 @@ import {
 } from '@/features/experiences/public/tour-markets';
 import type { BenrosoCountryId } from '@/features/experiences/public/country-map-copy';
 import { ExperiencePricingSelector } from './experience-pricing-selector';
+import { ItineraryDescriptionEditor } from './itinerary-description-editor';
 import {
   emptyTourValues,
   tourDraftGateSchema,
@@ -125,18 +126,14 @@ function ItineraryInput({
             />
             <div className='grid gap-2'>
               <Label htmlFor={`itinerary-description-${index}`}>Day description</Label>
-              <Textarea
+              <ItineraryDescriptionEditor
                 id={`itinerary-description-${index}`}
                 value={day.description}
-                onChange={(event) => updateDay(index, { description: event.target.value })}
-                placeholder={
-                  'Write paragraphs or bullet lists. Start lines with "- " for bullet points.'
-                }
-                rows={6}
+                onChange={(description) => updateDay(index, { description })}
+                placeholder='Write the day overview. Use the toolbar or Ctrl+B for bold and Ctrl+Shift+H to highlight.'
               />
               <p className='text-muted-foreground text-xs'>
-                Use blank lines for paragraphs, or prefix lines with &quot;- &quot; for activity
-                lists.
+                Select text and use Bold or Highlight, or use the bullet list button for activities.
               </p>
             </div>
 

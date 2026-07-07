@@ -865,6 +865,36 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   padding-bottom: 0.25rem;
 }
 
+.public-site .benroso-itinerary-prose p {
+  margin-bottom: 0.75rem;
+}
+
+.public-site .benroso-itinerary-prose p:last-child {
+  margin-bottom: 0;
+}
+
+.public-site .benroso-itinerary-prose ul {
+  list-style: disc;
+  margin: 0 0 0.75rem 1.25rem;
+}
+
+.public-site .benroso-itinerary-prose li + li {
+  margin-top: 0.375rem;
+}
+
+.public-site .benroso-itinerary-prose strong {
+  color: var(--benroso-heading);
+  font-weight: 600;
+}
+
+.public-site .benroso-itinerary-prose mark,
+.public-site .benroso-itinerary-prose .benroso-desc-highlight {
+  background-color: rgb(169 192 56 / 28%);
+  border-radius: 2px;
+  color: inherit;
+  padding: 0 0.15em;
+}
+
 @media (min-width: 768px) {
   .public-site .benroso-inclusion-panel__empty {
     padding: 1.125rem 1.375rem 1.375rem;

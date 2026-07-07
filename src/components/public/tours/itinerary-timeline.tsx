@@ -47,7 +47,22 @@ function buildDescriptionBlocks(description: string): DescriptionBlock[] {
   return blocks;
 }
 
+function isHtmlDescription(description: string): boolean {
+  return /<[a-z][\s\S]*>/i.test(description.trim());
+}
+
 function ItineraryDescription({ description }: { description: string }) {
+  if (!description.trim()) return null;
+
+  if (isHtmlDescription(description)) {
+    return (
+      <div
+        className='benroso-body benroso-itinerary-prose mt-3 text-[15px] leading-7'
+        dangerouslySetInnerHTML={{ __html: description }}
+      />
+    );
+  }
+
   const blocks = buildDescriptionBlocks(description);
   if (!blocks.length) return null;
 

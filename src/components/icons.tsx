@@ -55,6 +55,7 @@ import {
   IconFolder,
   IconGripVertical,
   IconHelpCircle,
+  IconHighlight,
   IconInfoCircle,
   IconItalic,
   IconLayoutDashboard,
@@ -257,6 +258,7 @@ export const Icons = {
 
   // Text formatting
   bold: IconBold,
+  highlight: IconHighlight,
   italic: IconItalic,
   underline: IconUnderline,
   strikethrough: IconStrikethrough,
