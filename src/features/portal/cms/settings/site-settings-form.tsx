@@ -431,14 +431,14 @@ function SeoTab({ initial }: { initial: SeoAnalyticsValues }) {
         <TextField
           id='googleSiteVerification'
           label='Google site verification'
-          hint='The content value of the google-site-verification meta tag.'
+          hint='Paste the full HTML meta tag from Search Console, or just the verification code.'
           onChange={(googleSiteVerification) => set({ googleSiteVerification })}
           value={values.googleSiteVerification ?? ''}
         />
         <TextField
           id='bingSiteVerification'
           label='Bing site verification'
-          hint='The content value of the msvalidate.01 meta tag.'
+          hint='Paste the full HTML meta tag from Bing, or just the verification code.'
           onChange={(bingSiteVerification) => set({ bingSiteVerification })}
           value={values.bingSiteVerification ?? ''}
         />

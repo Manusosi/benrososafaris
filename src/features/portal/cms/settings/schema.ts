@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { BENROSO_FAVICON_PATH } from '@/config/benroso';
+import { normalizeSiteVerificationToken } from '@/lib/site-verification';
 import type { Tables } from '@/types/database.types';
 
 /** Optional free-text that stores null when blank. */
@@ -52,14 +53,20 @@ export const notificationsSchema = z.object({
   whatsappNotifyPhone: optionalText
 });
 
+const optionalVerificationToken = z
+  .string()
+  .trim()
+  .transform((value) => normalizeSiteVerificationToken(value))
+  .nullable();
+
 export const seoAnalyticsSchema = z.object({
   seoTitle: optionalText,
   seoDescription: optionalText,
   gaMeasurementId: optionalText,
   gtmId: optionalText,
   metaPixelId: optionalText,
-  googleSiteVerification: optionalText,
-  bingSiteVerification: optionalText
+  googleSiteVerification: optionalVerificationToken,
+  bingSiteVerification: optionalVerificationToken
 });
 
 export type GeneralBrandingValues = z.input<typeof generalBrandingSchema>;
@@ -126,8 +133,10 @@ export function settingsFromRow(row: Tables<'site_settings'> | null): SettingsFo
       gaMeasurementId: str(analytics.gaMeasurementId),
       gtmId: str(analytics.gtmId),
       metaPixelId: str(analytics.metaPixelId),
-      googleSiteVerification: str(analytics.googleSiteVerification),
-      bingSiteVerification: str(analytics.bingSiteVerification)
+      googleSiteVerification:
+        normalizeSiteVerificationToken(str(analytics.googleSiteVerification)) ?? '',
+      bingSiteVerification:
+        normalizeSiteVerificationToken(str(analytics.bingSiteVerification)) ?? ''
     }
   };
 }

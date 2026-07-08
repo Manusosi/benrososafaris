@@ -39,6 +39,14 @@ const baseConfig: NextConfig = {
   transpilePackages: ['geist'],
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production'
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/favicon.ico',
+        destination: '/api/site-favicon'
+      }
+    ];
   }
 };
 

@@ -22,6 +22,7 @@ import {
   parseTourSafariMarkets,
   type TourSafariMarketId
 } from '@/features/experiences/public/tour-markets';
+import { normalizeSiteVerificationToken } from '@/lib/site-verification';
 import { localePath } from './locale-path';
 import { activeHeroSlides, normalizeHeroSlides } from './hero-slides';
 import { normalizePageHero, type PageHeroKey } from './page-heroes';
@@ -196,8 +197,8 @@ function readAnalytics(value: unknown): PublicSiteSettings['analytics'] {
     gaMeasurementId: str('gaMeasurementId'),
     gtmId: str('gtmId'),
     metaPixelId: str('metaPixelId'),
-    googleSiteVerification: str('googleSiteVerification'),
-    bingSiteVerification: str('bingSiteVerification')
+    googleSiteVerification: normalizeSiteVerificationToken(str('googleSiteVerification')),
+    bingSiteVerification: normalizeSiteVerificationToken(str('bingSiteVerification'))
   };
 }
 

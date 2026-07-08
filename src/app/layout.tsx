@@ -7,16 +7,21 @@ import ThemeProvider from '@/components/themes/theme-provider';
 import { cn } from '@/lib/utils';
 import { getPublicSiteSettings } from '@/lib/public/site-data';
 import { buildFaviconMetadataIcons } from '@/lib/site-favicon';
+import { normalizeSiteVerificationToken } from '@/lib/site-verification';
 import { getTheme } from '@teispace/next-themes/server';
 import type { Metadata, Viewport } from 'next';
+import { connection } from 'next/server';
 import { cookies } from 'next/headers';
 import NextTopLoader from 'nextjs-toploader';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import '../styles/globals.css';
 
 export async function generateMetadata(): Promise<Metadata> {
+  await connection();
   const settings = await getPublicSiteSettings();
   const { analytics } = settings;
+  const googleVerification = normalizeSiteVerificationToken(analytics.googleSiteVerification);
+  const bingVerification = normalizeSiteVerificationToken(analytics.bingSiteVerification);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://benrososafaris.com';
 
   return {
@@ -30,12 +35,10 @@ export async function generateMetadata(): Promise<Metadata> {
     icons: buildFaviconMetadataIcons(settings.faviconUrl),
     openGraph: settings.ogImage ? { images: [settings.ogImage] } : undefined,
     verification:
-      analytics.googleSiteVerification || analytics.bingSiteVerification
+      googleVerification || bingVerification
         ? {
-            google: analytics.googleSiteVerification ?? undefined,
-            other: analytics.bingSiteVerification
-              ? { 'msvalidate.01': analytics.bingSiteVerification }
-              : undefined
+            google: googleVerification ?? undefined,
+            other: bingVerification ? { 'msvalidate.01': bingVerification } : undefined
           }
         : undefined
   };
