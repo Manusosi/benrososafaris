@@ -1,9 +1,6 @@
-'use client';
-
 import Image from 'next/image';
 
-import { Slider } from '@/components/public/ui/slider';
-import { ABOUT_STORY, ABOUT_STORY_IMAGES } from '@/lib/public/about-content';
+import { ABOUT_STORY, ABOUT_STORY_IMAGE } from '@/lib/public/about-content';
 
 export function AboutStoryIntro() {
   return (
@@ -21,24 +18,16 @@ export function AboutStoryIntro() {
           </div>
         </div>
 
-        <Slider autoPlayMs={5000} showArrows={false}>
-          {ABOUT_STORY_IMAGES.map((image) => (
-            <div
-              className='relative aspect-[4/3] overflow-hidden rounded-[var(--benroso-radius)] bg-[var(--benroso-primary)]'
-              key={image.imageUrl}
-            >
-              <Image
-                alt={image.imageAlt}
-                className='object-cover'
-                fill
-                loading={image.imageUrl === ABOUT_STORY_IMAGES[0].imageUrl ? 'eager' : 'lazy'}
-                priority={image.imageUrl === ABOUT_STORY_IMAGES[0].imageUrl}
-                sizes='(max-width:1024px) 100vw, 50vw'
-                src={image.imageUrl}
-              />
-            </div>
-          ))}
-        </Slider>
+        <div className='relative aspect-[4/3] overflow-hidden rounded-[var(--benroso-radius)] bg-[var(--benroso-primary)]'>
+          <Image
+            alt={ABOUT_STORY_IMAGE.imageAlt}
+            className='object-cover'
+            fill
+            priority
+            sizes='(max-width:1024px) 100vw, 50vw'
+            src={ABOUT_STORY_IMAGE.imageUrl}
+          />
+        </div>
       </div>
     </section>
   );

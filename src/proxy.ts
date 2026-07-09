@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { detectLocale, pathnameHasLocale } from '@/lib/i18n';
+import { detectLocale, localeFromPathname, pathnameHasLocale } from '@/lib/i18n';
 import {
   getPortalHost,
   getPortalUrl,
@@ -113,7 +113,16 @@ export async function proxy(request: NextRequest) {
   }
 
   if (pathnameHasLocale(pathname)) {
-    return NextResponse.next();
+    const chosenLocale = localeFromPathname(pathname);
+    const localeResponse = NextResponse.next();
+    if (chosenLocale) {
+      localeResponse.cookies.set('NEXT_LOCALE', chosenLocale, {
+        maxAge: 60 * 60 * 24 * 365,
+        path: '/',
+        sameSite: 'lax'
+      });
+    }
+    return localeResponse;
   }
 
   const locale = detectLocale(request);

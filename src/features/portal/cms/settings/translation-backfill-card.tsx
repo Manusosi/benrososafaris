@@ -37,12 +37,12 @@ export function TranslationBackfillCard() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Auto Translation</CardTitle>
+        <CardTitle>Manual Translation</CardTitle>
         <CardDescription>
           Generate Google translations for all already-published CMS content (tours, blog,
-          destinations, experiences, packages, accommodations, and parks). New publishes also
-          translate automatically when AUTO_TRANSLATE_ENABLED=true. Static homepage labels are still
-          English-only until UI message files are added.
+          destinations, experiences, packages, accommodations, and parks). Translations run only
+          when you click the button below — new publishes are not translated automatically. Requires
+          AUTO_TRANSLATE_ENABLED=true and GOOGLE_TRANSLATE_API_KEY in Vercel.
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>

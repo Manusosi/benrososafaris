@@ -13,20 +13,10 @@ export const ABOUT_STORY = {
   ]
 } as const;
 
-export const ABOUT_STORY_IMAGES = [
-  {
-    imageUrl: '/assets/benroso-4x4-safaris-fleet.png',
-    imageAlt: 'Benroso Safaris 4x4 fleet at a scenic East African viewpoint'
-  },
-  {
-    imageUrl: '/assets/benroso-bird-watching-safaris-2.png',
-    imageAlt: 'Ostriches on a bird watching safari in the East African savanna'
-  },
-  {
-    imageUrl: '/assets/benroso-safaris-kenya.webp',
-    imageAlt: 'Benroso Safaris team in Kenya'
-  }
-] as const;
+export const ABOUT_STORY_IMAGE = {
+  imageUrl: '/assets/leopard-lake-nakuru.png',
+  imageAlt: 'Leopard resting in a tree near Lake Nakuru, Kenya'
+} as const;
 
 export type AboutAdvantageItem = {
   iconSrc: string;
