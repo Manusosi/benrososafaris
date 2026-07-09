@@ -60,7 +60,10 @@ export const ABOUT_VISION_MISSION = {
     body: 'To conduct ethical and profitable business by providing services to our customers through committed personnel and upholding the spirit of comradeship among all the players in East Africa travel industry.'
   },
   teamImageUrl: '/assets/benroso-safaris-kenya.webp',
-  teamImageAlt: 'Benroso Safaris team in East Africa'
+  teamImageAlt: 'Benroso Safaris team in East Africa',
+  missionImageUrl: '/assets/cape-of-good-hope-team.png',
+  missionImageAlt:
+    'Benroso Safaris team at the Cape of Good Hope, the south-western tip of the African continent'
 } as const;
 
 export const ABOUT_GUIDES_INTRO = {

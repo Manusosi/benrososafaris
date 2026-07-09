@@ -4,7 +4,7 @@ import { ABOUT_VISION_MISSION, ABOUT_WHY_TRAVEL } from '@/lib/public/about-conte
 
 export function AboutMissionCommitment() {
   return (
-    <section className='grid lg:grid-cols-2'>
+    <section className='grid lg:grid-cols-2 lg:items-stretch'>
       <div className='relative bg-[var(--benroso-primary-dark)] px-6 py-14 md:px-10 md:py-16 lg:px-12 lg:py-20'>
         <div
           aria-hidden
@@ -45,13 +45,17 @@ export function AboutMissionCommitment() {
         </div>
       </div>
 
-      <div className='relative min-h-[280px] lg:min-h-[420px]'>
+      <div className='relative min-h-[360px] sm:min-h-[440px] lg:min-h-full'>
         <Image
-          alt='Guests on a rhino conservation safari at Ol Pejeta Conservancy'
-          className='object-cover'
+          alt={ABOUT_VISION_MISSION.missionImageAlt}
+          className='object-cover object-[center_38%]'
           fill
           sizes='(max-width:1024px) 100vw, 50vw'
-          src='/assets/ol-pejeta-conservancy-rhino.png'
+          src={ABOUT_VISION_MISSION.missionImageUrl}
+        />
+        <div
+          aria-hidden
+          className='pointer-events-none absolute inset-y-0 left-0 hidden w-16 bg-gradient-to-r from-[var(--benroso-primary-dark)]/35 to-transparent lg:block'
         />
       </div>
     </section>
