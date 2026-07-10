@@ -550,9 +550,9 @@ export async function getTourRelationOptions(): Promise<{
   const experienceLayoutVariants = Object.fromEntries(
     (experienceRows.data ?? []).map((row) => [
       row.id as string,
-      row.layout_variant === 'mountain' ? 'mountain' : 'safari'
+      row.layout_variant === 'mountain' ? ('mountain' as const) : ('safari' as const)
     ])
-  );
+  ) as Record<string, 'safari' | 'mountain'>;
 
   return {
     parks,
