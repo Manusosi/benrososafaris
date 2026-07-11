@@ -19,9 +19,11 @@ export const ACCOMMODATION_PROPERTY_TYPES = [
 ] as const;
 
 export const ACCOMMODATION_COMFORT_LEVELS = [
+  { value: 'budget', label: 'Budget' },
   { value: 'economy', label: 'Economy' },
   { value: 'mid-range', label: 'Mid Range' },
   { value: 'luxury', label: 'Luxury' },
+  { value: 'high-end', label: 'High End' },
   { value: 'ultra-luxury', label: 'Ultra Luxury' }
 ] as const;
 
