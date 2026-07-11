@@ -17,6 +17,7 @@ type AccommodationTranslationRow = {
         comfort_level: string | null;
         country: string | null;
         deleted_at?: string | null;
+        destination_id?: string | null;
         gallery: string[] | null;
         id: string;
         map_query?: string | null;
@@ -31,6 +32,7 @@ type AccommodationTranslationRow = {
         comfort_level: string | null;
         country: string | null;
         deleted_at?: string | null;
+        destination_id?: string | null;
         gallery: string[] | null;
         id: string;
         map_query?: string | null;
@@ -50,6 +52,12 @@ type AccommodationTranslationRow = {
   seo_title: string | null;
   slug: string;
   summary: string | null;
+};
+
+type DestinationLookup = {
+  id: string;
+  label: string;
+  slug: string;
 };
 
 function unwrapRelation<T>(value: T | T[] | null | undefined): T | null {
@@ -115,7 +123,8 @@ function coverFromGallery(
 function mapListingRow(
   row: AccommodationTranslationRow,
   locale: string,
-  mediaById: Map<string, PublicAccommodationMedia>
+  mediaById: Map<string, PublicAccommodationMedia>,
+  destinationsById: Map<string, DestinationLookup>
 ): PublicAccommodation | null {
   const accommodation = unwrapRelation(row.accommodation);
   if (!accommodation || accommodation.status !== 'published' || accommodation.deleted_at)
@@ -124,6 +133,9 @@ function mapListingRow(
   const galleryIds = parseGalleryIds(accommodation.gallery);
   const ogImage = unwrapRelation(row.og_image);
   const cover = coverFromGallery(galleryIds, mediaById, row.name, ogImage);
+  const destination = accommodation.destination_id
+    ? (destinationsById.get(accommodation.destination_id) ?? null)
+    : null;
 
   return {
     availability:
@@ -134,6 +146,7 @@ function mapListingRow(
         : null,
     comfortLevel: accommodation.comfort_level,
     country: accommodation.country,
+    destination,
     excerpt: row.summary,
     href: localePath(locale, `/accommodations/${row.slug}`),
     id: accommodation.id,
@@ -166,6 +179,7 @@ async function fetchPublishedRows(locale: string) {
         status,
         country,
         region,
+        destination_id,
         comfort_level,
         property_type,
         price_per_night,
@@ -184,6 +198,52 @@ async function fetchPublishedRows(locale: string) {
     .order('name');
 
   return (data ?? []) as AccommodationTranslationRow[];
+}
+
+async function resolveDestinationsByIds(
+  destinationIds: string[],
+  locale: string
+): Promise<Map<string, DestinationLookup>> {
+  const uniqueIds = [...new Set(destinationIds.filter(Boolean))];
+  if (!uniqueIds.length) return new Map();
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('destination_translations')
+    .select('destination_id, name, slug')
+    .eq('locale', locale)
+    .in('destination_id', uniqueIds);
+
+  const byId = new Map<string, DestinationLookup>();
+  for (const row of data ?? []) {
+    byId.set(row.destination_id, {
+      id: row.destination_id,
+      label: row.name,
+      slug: row.slug
+    });
+  }
+
+  if (locale !== 'en') {
+    const missingIds = uniqueIds.filter((id) => !byId.has(id));
+    if (missingIds.length) {
+      const { data: fallback } = await supabase
+        .from('destination_translations')
+        .select('destination_id, name, slug')
+        .eq('locale', 'en')
+        .in('destination_id', missingIds);
+      for (const row of fallback ?? []) {
+        if (!byId.has(row.destination_id)) {
+          byId.set(row.destination_id, {
+            id: row.destination_id,
+            label: row.name,
+            slug: row.slug
+          });
+        }
+      }
+    }
+  }
+
+  return byId;
 }
 
 function matchesFilters(
@@ -211,6 +271,12 @@ function matchesFilters(
   if (filters.regions?.length && (!item.region || !filters.regions.includes(item.region))) {
     return false;
   }
+  if (
+    filters.destinationSlugs?.length &&
+    (!item.destination?.slug || !filters.destinationSlugs.includes(item.destination.slug))
+  ) {
+    return false;
+  }
   if (filters.minPrice != null && (item.pricePerNight ?? 0) < filters.minPrice) return false;
   if (
     filters.maxPrice != null &&
@@ -228,15 +294,23 @@ export async function listPublishedAccommodations(
   const galleryIds = rows.flatMap((row) =>
     parseGalleryIds(unwrapRelation(row.accommodation)?.gallery)
   );
-  const mediaById = await resolveMediaByIds(galleryIds);
+  const destinationIds = rows.flatMap((row) => {
+    const destinationId = unwrapRelation(row.accommodation)?.destination_id;
+    return destinationId ? [destinationId] : [];
+  });
+  const [mediaById, destinationsById] = await Promise.all([
+    resolveMediaByIds(galleryIds),
+    resolveDestinationsByIds(destinationIds, filters.locale)
+  ]);
 
   return rows
-    .map((row) => mapListingRow(row, filters.locale, mediaById))
+    .map((row) => mapListingRow(row, filters.locale, mediaById, destinationsById))
     .filter((item): item is PublicAccommodation => item !== null)
     .filter((item) =>
       matchesFilters(item, {
         comfortLevels: filters.comfortLevels,
         countries: filters.countries,
+        destinationSlugs: filters.destinationSlugs,
         maxPrice: filters.maxPrice,
         minPrice: filters.minPrice,
         propertyTypes: filters.propertyTypes,
@@ -288,6 +362,7 @@ export async function getPublishedAccommodationBySlug(
         status,
         country,
         region,
+        destination_id,
         comfort_level,
         property_type,
         price_per_night,
@@ -312,8 +387,12 @@ export async function getPublishedAccommodationBySlug(
   if (!accommodation) return null;
 
   const galleryIds = parseGalleryIds(accommodation.gallery);
+  const destinationsById = await resolveDestinationsByIds(
+    accommodation.destination_id ? [accommodation.destination_id] : [],
+    locale
+  );
   const mediaById = await resolveMediaByIds(galleryIds);
-  const listing = mapListingRow(data, locale, mediaById);
+  const listing = mapListingRow(data, locale, mediaById, destinationsById);
   if (!listing) return null;
 
   const description = data.description;
@@ -336,7 +415,10 @@ export async function getPublishedAccommodationBySlug(
 }
 
 export async function getAccommodationFilterFacets(locale: string) {
-  const items = await listPublishedAccommodations({ locale });
+  const [items, destinations] = await Promise.all([
+    listPublishedAccommodations({ locale }),
+    listPublishedDestinationOptions(locale)
+  ]);
 
   const countries = new Set<string>();
   const propertyTypes = new Set<string>();
@@ -358,6 +440,7 @@ export async function getAccommodationFilterFacets(locale: string) {
   return {
     comfortLevels: [...comfortLevels].toSorted((a, b) => a.localeCompare(b)),
     countries: [...countries].toSorted((a, b) => a.localeCompare(b)),
+    destinations,
     priceBounds: {
       min: Math.floor(minPrice / 50) * 50,
       max: Math.ceil(maxPrice / 50) * 50 || 1000
@@ -365,4 +448,49 @@ export async function getAccommodationFilterFacets(locale: string) {
     propertyTypes: [...propertyTypes].toSorted((a, b) => a.localeCompare(b)),
     regions: [...regions].toSorted((a, b) => a.localeCompare(b))
   };
+}
+
+async function listPublishedDestinationOptions(locale: string) {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('destination_translations')
+    .select('name, slug, destination:destinations!inner(country, deleted_at, status)')
+    .eq('locale', locale)
+    .eq('destination.status', 'published')
+    .is('destination.deleted_at', null)
+    .order('name', { ascending: true });
+
+  const options = (data ?? []).flatMap((row) => {
+    const destination = Array.isArray(row.destination) ? row.destination[0] : row.destination;
+    if (!destination || destination.status !== 'published' || destination.deleted_at) return [];
+    return [
+      {
+        country: (destination.country as string | null) ?? null,
+        label: row.name,
+        slug: row.slug
+      }
+    ];
+  });
+
+  if (options.length || locale === 'en') return options;
+
+  const { data: fallback } = await supabase
+    .from('destination_translations')
+    .select('name, slug, destination:destinations!inner(country, deleted_at, status)')
+    .eq('locale', 'en')
+    .eq('destination.status', 'published')
+    .is('destination.deleted_at', null)
+    .order('name', { ascending: true });
+
+  return (fallback ?? []).flatMap((row) => {
+    const destination = Array.isArray(row.destination) ? row.destination[0] : row.destination;
+    if (!destination || destination.status !== 'published' || destination.deleted_at) return [];
+    return [
+      {
+        country: (destination.country as string | null) ?? null,
+        label: row.name,
+        slug: row.slug
+      }
+    ];
+  });
 }

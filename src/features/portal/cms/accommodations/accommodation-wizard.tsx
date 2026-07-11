@@ -21,6 +21,7 @@ import {
   ACCOMMODATION_COMFORT_LEVELS,
   ACCOMMODATION_PROPERTY_TYPES,
   SAFARI_COUNTRY_OPTIONS,
+  countriesMatch,
   formatAvailabilityLabel,
   formatComfortLevelLabel,
   formatCountryLabel
@@ -51,6 +52,7 @@ interface AccommodationWizardProps {
   id?: string;
   initialValues?: AccommodationFormValues;
   countryOptions?: string[];
+  destinationOptions?: Array<{ value: string; label: string; country: string | null }>;
   propertyTypeOptions?: string[];
   regionOptions?: string[];
 }
@@ -80,6 +82,7 @@ export function AccommodationWizard({
   id,
   initialValues,
   countryOptions = [],
+  destinationOptions = [],
   propertyTypeOptions = [],
   regionOptions = []
 }: AccommodationWizardProps) {
@@ -98,6 +101,13 @@ export function AccommodationWizard({
     () => regionOptions.map((value) => ({ value, label: value })),
     [regionOptions]
   );
+  const destinationItems = React.useMemo<ComboboxOption[]>(
+    () => destinationOptions.map((option) => ({ value: option.value, label: option.label })),
+    [destinationOptions]
+  );
+  const destinationById = React.useMemo(() => {
+    return new Map(destinationOptions.map((option) => [option.value, option]));
+  }, [destinationOptions]);
 
   const autoSlugRef = React.useRef(!id);
   const autoTitleRef = React.useRef(!id);
@@ -242,51 +252,107 @@ export function AccommodationWizard({
 
         {currentStep === 2 ? (
           <div className='grid gap-4'>
-            <div className='grid gap-4 sm:grid-cols-2'>
-              <form.AppField name='country'>
-                {(field) => (
+            <form.AppField name='country'>
+              {(field) => (
+                <div className='grid gap-2'>
+                  <Label htmlFor='accommodation-country'>
+                    Country <span className='text-destructive'>*</span>
+                  </Label>
+                  <Combobox
+                    id='accommodation-country'
+                    options={countryItems}
+                    value={field.state.value}
+                    onChange={(value) => {
+                      field.handleChange(value);
+                      const currentDestinationId = form.getFieldValue('destinationId');
+                      const currentDestination = destinationById.get(currentDestinationId);
+                      if (
+                        currentDestination &&
+                        !countriesMatch(currentDestination.country, value)
+                      ) {
+                        form.setFieldValue('destinationId', '');
+                      }
+                    }}
+                    placeholder='Select a country first'
+                    searchPlaceholder='Search or add a country…'
+                    emptyText='No countries yet.'
+                    creatable
+                    createLabel='Add country'
+                  />
+                </div>
+              )}
+            </form.AppField>
+            <form.AppField name='destinationId'>
+              {(field) => {
+                const countrySelected = Boolean(values.country.trim());
+                const destinationsForCountry = countrySelected
+                  ? destinationItems.filter((option) => {
+                      const destination = destinationById.get(option.value);
+                      return countriesMatch(destination?.country, values.country);
+                    })
+                  : [];
+
+                return (
                   <div className='grid gap-2'>
-                    <Label htmlFor='accommodation-country'>
-                      Country <span className='text-destructive'>*</span>
+                    <Label htmlFor='accommodation-destination'>
+                      Destination <span className='text-destructive'>*</span>
                     </Label>
                     <Combobox
-                      id='accommodation-country'
-                      options={countryItems}
+                      id='accommodation-destination'
+                      options={destinationsForCountry}
                       value={field.state.value}
-                      onChange={field.handleChange}
-                      placeholder='Select a country'
-                      searchPlaceholder='Search or add a country…'
-                      emptyText='No countries yet.'
-                      creatable
-                      createLabel='Add country'
-                    />
-                  </div>
-                )}
-              </form.AppField>
-              <form.AppField name='region'>
-                {(field) => (
-                  <div className='grid gap-2'>
-                    <Label htmlFor='accommodation-region'>
-                      Location <span className='text-destructive'>*</span>
-                    </Label>
-                    <Combobox
-                      id='accommodation-region'
-                      options={regionItems}
-                      value={field.state.value}
-                      onChange={field.handleChange}
-                      placeholder='e.g. Masai Mara National Reserve'
-                      searchPlaceholder='Search or add a location…'
-                      emptyText='No locations yet.'
-                      creatable
-                      createLabel='Add location'
+                      onChange={(value) => {
+                        field.handleChange(value);
+                        const destination = destinationById.get(value);
+                        if (!destination) return;
+                        if (!form.getFieldValue('region')) {
+                          form.setFieldValue('region', destination.label);
+                        }
+                      }}
+                      placeholder={
+                        countrySelected
+                          ? `Destinations in ${formatCountryLabel(values.country) ?? values.country}`
+                          : 'Select a country first'
+                      }
+                      searchPlaceholder='Search destinations…'
+                      emptyText={
+                        countrySelected
+                          ? 'No destinations for this country yet.'
+                          : 'Select a country to see destinations.'
+                      }
+                      disabled={!countrySelected}
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Park, reserve, or city shown on the public listing card.
+                      Choose the park or area hub within the selected country (e.g. Maasai Mara,
+                      Lake Nakuru).
                     </p>
                   </div>
-                )}
-              </form.AppField>
-            </div>
+                );
+              }}
+            </form.AppField>
+            <form.AppField name='region'>
+              {(field) => (
+                <div className='grid gap-2'>
+                  <Label htmlFor='accommodation-region'>
+                    Location <span className='text-destructive'>*</span>
+                  </Label>
+                  <Combobox
+                    id='accommodation-region'
+                    options={regionItems}
+                    value={field.state.value}
+                    onChange={field.handleChange}
+                    placeholder='e.g. Masai Mara National Reserve'
+                    searchPlaceholder='Search or add a location…'
+                    emptyText='No locations yet.'
+                    creatable
+                    createLabel='Add location'
+                  />
+                  <p className='text-muted-foreground text-xs'>
+                    Park, reserve, or city shown on the public listing card.
+                  </p>
+                </div>
+              )}
+            </form.AppField>
             <form.AppField name='mapQuery'>
               {(field) => (
                 <LocationMapField
@@ -445,17 +511,29 @@ export function AccommodationWizard({
           </div>
         ) : null}
 
-        {currentStep === 7 ? <ReviewSummary values={values} /> : null}
+        {currentStep === 7 ? (
+          <ReviewSummary
+            values={values}
+            destinationLabel={destinationById.get(values.destinationId)?.label}
+          />
+        ) : null}
       </WizardShell>
     </form.AppForm>
   );
 }
 
-function ReviewSummary({ values }: { values: AccommodationFormValues }) {
+function ReviewSummary({
+  values,
+  destinationLabel
+}: {
+  values: AccommodationFormValues;
+  destinationLabel?: string;
+}) {
   const rows: Array<{ label: string; value: string }> = [
     { label: 'Name', value: values.name },
     { label: 'Slug', value: values.slug },
     { label: 'Property type', value: values.propertyType },
+    { label: 'Destination', value: destinationLabel ?? values.destinationId },
     { label: 'Country', value: formatCountryLabel(values.country) ?? values.country },
     { label: 'Location', value: values.region },
     { label: 'Map pin', value: values.mapQuery },

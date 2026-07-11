@@ -40,6 +40,7 @@ interface ComboboxProps {
   onCreate?: (value: string) => void;
   className?: string;
   id?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -64,7 +65,8 @@ export function Combobox({
   createLabel = 'Add',
   onCreate,
   className,
-  id
+  id,
+  disabled = false
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState('');
@@ -104,12 +106,19 @@ export function Combobox({
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={disabled ? false : open}
+      onOpenChange={(next) => {
+        if (disabled) return;
+        setOpen(next);
+      }}
+    >
       <PopoverTrigger asChild>
         <Button
           type='button'
           variant='outline'
           id={id}
+          disabled={disabled}
           className={cn(
             'w-full justify-between font-normal',
             !selected && 'text-muted-foreground',

@@ -20,6 +20,7 @@ export const accommodationFormSchema = z.object({
   summary: z.string().max(280, 'Keep the summary under 280 characters'),
   description: z.string(),
   // Base
+  destinationId: z.string().min(1, 'Destination is required'),
   country: z.string().min(1, 'Country is required'),
   region: z.string().min(1, 'Location is required'),
   mapQuery: z.string(),
@@ -44,7 +45,12 @@ export type AccommodationFormValues = z.infer<typeof accommodationFormSchema>;
 
 export const accommodationStepSchemas = [
   accommodationFormSchema.pick({ name: true, slug: true, propertyType: true, summary: true }),
-  accommodationFormSchema.pick({ country: true, region: true, mapQuery: true }),
+  accommodationFormSchema.pick({
+    destinationId: true,
+    country: true,
+    region: true,
+    mapQuery: true
+  }),
   accommodationFormSchema.pick({ gallery: true }),
   accommodationFormSchema.pick({ amenities: true, description: true }),
   accommodationFormSchema.pick({
@@ -63,7 +69,10 @@ export const accommodationStepSchemas = [
 
 export const accommodationWizardSteps = [
   { title: 'Basics', description: 'Name, property type, and the auto-generated URL slug.' },
-  { title: 'Location', description: 'Country, park or area, and map pin for the detail sidebar.' },
+  {
+    title: 'Location',
+    description: 'Country first, then the matching destination hub, location label, and map pin.'
+  },
   { title: 'Gallery', description: 'Choose the images shown on this property page.' },
   { title: 'Amenities', description: 'About text and the facilities guests can expect.' },
   { title: 'Pricing', description: 'Nightly rate, comfort level, and availability status.' },
@@ -76,6 +85,7 @@ export const emptyAccommodationValues: AccommodationFormValues = {
   slug: '',
   summary: '',
   description: '',
+  destinationId: '',
   country: '',
   region: '',
   mapQuery: '',

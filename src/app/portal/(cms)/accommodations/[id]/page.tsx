@@ -5,6 +5,7 @@ import { requirePortalSession } from '@/lib/auth/portal';
 import { AccommodationWizard } from '@/features/portal/cms/accommodations/accommodation-wizard';
 import {
   getAccommodation,
+  getAccommodationDestinationOptions,
   getAccommodationFacets
 } from '@/features/portal/cms/accommodations/service';
 
@@ -15,9 +16,10 @@ export default async function EditAccommodationPage({
 }) {
   await requirePortalSession();
   const { id } = await params;
-  const [accommodation, facets] = await Promise.all([
+  const [accommodation, facets, destinationOptions] = await Promise.all([
     getAccommodation(id),
-    getAccommodationFacets()
+    getAccommodationFacets(),
+    getAccommodationDestinationOptions()
   ]);
 
   if (!accommodation) {
@@ -33,6 +35,7 @@ export default async function EditAccommodationPage({
         id={accommodation.id}
         initialValues={accommodation}
         countryOptions={facets.countries}
+        destinationOptions={destinationOptions}
         propertyTypeOptions={facets.propertyTypes}
         regionOptions={facets.regions}
       />

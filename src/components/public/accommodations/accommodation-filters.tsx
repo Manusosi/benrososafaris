@@ -8,6 +8,7 @@ import {
   ACCOMMODATION_COMFORT_LEVELS,
   ACCOMMODATION_COUNTRIES,
   ACCOMMODATION_PROPERTY_TYPES,
+  countriesMatch,
   formatComfortLevelLabel,
   formatCountryLabel,
   normalizeCountryValue
@@ -19,6 +20,7 @@ type AccommodationFiltersProps = {
   active: {
     comfortLevels: string[];
     countries: string[];
+    destinations: string[];
     maxPrice?: string;
     minPrice?: string;
     propertyTypes: string[];
@@ -27,6 +29,7 @@ type AccommodationFiltersProps = {
   facets: {
     comfortLevels: string[];
     countries: string[];
+    destinations: Array<{ country: string | null; label: string; slug: string }>;
     propertyTypes: string[];
     regions: string[];
   };
@@ -44,6 +47,7 @@ function toggleList(current: string[], value: string) {
 function buildQuery(active: AccommodationFiltersProps['active']) {
   const params = new URLSearchParams();
   if (active.countries.length) params.set('country', active.countries.join(','));
+  if (active.destinations.length) params.set('destination', active.destinations.join(','));
   if (active.propertyTypes.length) params.set('property_type', active.propertyTypes.join(','));
   if (active.comfortLevels.length) params.set('comfort_level', active.comfortLevels.join(','));
   if (active.regions.length) params.set('region', active.regions.join(','));
@@ -118,6 +122,14 @@ export function AccommodationFilters({
   );
 
   const countries = ACCOMMODATION_COUNTRIES.map((country) => country.value);
+  const selectedCountries = active.countries
+    .map((country) => normalizeCountryValue(country) ?? country)
+    .filter(Boolean);
+  const destinationsForCountry = selectedCountries.length
+    ? facets.destinations.filter((destination) =>
+        selectedCountries.some((country) => countriesMatch(destination.country, country))
+      )
+    : [];
 
   const sliderMin = priceBounds.min;
   const sliderMax = Math.max(priceBounds.max, sliderMin + 100);
@@ -141,7 +153,20 @@ export function AccommodationFilters({
   }
 
   function update(partial: Partial<AccommodationFiltersProps['active']>) {
-    navigate({ ...active, ...partial });
+    const next = { ...active, ...partial };
+
+    if (partial.countries) {
+      const nextCountries = partial.countries
+        .map((country) => normalizeCountryValue(country) ?? country)
+        .filter(Boolean);
+      next.destinations = next.destinations.filter((slug) => {
+        const destination = facets.destinations.find((item) => item.slug === slug);
+        if (!destination) return false;
+        return nextCountries.some((country) => countriesMatch(destination.country, country));
+      });
+    }
+
+    navigate(next);
   }
 
   return (
@@ -163,6 +188,31 @@ export function AccommodationFilters({
           );
         })}
       </FilterGroup>
+
+      {selectedCountries.length ? (
+        <FilterGroup title='Destination'>
+          {destinationsForCountry.length ? (
+            destinationsForCountry.map((destination) => {
+              const id = `filter-destination-${destination.slug}`;
+              return (
+                <FilterCheckbox
+                  key={destination.slug}
+                  checked={active.destinations.includes(destination.slug)}
+                  id={id}
+                  label={destination.label}
+                  onCheckedChange={() =>
+                    update({ destinations: toggleList(active.destinations, destination.slug) })
+                  }
+                />
+              );
+            })
+          ) : (
+            <li className='text-sm text-[var(--benroso-muted)]'>
+              No destinations for the selected country yet.
+            </li>
+          )}
+        </FilterGroup>
+      ) : null}
 
       <FilterGroup title='Property Type'>
         {propertyTypes.map((type) => {

@@ -19,6 +19,7 @@ type AccommodationsPageProps = {
   searchParams: Promise<{
     comfort_level?: string;
     country?: string;
+    destination?: string;
     max_price?: string;
     min_price?: string;
     property_type?: string;
@@ -62,6 +63,7 @@ export default async function AccommodationsPage({
   const activeFilters = {
     comfortLevels: parseFilterList(query.comfort_level),
     countries: parseFilterList(query.country),
+    destinations: parseFilterList(query.destination),
     maxPrice: query.max_price?.trim() || undefined,
     minPrice: query.min_price?.trim() || undefined,
     propertyTypes: parseFilterList(query.property_type),
@@ -72,6 +74,7 @@ export default async function AccommodationsPage({
     listPublishedAccommodations({
       comfortLevels: activeFilters.comfortLevels,
       countries: activeFilters.countries,
+      destinationSlugs: activeFilters.destinations,
       locale,
       maxPrice: parsePrice(activeFilters.maxPrice),
       minPrice: parsePrice(activeFilters.minPrice),

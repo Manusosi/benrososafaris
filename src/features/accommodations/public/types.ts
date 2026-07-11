@@ -6,10 +6,17 @@ export type PublicAccommodationMedia = {
   url: string | null;
 };
 
+export type PublicAccommodationDestination = {
+  id: string;
+  label: string;
+  slug: string;
+};
+
 export type PublicAccommodation = {
   availability: AccommodationAvailability | null;
   comfortLevel: string | null;
   country: string | null;
+  destination: PublicAccommodationDestination | null;
   excerpt: string | null;
   href: string;
   id: string;
@@ -35,6 +42,7 @@ export type PublicAccommodationDetail = PublicAccommodation & {
 export type AccommodationListFilters = {
   comfortLevels?: string[];
   countries?: string[];
+  destinationSlugs?: string[];
   locale: string;
   maxPrice?: number;
   minPrice?: number;

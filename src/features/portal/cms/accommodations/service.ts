@@ -49,6 +49,7 @@ export async function saveAccommodation(input: {
 
   const basePayload = {
     country: values.country,
+    destination_id: values.destinationId || null,
     region: values.region || null,
     map_query: values.mapQuery.trim() || null,
     property_type: values.propertyType || null,
@@ -148,6 +149,7 @@ export async function getAccommodation(id: string): Promise<AccommodationRecord 
   return {
     id: base.id,
     status: base.status,
+    destinationId: base.destination_id ?? '',
     country: base.country ?? '',
     region: base.region ?? '',
     mapQuery: base.map_query ?? '',
@@ -199,4 +201,29 @@ export async function getAccommodationFacets(): Promise<{
     propertyTypes: [...propertyTypes].toSorted((a, b) => a.localeCompare(b)),
     regions: [...regions].toSorted((a, b) => a.localeCompare(b))
   };
+}
+
+/** Destination options (id + en name + country) for the accommodation wizard. */
+export async function getAccommodationDestinationOptions(): Promise<
+  Array<{ value: string; label: string; country: string | null }>
+> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from('destination_translations')
+    .select('destination_id, name, destination:destinations!inner(country, deleted_at, status)')
+    .eq('locale', 'en')
+    .is('destination.deleted_at', null)
+    .order('name', { ascending: true });
+
+  return (data ?? []).flatMap((row) => {
+    const destination = Array.isArray(row.destination) ? row.destination[0] : row.destination;
+    if (!destination || destination.deleted_at) return [];
+    return [
+      {
+        value: row.destination_id as string,
+        label: (row.name as string) ?? 'Untitled',
+        country: (destination.country as string | null) ?? null
+      }
+    ];
+  });
 }

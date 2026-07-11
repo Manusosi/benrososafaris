@@ -97,6 +97,7 @@ export type Database = {
           country: string | null;
           created_at: string;
           deleted_at: string | null;
+          destination_id: string | null;
           gallery: Json;
           id: string;
           map_query: string | null;
@@ -114,6 +115,7 @@ export type Database = {
           country?: string | null;
           created_at?: string;
           deleted_at?: string | null;
+          destination_id?: string | null;
           gallery?: Json;
           id?: string;
           map_query?: string | null;
@@ -131,6 +133,7 @@ export type Database = {
           country?: string | null;
           created_at?: string;
           deleted_at?: string | null;
+          destination_id?: string | null;
           gallery?: Json;
           id?: string;
           map_query?: string | null;
@@ -141,7 +144,15 @@ export type Database = {
           status?: string;
           updated_at?: string;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'accommodations_destination_id_fkey';
+            columns: ['destination_id'];
+            isOneToOne: false;
+            referencedRelation: 'destinations';
+            referencedColumns: ['id'];
+          }
+        ];
       };
       blog_posts: {
         Row: {

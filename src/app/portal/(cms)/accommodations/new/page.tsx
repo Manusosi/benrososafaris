@@ -1,11 +1,17 @@
 import PageContainer from '@/components/layout/page-container';
 import { requirePortalSession } from '@/lib/auth/portal';
 import { AccommodationWizard } from '@/features/portal/cms/accommodations/accommodation-wizard';
-import { getAccommodationFacets } from '@/features/portal/cms/accommodations/service';
+import {
+  getAccommodationDestinationOptions,
+  getAccommodationFacets
+} from '@/features/portal/cms/accommodations/service';
 
 export default async function NewAccommodationPage() {
   await requirePortalSession();
-  const facets = await getAccommodationFacets();
+  const [facets, destinationOptions] = await Promise.all([
+    getAccommodationFacets(),
+    getAccommodationDestinationOptions()
+  ]);
 
   return (
     <PageContainer
@@ -14,6 +20,7 @@ export default async function NewAccommodationPage() {
     >
       <AccommodationWizard
         countryOptions={facets.countries}
+        destinationOptions={destinationOptions}
         propertyTypeOptions={facets.propertyTypes}
         regionOptions={facets.regions}
       />
