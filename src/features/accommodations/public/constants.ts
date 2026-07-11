@@ -65,6 +65,48 @@ export function formatComfortLevelLabel(value: string | null | undefined) {
   );
 }
 
+/** Distinct badge colors for comfort tiers on accommodation cards. */
+export function comfortLevelBadgeClass(value: string | null | undefined) {
+  switch (value) {
+    case 'budget':
+      return 'bg-[#6b7c59] text-white';
+    case 'economy':
+      return 'bg-[#4a7c6f] text-white';
+    case 'mid-range':
+      return 'bg-[var(--benroso-primary)] text-white';
+    case 'luxury':
+      return 'bg-[var(--benroso-gold)] text-[var(--benroso-primary-dark)]';
+    case 'high-end':
+      return 'bg-[var(--benroso-brown)] text-white';
+    case 'ultra-luxury':
+      return 'bg-[var(--benroso-primary-dark)] text-[var(--benroso-gold)]';
+    default:
+      return 'bg-white/95 text-[var(--benroso-ink)]';
+  }
+}
+
+export type ComfortLevelIconKey = 'wallet' | 'home' | 'exclusive' | 'pro' | 'diamond' | 'sparkles';
+
+/** Icon key (from `@/components/icons`) for each comfort tier. */
+export function comfortLevelIconKey(value: string | null | undefined): ComfortLevelIconKey | null {
+  switch (value) {
+    case 'budget':
+      return 'wallet';
+    case 'economy':
+      return 'home';
+    case 'mid-range':
+      return 'exclusive';
+    case 'luxury':
+      return 'pro';
+    case 'high-end':
+      return 'diamond';
+    case 'ultra-luxury':
+      return 'sparkles';
+    default:
+      return null;
+  }
+}
+
 export function formatCountryLabel(value: string | null | undefined) {
   if (!value) return null;
   const normalized = normalizeCountryValue(value);

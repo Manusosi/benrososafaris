@@ -4,7 +4,11 @@ import Link from 'next/link';
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import type { AccommodationViewMode } from '@/components/public/accommodations/accommodation-view-toggle';
-import { formatAvailabilityLabel } from '@/features/accommodations/public/constants';
+import {
+  comfortLevelBadgeClass,
+  comfortLevelIconKey,
+  formatComfortLevelLabel
+} from '@/features/accommodations/public/constants';
 import type { PublicAccommodation } from '@/features/accommodations/public/types';
 import { cn } from '@/lib/utils';
 
@@ -17,13 +21,6 @@ function formatNightPrice(price?: number | null) {
   }).format(price);
 }
 
-function availabilityTone(availability: PublicAccommodation['availability']) {
-  if (availability === 'available') return 'bg-[var(--benroso-primary)] text-white';
-  if (availability === 'limited')
-    return 'bg-[var(--benroso-gold)] text-[var(--benroso-primary-dark)]';
-  return 'bg-white/95 text-[var(--benroso-ink)]';
-}
-
 type AccommodationCardProps = {
   item: PublicAccommodation;
   variant?: AccommodationViewMode;
@@ -31,7 +28,9 @@ type AccommodationCardProps = {
 
 export function AccommodationCard({ item, variant = 'grid' }: AccommodationCardProps) {
   const price = formatNightPrice(item.pricePerNight);
-  const availabilityLabel = formatAvailabilityLabel(item.availability);
+  const comfortLabel = formatComfortLevelLabel(item.comfortLevel);
+  const comfortIconKey = comfortLevelIconKey(item.comfortLevel);
+  const ComfortIcon = comfortIconKey ? Icons[comfortIconKey] : null;
   const isList = variant === 'list';
 
   return (
@@ -66,14 +65,17 @@ export function AccommodationCard({ item, variant = 'grid' }: AccommodationCardP
           <div className='absolute inset-0 bg-[var(--benroso-primary-light)]' />
         )}
         <div className='absolute left-3 top-3 flex flex-wrap gap-2'>
-          <span
-            className={cn(
-              'rounded-[var(--benroso-radius)] px-3 py-1 text-xs font-bold uppercase tracking-wide',
-              availabilityTone(item.availability)
-            )}
-          >
-            {availabilityLabel}
-          </span>
+          {comfortLabel ? (
+            <span
+              className={cn(
+                'inline-flex items-center gap-1.5 rounded-[var(--benroso-radius)] px-3 py-1 text-xs font-bold uppercase tracking-wide',
+                comfortLevelBadgeClass(item.comfortLevel)
+              )}
+            >
+              {ComfortIcon ? <ComfortIcon aria-hidden className='size-3.5 shrink-0' /> : null}
+              {comfortLabel}
+            </span>
+          ) : null}
           {item.propertyType ? (
             <span className='rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white/95 px-3 py-1 text-xs font-bold uppercase tracking-wide text-[var(--benroso-ink)]'>
               {item.propertyType}
