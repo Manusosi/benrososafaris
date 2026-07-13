@@ -5,7 +5,6 @@ import { Icons } from '@/components/icons';
 import { ExperienceDetailHero } from '@/components/public/experiences/experience-detail-hero';
 import { ExperienceFaqSection } from '@/components/public/experiences/experience-faq-section';
 import { ExperienceGallery } from '@/components/public/experiences/experience-gallery';
-import { ExperiencePackageTabs } from '@/components/public/experiences/experience-package-tabs';
 import { ExperienceScrollReveal } from '@/components/public/experiences/experience-scroll-reveal';
 import { ExperienceTripsExplorer } from '@/components/public/experiences/experience-trips-explorer';
 import { SectionAnchorNav } from '@/components/public/section-anchor-nav';
@@ -17,7 +16,6 @@ import { buildExperienceGuideHeading } from '@/features/experiences/public/guide
 import { isMountainExperienceLayout } from '@/features/experiences/public/layout-variant';
 import type {
   PublicExperienceDetail,
-  PublicExperiencePackageLevel,
   PublicExperienceRelatedAccommodation,
   PublicExperienceRelatedTour
 } from '@/features/experiences/public/types';
@@ -26,18 +24,33 @@ type ExperienceDetailShellProps = {
   accommodations: PublicExperienceRelatedAccommodation[];
   experience: PublicExperienceDetail;
   locale: string;
-  packageLevels: PublicExperiencePackageLevel[];
   tours: PublicExperienceRelatedTour[];
 };
 
+const EXPERIENCE_HEADING_SUFFIX = /\s+(Safari(s)?|Experience)$/i;
+
+function stripExperienceHeadingSuffix(value: string) {
+  return value.replace(EXPERIENCE_HEADING_SUFFIX, '').trim();
+}
+
 function formatExperienceTourHeading(category: string | null, title: string) {
-  if (category) return `Our Best ${category} Safaris`;
-  const trimmed = title.replace(/\s+Safari(s)?$/i, '').trim();
-  return trimmed ? `Our Best ${trimmed} Safaris` : 'Safaris For This Experience';
+  const trimmedTitle = title.trim();
+  const trimmedCategory = category?.trim() ?? '';
+
+  const source =
+    trimmedTitle && EXPERIENCE_HEADING_SUFFIX.test(trimmedTitle)
+      ? trimmedTitle
+      : trimmedCategory || trimmedTitle;
+
+  const label = stripExperienceHeadingSuffix(source);
+  if (!label) return 'Safaris For This Experience';
+  return `Our Best ${label} Safaris`;
 }
 
 function formatMountainTripsHeading(title: string) {
-  const trimmed = title.replace(/\s+(Safari(s)?|Experience)$/i, '').trim();
+  const trimmed = stripExperienceHeadingSuffix(title)
+    .replace(/\s+Routes$/i, '')
+    .trim();
   return trimmed ? `${trimmed} Routes` : 'Climbing Routes';
 }
 
@@ -45,7 +58,6 @@ export function ExperienceDetailShell({
   accommodations,
   experience,
   locale,
-  packageLevels,
   tours
 }: ExperienceDetailShellProps) {
   const galleryImages = experience.gallery.filter((image) => image.url);
@@ -58,7 +70,6 @@ export function ExperienceDetailShell({
   const anchorItems = [
     { href: '#experience-overview', label: 'Overview' },
     experience.highlights.length ? { href: '#experience-expect', label: 'What To Expect' } : null,
-    !isMountainLayout ? { href: '#experience-pricing', label: 'Packages' } : null,
     {
       href: '#experience-trips',
       label: isMountainLayout ? 'Routes' : 'Safaris'
@@ -131,29 +142,6 @@ export function ExperienceDetailShell({
           </div>
         </ExperienceScrollReveal>
 
-        {!isMountainLayout ? (
-          <ExperienceScrollReveal
-            className='benroso-section scroll-mt-36 border-t border-[var(--benroso-line)] bg-white'
-            id='experience-pricing'
-          >
-            <div className='benroso-container'>
-              <div className='mx-auto max-w-3xl text-center'>
-                <p className='benroso-eyebrow'>Package Tables</p>
-                <h2 className='benroso-heading mt-3 font-display text-[clamp(2rem,4vw,3rem)] leading-tight'>
-                  {experience.title} Pricing
-                </h2>
-                <p className='benroso-body mx-auto mt-4 max-w-2xl text-base leading-7'>
-                  Select a package level to compare per-person prices by travel period and group
-                  size.
-                </p>
-              </div>
-              <div className='mt-10'>
-                <ExperiencePackageTabs levels={packageLevels} locale={locale} />
-              </div>
-            </div>
-          </ExperienceScrollReveal>
-        ) : null}
-
         <ExperienceScrollReveal
           className='benroso-section scroll-mt-36 border-y border-[var(--benroso-line)] bg-white'
           id='experience-trips'
@@ -163,7 +151,7 @@ export function ExperienceDetailShell({
             description={
               isMountainLayout
                 ? 'Each route is a published climbing itinerary. Open a route for the full day-by-day trek, camping or hut prices, and what is included.'
-                : `Under ${experience.title}, we curate safaris that let guests experience this travel style in different ways. Choose the package level that fits your comfort, then compare the routes below by duration and park area.`
+                : `Under ${experience.title}, we curate safaris that let guests experience this travel style in different ways. Compare the routes below by duration and park area, then open a trip for pricing and the full itinerary.`
             }
             hideFilters={isMountainLayout}
             itemLabel={isMountainLayout ? 'route' : 'safari'}
@@ -264,7 +252,7 @@ export function ExperienceDetailShell({
               <p className='benroso-body mx-auto mt-3 max-w-md'>
                 {isMountainLayout
                   ? 'Tell us your preferred route, month, and group size. We will confirm camping or hut arrangements and guide support.'
-                  : 'Tell us your month, group size, and comfort level. We will match the right package table with a route that makes sense.'}
+                  : 'Tell us your month, group size, and comfort level. We will match the right safari route and prepare a quote for your trip.'}
               </p>
               <BenrosoButtonGroup align='center' className='mt-7'>
                 <BenrosoButton href={localePath(locale, '/contact')}>

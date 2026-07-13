@@ -115,6 +115,7 @@ export function AccommodationsList() {
   const pageSize = data?.pageSize ?? 20;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const isTrashView = status === 'trash';
+  const hasActiveFilters = Boolean(search || country || propertyType || availability);
 
   const resetKey = `${status}|${search}|${country}|${propertyType}|${availability}|${page}`;
   const [selected, setSelected] = React.useState<string[]>([]);
@@ -196,6 +197,17 @@ export function AccommodationsList() {
     }
   }
 
+  function clearAllFilters() {
+    setSearchInput('');
+    void setParams({
+      s: '',
+      country: '',
+      property_type: '',
+      availability: '',
+      paged: 1
+    });
+  }
+
   function updateFilters(next: Partial<typeof params>) {
     void setParams({ ...next, paged: 1 });
   }
@@ -240,17 +252,41 @@ export function AccommodationsList() {
             updateFilters({ s: searchInput.trim() });
           }}
         >
-          <Input
-            value={searchInput}
-            onChange={(event) => setSearchInput(event.target.value)}
-            placeholder='Search accommodations'
-            className='h-9 w-56'
-          />
+          <div className='relative'>
+            <Input
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
+              placeholder='Search accommodations'
+              className='h-9 w-56 pr-8'
+            />
+            {searchInput ? (
+              <button
+                type='button'
+                aria-label='Clear search'
+                className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2'
+                onClick={() => {
+                  setSearchInput('');
+                  updateFilters({ s: '' });
+                }}
+              >
+                <Icons.close className='size-4' />
+              </button>
+            ) : null}
+          </div>
           <Button type='submit' size='sm' variant='outline'>
             Search
           </Button>
         </form>
       </div>
+
+      {hasActiveFilters ? (
+        <div className='flex flex-wrap items-center gap-2 text-sm'>
+          <span className='text-muted-foreground'>Filters active.</span>
+          <Button type='button' size='sm' variant='ghost' onClick={clearAllFilters}>
+            Clear all filters
+          </Button>
+        </div>
+      ) : null}
 
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div className='flex flex-wrap items-center gap-2'>
@@ -348,7 +384,10 @@ export function AccommodationsList() {
         </div>
 
         <div className='flex items-center gap-2'>
-          <p className='text-muted-foreground text-sm'>{total} items</p>
+          <p className='text-muted-foreground text-sm'>
+            {total} {total === 1 ? 'item' : 'items'}
+            {hasActiveFilters ? ' matching filters' : ''}
+          </p>
           <div className='flex rounded-md border'>
             <button
               type='button'

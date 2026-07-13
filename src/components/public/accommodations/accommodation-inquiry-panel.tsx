@@ -375,7 +375,7 @@ export function AccommodationInquiryPanel({
             <p className='text-xs font-semibold uppercase tracking-wide text-[var(--benroso-muted)]'>
               From
             </p>
-            <p className='mt-1 font-display text-3xl text-[var(--benroso-brown)]'>{price}</p>
+            <p className='mt-1 font-price text-3xl text-[var(--benroso-brown)]'>{price}</p>
             <p className='text-sm text-[var(--benroso-muted)]'>per night (USD)</p>
           </div>
         ) : (

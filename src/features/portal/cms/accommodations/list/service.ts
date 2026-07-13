@@ -133,7 +133,7 @@ export async function listAccommodations(
   });
 
   const [counts, countries, propertyTypes] = await Promise.all([
-    getStatusCounts(),
+    getStatusCounts(params),
     getCountryOptions(),
     getPropertyTypeOptions()
   ]);
@@ -149,23 +149,45 @@ export async function listAccommodations(
   };
 }
 
-async function getStatusCounts(): Promise<AccommodationStatusCounts> {
-  const supabase = await createClient();
-  const head = () => supabase.from('accommodations').select('id', { count: 'exact', head: true });
+async function getStatusCounts(
+  params: Pick<AccommodationListParams, 'search' | 'country' | 'propertyType' | 'availability'>
+): Promise<AccommodationStatusCounts> {
+  const supabase = (await createClient()) as unknown as SupabaseClient;
+
+  async function countForStatus(status: AccommodationListParams['status']): Promise<number> {
+    let query = supabase
+      .from('accommodation_translations')
+      .select('accommodation_id, accommodations!inner(id)', { count: 'exact', head: true })
+      .eq('locale', 'en');
+
+    if (status === 'trash') {
+      query = query.not('accommodations.deleted_at', 'is', null);
+    } else {
+      query = query.is('accommodations.deleted_at', null);
+      if (status === 'published') query = query.eq('accommodations.status', 'published');
+      if (status === 'draft') query = query.eq('accommodations.status', 'draft');
+    }
+
+    if (params.search.trim()) {
+      const term = `%${params.search.trim()}%`;
+      query = query.or(`name.ilike.${term},slug.ilike.${term}`);
+    }
+    if (params.country) query = query.eq('accommodations.country', params.country);
+    if (params.propertyType) query = query.eq('accommodations.property_type', params.propertyType);
+    if (params.availability) query = query.eq('accommodations.availability', params.availability);
+
+    const { count } = await query;
+    return count ?? 0;
+  }
 
   const [all, published, draft, trash] = await Promise.all([
-    head().is('deleted_at', null),
-    head().is('deleted_at', null).eq('status', 'published'),
-    head().is('deleted_at', null).eq('status', 'draft'),
-    head().not('deleted_at', 'is', null)
+    countForStatus('all'),
+    countForStatus('published'),
+    countForStatus('draft'),
+    countForStatus('trash')
   ]);
 
-  return {
-    all: all.count ?? 0,
-    published: published.count ?? 0,
-    draft: draft.count ?? 0,
-    trash: trash.count ?? 0
-  };
+  return { all, published, draft, trash };
 }
 
 async function getCountryOptions(): Promise<string[]> {

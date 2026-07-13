@@ -4,6 +4,7 @@ import * as React from 'react';
 
 import { Icons } from '@/components/icons';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
+import { formatTourPrice } from '@/lib/public/tour-format';
 import { localePath } from '@/lib/public/locale-path';
 import { cn } from '@/lib/utils';
 import type { PublicExperiencePackageLevel } from '@/features/experiences/public/types';
@@ -109,13 +110,6 @@ function tierTheme(key: PublicExperiencePackageLevel['key']) {
   };
 }
 
-function formatPriceValue(value: number) {
-  return new Intl.NumberFormat('en-US', {
-    maximumFractionDigits: 0,
-    minimumFractionDigits: 0
-  }).format(value);
-}
-
 function PriceCell({ currency, price }: { currency: string; price: number | null | undefined }) {
   if (!price) {
     return <span className='text-xs text-[var(--benroso-muted)]'>On request</span>;
@@ -123,8 +117,8 @@ function PriceCell({ currency, price }: { currency: string; price: number | null
 
   return (
     <span className='inline-flex flex-col items-center leading-tight'>
-      <strong className='font-display text-base font-bold text-[var(--benroso-heading)] sm:text-[1.05rem]'>
-        {currency || 'USD'} {formatPriceValue(price)}
+      <strong className='font-price text-base text-[var(--benroso-heading)] sm:text-[1.05rem]'>
+        {formatTourPrice(price, currency)}
       </strong>
       <span className='mt-1 text-[10px] font-normal text-[var(--benroso-muted)] sm:text-[11px]'>
         per person

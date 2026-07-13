@@ -59,6 +59,12 @@
   letter-spacing: -0.01em;
 }
 
+.public-site .font-price {
+  font-family: var(--font-inter), var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 .public-site .benroso-container {
   width: var(--benroso-container);
   margin-inline: auto;

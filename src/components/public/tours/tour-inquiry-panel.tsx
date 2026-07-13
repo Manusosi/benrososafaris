@@ -575,7 +575,7 @@ export function TourInquiryPanel({
             <span className='text-xs uppercase tracking-wide text-[var(--benroso-muted)]'>
               Price from
             </span>
-            <strong className='block font-display text-3xl text-[var(--benroso-brown)]'>
+            <strong className='font-price block text-3xl text-[var(--benroso-brown)]'>
               {price}
             </strong>
           </p>

@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import type { PublicPackage } from '@/lib/public/types';
-import { formatComfortTierLabel } from '@/lib/public/tour-format';
+import { formatComfortTierLabel, formatTourPrice } from '@/lib/public/tour-format';
 
 export type TourCardItem = {
   days?: number | null;
@@ -26,15 +26,6 @@ function formatDuration(days?: number | null, nights?: number | null) {
   return 'Safari';
 }
 
-function formatPrice(price?: number | null) {
-  if (!price) return null;
-  return new Intl.NumberFormat('en-US', {
-    currency: 'USD',
-    maximumFractionDigits: 0,
-    style: 'currency'
-  }).format(price);
-}
-
 export function TourCard({
   item,
   linkAccent = 'green'
@@ -42,7 +33,7 @@ export function TourCard({
   item: TourCardItem;
   linkAccent?: 'green' | 'gold';
 }) {
-  const price = formatPrice(item.priceFrom);
+  const price = formatTourPrice(item.priceFrom);
   const linkBorderClass =
     linkAccent === 'gold'
       ? 'benroso-fill-hover border-[var(--benroso-lime)] text-[var(--benroso-lime)] hover:text-[var(--benroso-primary-dark)]'
@@ -92,7 +83,7 @@ export function TourCard({
                 <span className='block text-xs font-semibold uppercase tracking-wide text-[var(--benroso-muted)]'>
                   From
                 </span>
-                <strong className='text-xl text-[var(--benroso-brown)]'>{price}</strong>
+                <strong className='font-price text-xl text-[var(--benroso-brown)]'>{price}</strong>
                 <span className='block text-xs text-[var(--benroso-muted)]'>per person</span>
               </>
             ) : (
@@ -119,7 +110,7 @@ export function TourCard({
 }
 
 export function PackageCard({ item }: { item: PublicPackage }) {
-  const price = formatPrice(item.priceFrom);
+  const price = formatTourPrice(item.priceFrom);
   const tierLabel = formatComfortTierLabel(item.comfortTier);
   const routeLabel = item.tour
     ? formatDuration(item.tour.days, item.tour.nights)
@@ -172,7 +163,7 @@ export function PackageCard({ item }: { item: PublicPackage }) {
                 <span className='block text-xs font-semibold uppercase tracking-wide text-[var(--benroso-muted)]'>
                   From
                 </span>
-                <strong className='text-xl text-[var(--benroso-brown)]'>{price}</strong>
+                <strong className='font-price text-xl text-[var(--benroso-brown)]'>{price}</strong>
                 <span className='block text-xs text-[var(--benroso-muted)]'>per person</span>
               </>
             ) : (

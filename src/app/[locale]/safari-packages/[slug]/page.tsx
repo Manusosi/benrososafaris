@@ -169,7 +169,7 @@ export default async function SafariPackageDetailPage({ params }: SafariPackageD
                 <p className='text-xs font-bold uppercase tracking-[0.14em] text-[var(--benroso-muted)]'>
                   Package from
                 </p>
-                <strong className='mt-2 block font-display text-3xl text-[var(--benroso-brown)]'>
+                <strong className='font-price mt-2 block text-3xl text-[var(--benroso-brown)]'>
                   {packagePrice ?? 'Custom quote'}
                 </strong>
                 <p className='benroso-body mt-4 text-sm leading-6'>

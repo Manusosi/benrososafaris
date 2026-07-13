@@ -3,12 +3,10 @@ import { notFound } from 'next/navigation';
 
 import { ExperienceDetailShell } from '@/components/public/experience-detail-shell';
 import {
-  getPackageLevelsForExperience,
   getPublishedExperienceBySlug,
   getRelatedAccommodationsForExperience,
   getRelatedToursForExperience
 } from '@/features/experiences/public/service';
-import { isMountainExperienceLayout } from '@/features/experiences/public/layout-variant';
 import { absoluteUrl, buildAlternates, buildFaqJsonLd } from '@/lib/seo';
 
 type ExperiencePageProps = {
@@ -58,12 +56,9 @@ export default async function ExperienceDetailPage(props: ExperiencePageProps) {
 
   if (!experience) notFound();
 
-  const isMountainLayout = isMountainExperienceLayout(experience);
-
-  const [tours, accommodations, packageLevels] = await Promise.all([
+  const [tours, accommodations] = await Promise.all([
     getRelatedToursForExperience(experience.experienceId, locale),
-    getRelatedAccommodationsForExperience(experience.experienceId, locale),
-    isMountainLayout ? Promise.resolve([]) : getPackageLevelsForExperience(experience.experienceId)
+    getRelatedAccommodationsForExperience(experience.experienceId, locale)
   ]);
 
   const faqJsonLd = buildFaqJsonLd(experience.faqs);
@@ -80,7 +75,6 @@ export default async function ExperienceDetailPage(props: ExperiencePageProps) {
         accommodations={accommodations}
         experience={experience}
         locale={locale}
-        packageLevels={packageLevels}
         tours={tours}
       />
     </>

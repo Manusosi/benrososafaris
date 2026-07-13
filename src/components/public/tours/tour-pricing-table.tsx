@@ -84,7 +84,7 @@ function PriceCell({ currency, price }: { currency: string; price: number | null
 
   return (
     <span className='inline-flex flex-col items-center leading-tight'>
-      <strong className='font-display text-base font-bold text-[var(--benroso-heading)] sm:text-[1.05rem]'>
+      <strong className='font-price text-base text-[var(--benroso-heading)] sm:text-[1.05rem]'>
         {formatTourPrice(price, currency)}
       </strong>
       <span className='mt-1 text-[10px] font-normal text-[var(--benroso-muted)] sm:text-[11px]'>

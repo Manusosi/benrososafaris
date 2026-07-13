@@ -199,7 +199,7 @@ function DestinationCostsSection({
             <span className='block text-xs font-bold uppercase tracking-[0.14em] text-white/70'>
               Published Range
             </span>
-            <strong className='mt-2 block font-display text-3xl'>
+            <strong className='font-price mt-2 block text-3xl'>
               {min ? formatTourPrice(min) : 'On request'}
             </strong>
             {max && max !== min ? (

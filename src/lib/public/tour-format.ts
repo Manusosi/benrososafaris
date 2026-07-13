@@ -28,11 +28,9 @@ export function formatComfortTierLabel(
 
 export function formatTourPrice(price?: number | null, currency = 'USD') {
   if (!price) return null;
-  return new Intl.NumberFormat('en-US', {
-    currency,
-    maximumFractionDigits: 0,
-    style: 'currency'
-  }).format(price);
+  const amount = price.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (currency === 'USD') return `$${amount}`;
+  return `${currency} ${amount}`;
 }
 
 export function formatTourDuration(days?: number | null, nights?: number | null) {
