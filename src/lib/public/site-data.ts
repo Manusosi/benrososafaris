@@ -226,6 +226,7 @@ async function fetchPublicSiteSettings(): Promise<PublicSiteSettings> {
     description: DEFAULT_DESCRIPTION,
     email: data?.email ?? BENROSO_CONTACT_DEFAULTS.email,
     faviconUrl: data?.favicon_url ?? BENROSO_FAVICON_PATH,
+    faviconVersion: data?.updated_at ?? null,
     logoUrl: data?.logo_url ?? null,
     ogImage: data?.og_default_image_url ?? null,
     phoneOffice: data?.phone_office ?? BENROSO_CONTACT_DEFAULTS.phoneOffice,

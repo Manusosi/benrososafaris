@@ -2,7 +2,7 @@
 
 import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
 
-import { DEFAULT_THEME } from './theme.config';
+import { DEFAULT_THEME, THEMES } from './theme.config';
 
 const COOKIE_NAME = 'active_theme';
 
@@ -10,6 +10,13 @@ function setThemeCookie(theme: string) {
   if (typeof window === 'undefined') return;
 
   document.cookie = `${COOKIE_NAME}=${theme}; path=/; max-age=31536000; SameSite=Lax; ${window.location.protocol === 'https:' ? 'Secure;' : ''}`;
+}
+
+function readThemeFromDocument() {
+  if (typeof document === 'undefined') return undefined;
+  const attr = document.documentElement.getAttribute('data-theme');
+  if (attr && THEMES.some((theme) => theme.value === attr)) return attr;
+  return undefined;
 }
 
 type ThemeContextType = {
@@ -26,8 +33,9 @@ export function ActiveThemeProvider({
   children: ReactNode;
   initialTheme?: string;
 }) {
-  const themeToUse = initialTheme || DEFAULT_THEME;
-  const [activeTheme, setActiveTheme] = useState<string>(themeToUse);
+  const [activeTheme, setActiveTheme] = useState<string>(
+    () => readThemeFromDocument() || initialTheme || DEFAULT_THEME
+  );
 
   useEffect(() => {
     // Only update if theme has changed

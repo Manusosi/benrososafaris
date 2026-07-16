@@ -1,6 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
+import { unstable_cache } from 'next/cache';
+
 import { localePath } from '@/lib/public/locale-path';
 import { getPublicToursByIds } from '@/lib/public/site-data';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 
 import { BENROSO_OPERATING_COUNTRIES, type BenrosoCountryId } from './country-map-copy';
 import { isMountainExperienceLayout, normalizeExperienceLayoutVariant } from './layout-variant';
@@ -263,7 +265,7 @@ async function resolveMediaByIds(ids: string[]): Promise<Map<string, PublicExper
   const uniqueIds = [...new Set(ids.filter(Boolean))];
   if (!uniqueIds.length) return new Map();
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase.from('media_assets').select('id, url, alt').in('id', uniqueIds);
 
   return new Map(
@@ -332,7 +334,7 @@ async function fetchPublishedTranslationRows(
     menuGroups?: PublicExperienceMenuItem['menuGroup'][];
   }
 ) {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   let query = supabase
     .from('experience_translations')
@@ -378,7 +380,7 @@ async function fetchPublishedTranslationRows(
   return rows;
 }
 
-export async function listPublishedExperiences({
+async function fetchPublishedExperiences({
   countries,
   locale,
   menuGroups
@@ -400,8 +402,27 @@ export async function listPublishedExperiences({
   });
 }
 
-export async function listExperienceMenuItems(locale: string): Promise<PublicExperienceMenuItem[]> {
-  const supabase = await createClient();
+export async function listPublishedExperiences({
+  countries,
+  locale,
+  menuGroups
+}: {
+  countries?: BenrosoCountryId[];
+  locale: string;
+  menuGroups?: PublicExperienceMenuItem['menuGroup'][];
+}): Promise<PublicExperience[]> {
+  const countriesKey = (countries ?? []).toSorted().join(',') || 'all';
+  const menuGroupsKey = (menuGroups ?? []).toSorted().join(',') || 'all';
+
+  return unstable_cache(
+    () => fetchPublishedExperiences({ countries, locale, menuGroups }),
+    ['public-experiences', locale, countriesKey, menuGroupsKey],
+    { revalidate: 300, tags: ['public-experiences'] }
+  )();
+}
+
+async function fetchExperienceMenuItems(locale: string): Promise<PublicExperienceMenuItem[]> {
+  const supabase = createEnquiryPublicClient();
 
   const { data } = await supabase
     .from('experience_menu_items')
@@ -455,6 +476,17 @@ export async function listExperienceMenuItems(locale: string): Promise<PublicExp
     );
 }
 
+export async function listExperienceMenuItems(locale: string): Promise<PublicExperienceMenuItem[]> {
+  return unstable_cache(
+    () => fetchExperienceMenuItems(locale),
+    ['public-experience-menu', locale],
+    {
+      revalidate: 300,
+      tags: ['public-experiences']
+    }
+  )();
+}
+
 export async function getExperienceCountries(locale: string): Promise<BenrosoCountryId[]> {
   const experiences = await listPublishedExperiences({ locale });
   const countries = new Set<BenrosoCountryId>();
@@ -483,7 +515,7 @@ export async function getPublishedExperienceBySlug(
   locale: string,
   slug: string
 ): Promise<PublicExperienceDetail | null> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data: row } = await supabase
     .from('experience_translations')
@@ -551,7 +583,7 @@ async function fetchParksByTourId(
 ): Promise<Map<string, string[]>> {
   if (!tourIds.length) return new Map();
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: parkLinks } = await supabase
     .from('tour_national_parks')
     .select('tour_id, park_id, position')
@@ -587,7 +619,7 @@ export async function getRelatedToursForExperience(
   experienceId: string,
   locale: string
 ): Promise<PublicExperienceRelatedTour[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data: experienceLinks } = await supabase
     .from('tour_experiences')
@@ -658,7 +690,7 @@ async function fetchMountainPricingByTourId(
   const result = new Map<string, { currency: string; rows: PublicMountainRoutePricingRow[] }>();
   if (!tourIds.length) return result;
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: tiers } = await supabase
     .from('tour_pricing_tiers')
     .select('id, tour_id, currency, position')
@@ -734,7 +766,7 @@ export async function getMountainRoutesForExperience(
   experienceId: string,
   locale: string
 ): Promise<PublicMountainRoute[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: experienceLinks } = await supabase
     .from('tour_experiences')
     .select('tour_id, position')
@@ -824,7 +856,7 @@ export async function getMountainRoutesForExperience(
 export { isMountainExperienceLayout };
 
 async function getExperienceTourIds(experienceId: string): Promise<string[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('tour_experiences')
     .select('tour_id, position')
@@ -839,7 +871,7 @@ async function getExperienceTourIds(experienceId: string): Promise<string[]> {
 export async function getPackageLevelsForExperience(
   experienceId: string
 ): Promise<PublicExperiencePackageLevel[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data: experienceRow } = await supabase
     .from('experiences')
     .select('layout_variant, package_pricing')
@@ -1009,7 +1041,7 @@ export async function getRelatedAccommodationsForExperience(
   locale: string,
   limit = 6
 ): Promise<PublicExperienceRelatedAccommodation[]> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data: tourLinks } = await supabase
     .from('tour_experiences')

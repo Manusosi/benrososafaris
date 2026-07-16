@@ -7,15 +7,14 @@ import type {
   PublicFleetVehicleDetail
 } from '@/lib/public/types';
 import { normalizeDirectAnswers } from '@/lib/seo/direct-answers';
-import { createClient } from '@/lib/supabase/server';
 import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
-
-async function genericClient(): Promise<SupabaseClient> {
-  return (await createClient()) as unknown as SupabaseClient;
-}
 
 async function publicClient(): Promise<SupabaseClient> {
   return createEnquiryPublicClient() as unknown as SupabaseClient;
+}
+
+async function genericClient(): Promise<SupabaseClient> {
+  return publicClient();
 }
 
 function parseStringArray(value: unknown): string[] {

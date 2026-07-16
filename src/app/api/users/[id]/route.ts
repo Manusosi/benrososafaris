@@ -5,11 +5,14 @@
 // ============================================================
 
 import { fakeUsers } from '@/constants/mock-api-users';
+import { isProductionRuntime, mockApiNotFoundResponse } from '@/lib/security/public-api-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function PUT(request: NextRequest, { params }: Params) {
+  if (isProductionRuntime()) return mockApiNotFoundResponse();
+
   const { id } = await params;
   const body = await request.json();
   const data = await fakeUsers.updateUser(Number(id), body);
@@ -22,6 +25,8 @@ export async function PUT(request: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(request: NextRequest, { params }: Params) {
+  if (isProductionRuntime()) return mockApiNotFoundResponse();
+
   const { id } = await params;
   const data = await fakeUsers.deleteUser(Number(id));
 

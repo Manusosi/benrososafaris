@@ -1,23 +1,20 @@
 import Providers from '@/components/layout/providers';
 import { Toaster } from '@/components/ui/sonner';
 import { fontVariables } from '@/components/themes/font.config';
-import { DEFAULT_THEME, THEMES } from '@/components/themes/theme.config';
+import { DEFAULT_THEME } from '@/components/themes/theme.config';
 import { MetaThemeColorSync } from '@/components/themes/meta-theme-color-sync';
+import { ThemeCookieScript } from '@/components/themes/theme-cookie-script';
 import ThemeProvider from '@/components/themes/theme-provider';
 import { cn } from '@/lib/utils';
 import { getPublicSiteSettings } from '@/lib/public/site-data';
 import { buildFaviconMetadataIcons } from '@/lib/site-favicon';
 import { normalizeSiteVerificationToken } from '@/lib/site-verification';
-import { getTheme } from '@teispace/next-themes/server';
 import type { Metadata, Viewport } from 'next';
-import { connection } from 'next/server';
-import { cookies } from 'next/headers';
 import NextTopLoader from 'nextjs-toploader';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import '../styles/globals.css';
 
 export async function generateMetadata(): Promise<Metadata> {
-  await connection();
   const settings = await getPublicSiteSettings();
   const { analytics } = settings;
   const googleVerification = normalizeSiteVerificationToken(analytics.googleSiteVerification);
@@ -32,7 +29,9 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     description:
       'Premium Kenya and Tanzania safari holidays with Benroso Safaris — tailor-made itineraries, expert guides, and trusted local support.',
-    icons: buildFaviconMetadataIcons(settings.faviconUrl),
+    icons: buildFaviconMetadataIcons(settings.faviconUrl, {
+      cacheKey: settings.faviconVersion
+    }),
     openGraph: settings.ogImage ? { images: [settings.ogImage] } : undefined,
     verification:
       googleVerification || bingVerification
@@ -60,27 +59,21 @@ const THEME_PROVIDER_PROPS = {
   storage: 'local' as const
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const cookieStore = await cookies();
-  const activeThemeValue = cookieStore.get('active_theme')?.value;
-  const isValidTheme = THEMES.some((t) => t.value === activeThemeValue);
-  const themeToApply = isValidTheme ? activeThemeValue! : DEFAULT_THEME;
-
-  const initialTheme = await getTheme({ themes: ['light', 'dark', 'system'] });
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang='en' suppressHydrationWarning data-theme={themeToApply}>
+    <html lang='en' suppressHydrationWarning data-theme={DEFAULT_THEME}>
       <body
         className={cn(
           'bg-background overflow-x-clip overscroll-none font-sans antialiased',
           fontVariables
         )}
       >
+        <ThemeCookieScript />
         <NextTopLoader color='var(--primary)' showSpinner={false} />
         <NuqsAdapter>
-          <ThemeProvider {...THEME_PROVIDER_PROPS} initialTheme={initialTheme ?? undefined}>
+          <ThemeProvider {...THEME_PROVIDER_PROPS}>
             <MetaThemeColorSync />
-            <Providers activeThemeValue={themeToApply}>
+            <Providers activeThemeValue={DEFAULT_THEME}>
               <Toaster />
               {children}
             </Providers>

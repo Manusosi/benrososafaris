@@ -16,9 +16,12 @@
 // ============================================================
 
 import { fakeUsers } from '@/constants/mock-api-users';
+import { isProductionRuntime, mockApiNotFoundResponse } from '@/lib/security/public-api-guard';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
+  if (isProductionRuntime()) return mockApiNotFoundResponse();
+
   const { searchParams } = request.nextUrl;
 
   const page = Number(searchParams.get('page') ?? 1);
@@ -39,6 +42,8 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isProductionRuntime()) return mockApiNotFoundResponse();
+
   const body = await request.json();
   const data = await fakeUsers.createUser(body);
   return NextResponse.json(data, { status: 201 });

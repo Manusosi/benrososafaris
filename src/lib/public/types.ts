@@ -85,6 +85,8 @@ export type PublicSiteSettings = {
   description: string;
   email: string;
   faviconUrl: string | null;
+  /** ISO timestamp used to cache-bust favicon/logo metadata after CMS updates. */
+  faviconVersion: string | null;
   logoUrl: string | null;
   ogImage: string | null;
   phoneOffice: string;

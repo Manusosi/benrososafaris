@@ -27,12 +27,19 @@ export async function proxy(request: NextRequest) {
 
   const isPortalRoute = pathname.startsWith('/portal');
   const isAdminRoute = pathname.startsWith('/admin');
+  const isMetadataAsset =
+    pathname === '/icon' ||
+    pathname === '/apple-icon' ||
+    pathname.startsWith('/icon/') ||
+    pathname.startsWith('/apple-icon/');
+
   const isAuthExempt =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname.startsWith('/auth') ||
     isPortalRoute ||
     isAdminRoute ||
+    isMetadataAsset ||
     PUBLIC_FILE.test(pathname);
 
   if (isAdminRoute) {
@@ -64,6 +71,7 @@ export async function proxy(request: NextRequest) {
       pathname.startsWith('/auth') ||
       pathname.startsWith('/portal') ||
       pathname.startsWith('/monitoring') ||
+      isMetadataAsset ||
       PUBLIC_FILE.test(pathname);
 
     if (!isPortalHostExempt) {
@@ -132,8 +140,9 @@ export async function proxy(request: NextRequest) {
   return NextResponse.redirect(url);
 }
 
-export const proxyConfig = {
+// Next.js Proxy matcher (must be `config`, not a custom export name).
+export const config = {
   matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)'
+    '/((?!_next/static|_next/image|favicon.ico|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)'
   ]
 };

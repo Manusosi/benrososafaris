@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { createClient } from '@/lib/supabase/server';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 
 type TranslationAlternate = {
   locale: string;
@@ -22,7 +22,7 @@ export async function buildAlternates({
 }: BuildAlternatesInput) {
   // Generic, runtime-driven table name: use the untyped client surface since the
   // typed client only accepts literal table names.
-  const supabase = (await createClient()) as unknown as SupabaseClient;
+  const supabase = createEnquiryPublicClient() as unknown as SupabaseClient;
   const { data } = await supabase
     .from(table)
     .select('locale, slug')

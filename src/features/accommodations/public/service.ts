@@ -1,5 +1,5 @@
-import { createClient } from '@/lib/supabase/server';
 import { localePath } from '@/lib/public/locale-path';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 
 import type {
   AccommodationListFilters,
@@ -78,7 +78,7 @@ async function resolveMediaByIds(ids: string[]): Promise<Map<string, PublicAccom
   const uniqueIds = [...new Set(ids.filter(Boolean))];
   if (!uniqueIds.length) return new Map();
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase.from('media_assets').select('id, url, alt').in('id', uniqueIds);
 
   return new Map(
@@ -162,7 +162,7 @@ function mapListingRow(
 }
 
 async function fetchPublishedRows(locale: string) {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data } = await supabase
     .from('accommodation_translations')
@@ -207,7 +207,7 @@ async function resolveDestinationsByIds(
   const uniqueIds = [...new Set(destinationIds.filter(Boolean))];
   if (!uniqueIds.length) return new Map();
 
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('destination_translations')
     .select('destination_id, name, slug')
@@ -345,7 +345,7 @@ export async function getPublishedAccommodationBySlug(
   locale: string,
   slug: string
 ): Promise<PublicAccommodationDetail | null> {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
 
   const { data } = await supabase
     .from('accommodation_translations')
@@ -451,7 +451,7 @@ export async function getAccommodationFilterFacets(locale: string) {
 }
 
 async function listPublishedDestinationOptions(locale: string) {
-  const supabase = await createClient();
+  const supabase = createEnquiryPublicClient();
   const { data } = await supabase
     .from('destination_translations')
     .select('name, slug, destination:destinations!inner(country, deleted_at, status)')

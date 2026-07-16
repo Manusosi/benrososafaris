@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-import { createClient } from '@/lib/supabase/server';
 import type { TourCardItem } from '@/components/public/cards/content-cards';
 import { localePath } from '@/lib/public/locale-path';
+import { createEnquiryPublicClient } from '@/lib/supabase/service-role';
 
 export interface ParkListItem {
   activities: string[];
@@ -67,7 +67,7 @@ export type ParkFilterFacets = {
 
 /** The newly-added `gallery` column is not in generated types yet. */
 async function genericClient(): Promise<SupabaseClient> {
-  return (await createClient()) as unknown as SupabaseClient;
+  return createEnquiryPublicClient() as unknown as SupabaseClient;
 }
 
 type ParkCoverSource = {

@@ -1,6 +1,6 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 import { requirePortalSession } from '@/lib/auth/portal';
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
@@ -29,6 +29,7 @@ async function assertCanWrite() {
 }
 
 function revalidateExperiencePublicPaths() {
+  revalidateTag('public-experiences', 'max');
   for (const locale of SUPPORTED_LOCALES) {
     revalidatePath(`/${locale}`);
     revalidatePath(`/${locale}/experiences`);
