@@ -10,6 +10,9 @@ import type { PricingTier } from './schema';
 
 export const LEGACY_PAX_BANDS = ['1 PAX', '2-3 PAX', '4-5 PAX', '6 AND ABOVE'] as const;
 
+/** South Africa private tours: year-round matrix with three group-size columns. */
+export const SOUTH_AFRICA_PAX_BANDS = ['1 PAX', '2 - 3 PAX', '4 PAX & ABOVE'] as const;
+
 export const MOUNTAIN_ACCOMMODATION_BANDS = ['Camping', 'Sleeping at hut'] as const;
 
 export const DEFAULT_LEGACY_SEASONS = [
@@ -52,6 +55,13 @@ export function seasonUsesMountainBands(cells: Array<{ groupBand: string }>): bo
   return bands.every((band) => mountainSet.has(band));
 }
 
+export function seasonUsesSouthAfricaBands(cells: Array<{ groupBand: string }>): boolean {
+  const bands = seasonCellBands(cells);
+  if (!bands.length) return false;
+  const saSet = new Set<string>(SOUTH_AFRICA_PAX_BANDS);
+  return bands.every((band) => saSet.has(band));
+}
+
 export function isMountainPricingTierPublic(tier: PublicTourPricingTier): boolean {
   const seasons = tier.seasons.filter((season) => season.label.trim());
   if (!seasons.length) return false;
@@ -78,29 +88,39 @@ export function mountainPricingRowsFromTier(
   });
 }
 
-export function mapPublicSeasonCells(
-  cells: Array<{ groupBand: string; price?: number | null | string }>
+function mapBandPrices(
+  cells: Array<{ groupBand: string; price?: number | null | string }>,
+  bands: readonly string[]
 ): PublicTourPricingCell[] {
   const byBand = new Map(cells.map((cell) => [cell.groupBand, cell.price]));
-
-  if (seasonUsesMountainBands(cells)) {
-    return MOUNTAIN_ACCOMMODATION_BANDS.map((groupBand) => {
-      const raw = byBand.get(groupBand);
-      const price = typeof raw === 'string' ? toNumberOrNull(raw) : raw;
-      return { groupBand, price: price ?? undefined };
-    });
-  }
-
-  return LEGACY_PAX_BANDS.map((groupBand) => {
+  return bands.map((groupBand) => {
     const raw = byBand.get(groupBand);
     const price = typeof raw === 'string' ? toNumberOrNull(raw) : raw;
     return { groupBand, price: price ?? undefined };
   });
 }
 
+export function mapPublicSeasonCells(
+  cells: Array<{ groupBand: string; price?: number | null | string }>
+): PublicTourPricingCell[] {
+  if (seasonUsesMountainBands(cells)) {
+    return mapBandPrices(cells, MOUNTAIN_ACCOMMODATION_BANDS);
+  }
+
+  if (seasonUsesSouthAfricaBands(cells)) {
+    return mapBandPrices(cells, SOUTH_AFRICA_PAX_BANDS);
+  }
+
+  return mapBandPrices(cells, LEGACY_PAX_BANDS);
+}
+
 export function normalizeLegacySeasonCells(
   cells: PricingTier['seasons'][number]['cells']
 ): PricingTier['seasons'][number]['cells'] {
+  if (!cells.length) {
+    return LEGACY_PAX_BANDS.map((groupBand) => ({ groupBand, price: '' }));
+  }
+
   if (seasonUsesMountainBands(cells)) {
     const byBand = new Map(cells.map((cell) => [cell.groupBand, cell.price]));
     return MOUNTAIN_ACCOMMODATION_BANDS.map((groupBand) => ({
@@ -109,11 +129,44 @@ export function normalizeLegacySeasonCells(
     }));
   }
 
-  const byBand = new Map(cells.map((cell) => [cell.groupBand, cell.price]));
-  return LEGACY_PAX_BANDS.map((groupBand) => ({
-    groupBand,
-    price: byBand.get(groupBand) ?? ''
+  if (seasonUsesSouthAfricaBands(cells)) {
+    const byBand = new Map(cells.map((cell) => [cell.groupBand, cell.price]));
+    return SOUTH_AFRICA_PAX_BANDS.map((groupBand) => ({
+      groupBand,
+      price: byBand.get(groupBand) ?? ''
+    }));
+  }
+
+  const bands = seasonCellBands(cells);
+  const legacySet = new Set<string>(LEGACY_PAX_BANDS);
+  // Only force the Kenya 4-column matrix when every band already belongs to it.
+  // Preserve South Africa / custom layouts so a CMS save cannot invent "6 AND ABOVE".
+  if (bands.every((band) => legacySet.has(band))) {
+    const byBand = new Map(cells.map((cell) => [cell.groupBand, cell.price]));
+    return LEGACY_PAX_BANDS.map((groupBand) => ({
+      groupBand,
+      price: byBand.get(groupBand) ?? ''
+    }));
+  }
+
+  return cells.map((cell) => ({
+    groupBand: cell.groupBand,
+    price: cell.price ?? ''
   }));
+}
+
+/** Column headers for a season — follows stored bands (Kenya / SA / custom). */
+export function paxBandsForSeason(cells: Array<{ groupBand: string }>): readonly string[] {
+  if (seasonUsesMountainBands(cells)) return MOUNTAIN_ACCOMMODATION_BANDS;
+  if (seasonUsesSouthAfricaBands(cells)) return SOUTH_AFRICA_PAX_BANDS;
+
+  const bands = seasonCellBands(cells);
+  if (!bands.length) return LEGACY_PAX_BANDS;
+
+  const legacySet = new Set<string>(LEGACY_PAX_BANDS);
+  if (bands.every((band) => legacySet.has(band))) return LEGACY_PAX_BANDS;
+
+  return bands;
 }
 
 export function normalizeLegacyPricingTier(tier: PricingTier): PricingTier {
@@ -163,6 +216,30 @@ export function createLegacyPricingSeason(label: string): PricingTier['seasons']
     dateStart: '',
     dateEnd: '',
     cells: LEGACY_PAX_BANDS.map((groupBand) => ({ groupBand, price: '' }))
+  };
+}
+
+export function createSouthAfricaPricingSeason(
+  label = '1st JAN - 31st DEC'
+): PricingTier['seasons'][number] {
+  return {
+    label,
+    dateStart: '',
+    dateEnd: '',
+    cells: SOUTH_AFRICA_PAX_BANDS.map((groupBand) => ({ groupBand, price: '' }))
+  };
+}
+
+export function createDefaultSouthAfricaPricingTier(
+  tier: PricingTier['tier'] = 'mid_range'
+): PricingTier {
+  return {
+    tier,
+    label: '',
+    blurb: '',
+    notes: '',
+    currency: 'USD',
+    seasons: [createSouthAfricaPricingSeason()]
   };
 }
 

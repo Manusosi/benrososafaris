@@ -25,11 +25,12 @@ import {
   createDefaultMountainPricingTier,
   createLegacyPricingSeason,
   createMountainPricingSeason,
-  LEGACY_PAX_BANDS,
+  createSouthAfricaPricingSeason,
   LEGACY_PRICING_TIER_OPTIONS,
-  MOUNTAIN_ACCOMMODATION_BANDS,
   mapLegacyPricingTiersToPublic,
-  normalizeMountainPricingTier
+  normalizeMountainPricingTier,
+  paxBandsForSeason,
+  seasonUsesSouthAfricaBands
 } from './legacy-pricing';
 import {
   getExperiencePricingPreview,
@@ -353,8 +354,20 @@ function LegacyPricingInput({
   }
 
   function addSeason(tierIndex: number) {
+    const existing = tiers[tierIndex].seasons[0];
+    const nextSeason = existing
+      ? seasonUsesSouthAfricaBands(existing.cells)
+        ? createSouthAfricaPricingSeason('')
+        : {
+            label: '',
+            dateStart: '',
+            dateEnd: '',
+            cells: existing.cells.map((cell) => ({ groupBand: cell.groupBand, price: '' }))
+          }
+      : createLegacyPricingSeason('');
+
     updateTier(tierIndex, {
-      seasons: [...tiers[tierIndex].seasons, createLegacyPricingSeason('')]
+      seasons: [...tiers[tierIndex].seasons, nextSeason]
     });
   }
 
@@ -368,111 +381,121 @@ function LegacyPricingInput({
         </p>
       </div>
 
-      {tiers.map((tier, tierIndex) => (
-        <div
-          className='overflow-hidden rounded-lg border border-[#3C5142]/30 bg-background shadow-sm'
-          key={`${tier.tier}-${tierIndex}`}
-        >
-          <div className='mb-0 flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 p-4'>
-            <div className='grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)]'>
-              <select
-                className='border-input bg-background rounded-md border px-3 py-2 text-sm'
-                onChange={(event) =>
-                  updateTier(tierIndex, { tier: event.target.value as PricingTier['tier'] })
-                }
-                value={tier.tier}
-              >
-                {PRICING_TIER_OPTIONS.map((option) => {
-                  const taken = usedTierKeys.has(option.value) && tier.tier !== option.value;
-                  return (
-                    <option disabled={taken} key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  );
-                })}
-              </select>
-              <Input
-                value={tier.label}
-                onChange={(event) => updateTier(tierIndex, { label: event.target.value })}
-                placeholder='Tier heading'
+      {tiers.map((tier, tierIndex) => {
+        const bandHeaders = paxBandsForSeason(tier.seasons[0]?.cells ?? []);
+        const tableMinWidth = bandHeaders.length <= 3 ? 'min-w-[640px]' : 'min-w-[860px]';
+
+        return (
+          <div
+            className='overflow-hidden rounded-lg border border-[#3C5142]/30 bg-background shadow-sm'
+            key={`${tier.tier}-${tierIndex}`}
+          >
+            <div className='mb-0 flex flex-wrap items-center justify-between gap-3 border-b bg-muted/30 p-4'>
+              <div className='grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)]'>
+                <select
+                  className='border-input bg-background rounded-md border px-3 py-2 text-sm'
+                  onChange={(event) =>
+                    updateTier(tierIndex, { tier: event.target.value as PricingTier['tier'] })
+                  }
+                  value={tier.tier}
+                >
+                  {PRICING_TIER_OPTIONS.map((option) => {
+                    const taken = usedTierKeys.has(option.value) && tier.tier !== option.value;
+                    return (
+                      <option disabled={taken} key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    );
+                  })}
+                </select>
+                <Input
+                  value={tier.label}
+                  onChange={(event) => updateTier(tierIndex, { label: event.target.value })}
+                  placeholder='Tier heading'
+                />
+              </div>
+              <Button type='button' size='sm' variant='ghost' onClick={() => removeTier(tierIndex)}>
+                <Icons.trash className='size-4' />
+              </Button>
+            </div>
+
+            <div className='grid gap-4 p-4'>
+              <Textarea
+                value={tier.blurb}
+                onChange={(event) => updateTier(tierIndex, { blurb: event.target.value })}
+                placeholder='Short tier description…'
+                rows={2}
               />
-            </div>
-            <Button type='button' size='sm' variant='ghost' onClick={() => removeTier(tierIndex)}>
-              <Icons.trash className='size-4' />
-            </Button>
-          </div>
 
-          <div className='grid gap-4 p-4'>
-            <Textarea
-              value={tier.blurb}
-              onChange={(event) => updateTier(tierIndex, { blurb: event.target.value })}
-              placeholder='Short tier description…'
-              rows={2}
-            />
-
-            <div className='overflow-x-auto rounded-md border border-[#3C5142]/20'>
-              <table className='w-full min-w-[860px] text-sm'>
-                <thead>
-                  <tr className='border-b border-[#C8A84E] bg-[#3C5142] text-left text-xs font-semibold uppercase tracking-wide text-white'>
-                    <th className='w-52 px-3 py-3'>Season</th>
-                    {LEGACY_PAX_BANDS.map((band) => (
-                      <th className='px-3 py-3' key={band}>
-                        <span className='block'>{band}</span>
-                        <span className='mt-1 block text-[10px] font-normal normal-case tracking-normal opacity-80'>
-                          per person
-                        </span>
-                      </th>
-                    ))}
-                    <th className='px-3 py-3 text-center'>Enquiry</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tier.seasons.map((season, seasonIndex) => (
-                    <tr className='border-b last:border-b-0 even:bg-muted/20' key={seasonIndex}>
-                      <th className='px-3 py-3 align-top'>
-                        <Input
-                          aria-label={`Season ${seasonIndex + 1}`}
-                          value={season.label}
-                          onChange={(event) =>
-                            updateSeasonLabel(tierIndex, seasonIndex, event.target.value)
-                          }
-                          placeholder='Season dates'
-                        />
-                      </th>
-                      {season.cells.map((cell, cellIndex) => (
-                        <td className='px-3 py-3 align-top' key={cell.groupBand}>
-                          <div className='grid gap-1'>
-                            <Input
-                              aria-label={`${season.label || `Season ${seasonIndex + 1}`} ${cell.groupBand} price`}
-                              inputMode='numeric'
-                              value={cell.price}
-                              onChange={(event) =>
-                                updatePrice(tierIndex, seasonIndex, cellIndex, event.target.value)
-                              }
-                              placeholder='Price'
-                            />
-                            <span className='text-muted-foreground text-[10px]'>per person</span>
-                          </div>
-                        </td>
+              <div className='overflow-x-auto rounded-md border border-[#3C5142]/20'>
+                <table className={cn('w-full text-sm', tableMinWidth)}>
+                  <thead>
+                    <tr className='border-b border-[#C8A84E] bg-[#3C5142] text-left text-xs font-semibold uppercase tracking-wide text-white'>
+                      <th className='w-52 px-3 py-3'>Season</th>
+                      {bandHeaders.map((band) => (
+                        <th className='px-3 py-3' key={band}>
+                          <span className='block'>{band}</span>
+                          <span className='mt-1 block text-[10px] font-normal normal-case tracking-normal opacity-80'>
+                            per person
+                          </span>
+                        </th>
                       ))}
-                      <td className='px-3 py-3 text-center align-middle'>
-                        <span className='text-muted-foreground inline-flex rounded-md border border-dashed px-3 py-2 text-[11px] font-semibold uppercase tracking-wide'>
-                          Book CTA
-                        </span>
-                      </td>
+                      <th className='px-3 py-3 text-center'>Enquiry</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {tier.seasons.map((season, seasonIndex) => (
+                      <tr className='border-b last:border-b-0 even:bg-muted/20' key={seasonIndex}>
+                        <th className='px-3 py-3 align-top'>
+                          <Input
+                            aria-label={`Season ${seasonIndex + 1}`}
+                            value={season.label}
+                            onChange={(event) =>
+                              updateSeasonLabel(tierIndex, seasonIndex, event.target.value)
+                            }
+                            placeholder='Season dates'
+                          />
+                        </th>
+                        {season.cells.map((cell, cellIndex) => (
+                          <td className='px-3 py-3 align-top' key={cell.groupBand}>
+                            <div className='grid gap-1'>
+                              <Input
+                                aria-label={`${season.label || `Season ${seasonIndex + 1}`} ${cell.groupBand} price`}
+                                inputMode='numeric'
+                                value={cell.price}
+                                onChange={(event) =>
+                                  updatePrice(tierIndex, seasonIndex, cellIndex, event.target.value)
+                                }
+                                placeholder='Price'
+                              />
+                              <span className='text-muted-foreground text-[10px]'>per person</span>
+                            </div>
+                          </td>
+                        ))}
+                        <td className='px-3 py-3 text-center align-middle'>
+                          <span className='text-muted-foreground inline-flex rounded-md border border-dashed px-3 py-2 text-[11px] font-semibold uppercase tracking-wide'>
+                            Book CTA
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
-            <Button type='button' size='sm' variant='outline' onClick={() => addSeason(tierIndex)}>
-              <Icons.add className='mr-2 size-4' />
-              Add season row
-            </Button>
+              <Button
+                type='button'
+                size='sm'
+                variant='outline'
+                onClick={() => addSeason(tierIndex)}
+              >
+                <Icons.add className='mr-2 size-4' />
+                Add season row
+              </Button>
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       <Button
         type='button'
