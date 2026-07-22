@@ -1,17 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import Image from 'next/image';
 
 import { cn } from '@/lib/utils';
 import type { PublicTourDetail } from '@/lib/public/types';
 
-type GalleryImage = PublicTourDetail['gallery'][number];
-
 type ItineraryTimelineProps = {
   days: PublicTourDetail['itineraryDays'];
-  images: GalleryImage[];
-  title: string;
 };
 
 function isBulletLine(line: string) {
@@ -162,7 +157,7 @@ function useTimelineProgress(
   return { activeIndex, progress };
 }
 
-export function ItineraryTimeline({ days, images, title }: ItineraryTimelineProps) {
+export function ItineraryTimeline({ days }: ItineraryTimelineProps) {
   const containerRef = React.useRef<HTMLOListElement>(null);
   const markerRefs = React.useRef<(HTMLSpanElement | null)[]>([]);
   const { activeIndex, progress } = useTimelineProgress(containerRef, markerRefs, days.length);
@@ -189,9 +184,6 @@ export function ItineraryTimeline({ days, images, title }: ItineraryTimelineProp
       </div>
 
       {days.map((day, index) => {
-        const fallbackImage = images[index + 1] ?? images[index];
-        const imageUrl = day.imageUrl ?? fallbackImage?.url ?? null;
-        const imageAlt = day.imageAlt ?? fallbackImage?.alt ?? `${title} day ${day.day}`;
         const isReached = index <= activeIndex;
 
         return (
@@ -216,29 +208,16 @@ export function ItineraryTimeline({ days, images, title }: ItineraryTimelineProp
             </div>
 
             <article className='min-w-0 border-b border-[rgb(60_81_66/8%)] pb-10 last:border-b-0'>
-              <div className='grid md:grid-cols-[minmax(0,1fr)_210px]'>
-                <div className='md:pr-6 md:py-1'>
-                  <span className='text-xs font-bold uppercase tracking-[0.18em] text-[var(--benroso-primary)]'>
-                    Day {day.day}
-                  </span>
-                  <h3 className='benroso-heading mt-2 font-display text-xl leading-tight'>
-                    {day.title}
-                  </h3>
-                  <ItineraryDescription description={day.description} />
-                  <ItineraryAccommodationOptions options={day.accommodationOptions} />
-                  <ItineraryMealPlan mealPlan={day.mealPlan} />
-                </div>
-                {imageUrl ? (
-                  <div className='relative mt-5 min-h-[190px] overflow-hidden rounded-[var(--benroso-radius)] bg-[var(--benroso-ivory)] md:mt-0 md:min-h-[220px]'>
-                    <Image
-                      alt={imageAlt}
-                      className='object-cover'
-                      fill
-                      sizes='(min-width: 1024px) 210px, 100vw'
-                      src={imageUrl}
-                    />
-                  </div>
-                ) : null}
+              <div className='py-1'>
+                <span className='text-xs font-bold uppercase tracking-[0.18em] text-[var(--benroso-primary)]'>
+                  Day {day.day}
+                </span>
+                <h3 className='benroso-heading mt-2 font-display text-xl leading-tight'>
+                  {day.title}
+                </h3>
+                <ItineraryDescription description={day.description} />
+                <ItineraryAccommodationOptions options={day.accommodationOptions} />
+                <ItineraryMealPlan mealPlan={day.mealPlan} />
               </div>
             </article>
           </li>

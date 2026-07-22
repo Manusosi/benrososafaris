@@ -187,11 +187,7 @@ export function TourDetailShell({
                   {isMountainLayout ? 'Day-by-day overview' : 'Safari Itinerary'}
                 </h2>
                 <span aria-hidden className='benroso-gold-line benroso-gold-line--left mt-3' />
-                <ItineraryTimeline
-                  days={tour.itineraryDays}
-                  images={galleryImages}
-                  title={displayTitle}
-                />
+                <ItineraryTimeline days={tour.itineraryDays} />
               </section>
 
               {!isMountainLayout ? (
