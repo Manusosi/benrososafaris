@@ -239,6 +239,7 @@ export function ArticleEditor({
     const text = htmlToText(values.content).trim();
     return text ? text.split(/\s+/).length : 0;
   }, [values.content]);
+  const contentLinks = countLinks(values.content);
 
   const createCategoryMutation = useMutation({
     mutationFn: (name: string) => createBlogCategory(name),
@@ -476,8 +477,8 @@ export function ArticleEditor({
                         body: `${values.excerpt} ${htmlToText(values.content)}`,
                         imageCount: featuredIds.length,
                         imagesWithAlt,
-                        internalLinkCount: countLinks(values.content).internal,
-                        outboundLinkCount: countLinks(values.content).outbound
+                        internalLinkCount: contentLinks.internal,
+                        outboundLinkCount: contentLinks.outbound
                       }}
                     />
                   </div>

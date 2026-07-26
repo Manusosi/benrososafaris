@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { isInternalHref, toSitePath } from '@/lib/seo/site-links';
 import { cn } from '@/lib/utils';
 import { getMediaByIds } from '../media/api/client';
 import { MediaPickerDialog } from '../media/components/media-picker';
@@ -132,21 +133,37 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     });
   }
 
-  function applyLink(href: string, newTab: boolean) {
+  function applyLink(href: string, newTab: boolean, mode: 'external' | 'internal') {
     if (!editor) return;
-    const url = href.trim();
-    if (!url) {
+    const raw = href.trim();
+    if (!raw) {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
       return;
     }
+
+    // Store same-site links as root-relative paths so SEO treats them as internal.
+    let url = raw;
+    if (mode === 'internal') {
+      const sitePath = toSitePath(raw);
+      if (sitePath) {
+        url = sitePath;
+      } else if (!raw.startsWith('/')) {
+        url = `/${raw.replace(/^\/+/, '')}`;
+      }
+    } else {
+      const sitePath = toSitePath(raw);
+      if (sitePath) url = sitePath;
+    }
+
+    const openInNewTab = mode === 'external' && newTab && !isInternalHref(url);
     editor
       .chain()
       .focus()
       .extendMarkRange('link')
       .setLink({
         href: url,
-        target: newTab ? '_blank' : null,
-        rel: newTab ? 'noopener noreferrer' : null
+        target: openInNewTab ? '_blank' : null,
+        rel: openInNewTab ? 'noopener noreferrer' : null
       })
       .run();
   }
@@ -211,8 +228,8 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
       <LinkDialog
         state={linkState}
         onOpenChange={(open) => setLinkState((current) => ({ ...current, open }))}
-        onSubmit={(href, newTab) => {
-          applyLink(href, newTab);
+        onSubmit={(href, newTab, mode) => {
+          applyLink(href, newTab, mode);
           setLinkState({ open: false, href: '', newTab: false });
         }}
       />
@@ -252,18 +269,18 @@ function LinkDialog({
 }: {
   state: LinkDialogState;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (href: string, newTab: boolean) => void;
+  onSubmit: (href: string, newTab: boolean, mode: 'external' | 'internal') => void;
 }) {
-  const [mode, setMode] = React.useState<'external' | 'internal'>('external');
+  const [mode, setMode] = React.useState<'external' | 'internal'>('internal');
   const [href, setHref] = React.useState('');
   const [newTab, setNewTab] = React.useState(false);
 
   // Reseed from the selected link each time the dialog opens.
   React.useEffect(() => {
     if (!state.open) return;
-    const isInternal = state.href.startsWith('/');
-    setMode(isInternal ? 'internal' : 'external');
-    setHref(state.href);
+    const internal = !state.href || isInternalHref(state.href);
+    setMode(internal ? 'internal' : 'external');
+    setHref(toSitePath(state.href) ?? state.href);
     setNewTab(state.newTab);
   }, [state.open, state.href, state.newTab]);
 
@@ -273,31 +290,38 @@ function LinkDialog({
         <DialogHeader>
           <DialogTitle>Insert link</DialogTitle>
           <DialogDescription>
-            Link to another page on this site (internal) or an external web address (outbound).
+            Prefer Internal page for Benroso URLs (including full https://benrososafaris.com/…
+            links). Web address is only for other websites.
           </DialogDescription>
         </DialogHeader>
 
         <div className='flex gap-1 rounded-[3px] border border-[#E5E7EB] p-1'>
           <LinkModeButton
-            active={mode === 'external'}
-            label='Web address'
-            onClick={() => setMode('external')}
-          />
-          <LinkModeButton
             active={mode === 'internal'}
             label='Internal page'
             onClick={() => setMode('internal')}
+          />
+          <LinkModeButton
+            active={mode === 'external'}
+            label='Web address'
+            onClick={() => setMode('external')}
           />
         </div>
 
         <div className='grid gap-3'>
           <div className='grid gap-1.5'>
-            <Label htmlFor='link-href'>{mode === 'internal' ? 'Path' : 'URL'}</Label>
+            <Label htmlFor='link-href'>
+              {mode === 'internal' ? 'Path or site URL' : 'External URL'}
+            </Label>
             <Input
               id='link-href'
               value={href}
               onChange={(event) => setHref(event.target.value)}
-              placeholder={mode === 'internal' ? '/en/blog/your-article' : 'https://example.com'}
+              placeholder={
+                mode === 'internal'
+                  ? '/en/blog/your-article or https://benrososafaris.com/en/…'
+                  : 'https://example.com'
+              }
             />
           </div>
 
@@ -328,11 +352,11 @@ function LinkDialog({
 
         <DialogFooter>
           {state.href ? (
-            <Button type='button' variant='ghost' onClick={() => onSubmit('', false)}>
+            <Button type='button' variant='ghost' onClick={() => onSubmit('', false, mode)}>
               Remove link
             </Button>
           ) : null}
-          <Button type='button' onClick={() => onSubmit(href, mode === 'external' && newTab)}>
+          <Button type='button' onClick={() => onSubmit(href, newTab, mode)}>
             {state.href ? 'Update link' : 'Add link'}
           </Button>
         </DialogFooter>

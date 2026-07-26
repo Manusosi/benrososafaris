@@ -6,7 +6,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { requirePortalSession } from '@/lib/auth/portal';
 import { createClient } from '@/lib/supabase/server';
-import { analyzeSeo } from '../../seo/analyze';
+import { analyzeSeo, countLinks } from '../../seo/analyze';
 import {
   ARTICLES_PAGE_SIZE,
   type ArticleCategoryOption,
@@ -44,6 +44,11 @@ function contentToText(content: unknown): string {
   const value = (content as { html?: string; text?: string } | null) ?? null;
   if (!value) return '';
   return stripHtml(value.html ?? value.text ?? '');
+}
+
+function contentToHtml(content: unknown): string {
+  const value = (content as { html?: string } | null) ?? null;
+  return value?.html ?? '';
 }
 
 function toStringArray(value: unknown): string[] {
@@ -151,6 +156,8 @@ export async function listArticles(params: ArticleListParams): Promise<ArticleLi
       const post = row.blog_posts!;
       const title = row.title ?? 'Untitled';
       const keywords = toStringArray(row.keywords);
+      const html = contentToHtml(row.content);
+      const links = countLinks(html);
       const seo = analyzeSeo({
         title: row.seo_title || title,
         metaDescription: row.seo_description ?? '',
@@ -159,7 +166,9 @@ export async function listArticles(params: ArticleListParams): Promise<ArticleLi
         keywords,
         body: `${row.excerpt ?? ''} ${contentToText(row.content)}`,
         imageCount: row.og_image_id ? 1 : 0,
-        imagesWithAlt: row.og_image_id ? 1 : 0
+        imagesWithAlt: row.og_image_id ? 1 : 0,
+        internalLinkCount: links.internal,
+        outboundLinkCount: links.outbound
       });
 
       return {

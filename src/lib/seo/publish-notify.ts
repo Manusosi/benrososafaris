@@ -1,3 +1,5 @@
+import { revalidatePath } from 'next/cache';
+
 import { SUPPORTED_LOCALES } from '@/lib/i18n';
 
 import { notifySearchEnginesLater } from './indexing';
@@ -36,10 +38,13 @@ export function notifyPublishedContent({
   pathPrefix,
   slug
 }: PublishedContentInput) {
-  const paths = [
-    ...(listingPaths ?? defaultListingPaths(pathPrefix, locales)),
-    ...locales.map((locale) => `/${locale}/${pathPrefix}/${slug}`)
-  ];
+  const detailPaths = locales.map((locale) => `/${locale}/${pathPrefix}/${slug}`);
+  const paths = [...(listingPaths ?? defaultListingPaths(pathPrefix, locales)), ...detailPaths];
+
+  for (const path of paths) {
+    revalidatePath(path);
+  }
+  revalidatePath('/sitemap.xml');
 
   notifySearchEnginesLater(paths);
 }

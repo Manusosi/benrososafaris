@@ -42,6 +42,9 @@ export function SeoAnalyzer({ input, className }: SeoAnalyzerProps) {
         <p className='text-muted-foreground text-xs font-semibold uppercase tracking-wide'>
           SEO Readiness
         </p>
+        <p className='text-muted-foreground mt-1 text-[11px] leading-snug'>
+          Same-site links (paths or benrososafaris.com) count as internal — not outbound.
+        </p>
       </div>
 
       <div className='space-y-3 px-4 py-3'>

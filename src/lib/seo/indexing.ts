@@ -1,4 +1,5 @@
 import { absoluteUrl } from './absolute-url';
+import { submitGoogleIndexing } from './google-indexing';
 
 const INDEXNOW_ENDPOINTS = ['https://api.indexnow.org/indexnow', 'https://www.bing.com/indexnow'];
 
@@ -53,18 +54,10 @@ async function submitIndexNow(urls: string[]) {
   );
 }
 
-async function pingSitemap() {
-  const sitemapUrl = encodeURIComponent(absoluteUrl('/sitemap.xml'));
-  const endpoints = [
-    `https://www.google.com/ping?sitemap=${sitemapUrl}`,
-    `https://www.bing.com/ping?sitemap=${sitemapUrl}`
-  ];
-
-  await Promise.allSettled(endpoints.map((endpoint) => fetch(endpoint, { method: 'GET' })));
-}
-
 /**
  * Notify search engines that URLs were published or updated.
+ * - IndexNow → Bing / Yandex partners
+ * - Google Indexing API → Search Console (when service account is configured)
  * Fire-and-forget from CMS server actions — errors are swallowed.
  */
 export async function notifySearchEngines(pathsOrUrls: string[]) {
@@ -72,7 +65,7 @@ export async function notifySearchEngines(pathsOrUrls: string[]) {
   if (!urls.length) return;
 
   try {
-    await Promise.allSettled([submitIndexNow(urls), pingSitemap()]);
+    await Promise.allSettled([submitIndexNow(urls), submitGoogleIndexing(urls)]);
   } catch {
     // Non-blocking: indexing must never break CMS publish flows.
   }

@@ -10,6 +10,8 @@
  * run on the server when generating sitemaps or pre-publish reports.
  */
 
+import { classifyHref } from '@/lib/seo/site-links';
+
 export type SeoCheckStatus = 'good' | 'warn' | 'bad';
 
 export interface SeoCheck {
@@ -34,24 +36,25 @@ export interface SeoAnalysisInput {
   imageCount?: number;
   /** How many of those images already have alt text. */
   imagesWithAlt?: number;
-  /** Internal links in the body (href starting with `/`). Omit to skip the check. */
+  /** Internal links in the body (same-site paths or absolute site URLs). Omit to skip. */
   internalLinkCount?: number;
-  /** Outbound links in the body (absolute http(s) URLs). Omit to skip the check. */
+  /** True outbound links (other domains). Omit to skip the check. */
   outboundLinkCount?: number;
 }
 
-/** Counts internal (`/…`) vs outbound (`http(s)://…`) links in an HTML string. */
+/**
+ * Counts same-site (internal) vs other-domain (outbound) links in HTML.
+ * Absolute URLs on this site's host count as internal, not outbound.
+ */
 export function countLinks(html: string): { internal: number; outbound: number } {
   let internal = 0;
   let outbound = 0;
   const regex = /href\s*=\s*["']([^"']+)["']/gi;
   let match: RegExpExecArray | null;
   while ((match = regex.exec(html)) !== null) {
-    const href = match[1].trim();
-    if (!href || href.startsWith('#')) continue;
-    if (/^https?:\/\//i.test(href)) outbound += 1;
-    else if (href.startsWith('/')) internal += 1;
-    // mailto:, tel:, and anchors are ignored.
+    const kind = classifyHref(match[1] ?? '');
+    if (kind === 'internal') internal += 1;
+    else if (kind === 'outbound') outbound += 1;
   }
   return { internal, outbound };
 }
@@ -127,8 +130,9 @@ const WEIGHTS: Record<string, number> = {
   'slug-clean': 1,
   'extra-keywords': 1,
   'image-alt': 1,
-  'internal-links': 1,
-  'outbound-links': 1
+  'internal-links': 1.5,
+  // Optional signal — do not punish articles that stay on-site.
+  'outbound-links': 0.25
 };
 
 function ratingFor(score: number): SeoRating {
@@ -454,27 +458,34 @@ export function analyzeSeo(input: SeoAnalysisInput): SeoAnalysis {
     });
   }
 
-  // Internal links
+  // Internal links (same-site paths and absolute site URLs)
   if (input.internalLinkCount !== undefined) {
     const count = input.internalLinkCount;
     checks.push(
-      count > 0
+      count >= 2
         ? {
             id: 'internal-links',
             label: 'Internal links',
             status: 'good',
-            message: `${count} internal link${count === 1 ? '' : 's'} to other pages.`
+            message: `${count} same-site links to other Benroso pages.`
           }
-        : {
-            id: 'internal-links',
-            label: 'Internal links',
-            status: 'warn',
-            message: 'Add at least one internal link to related content.'
-          }
+        : count === 1
+          ? {
+              id: 'internal-links',
+              label: 'Internal links',
+              status: 'good',
+              message: '1 same-site link. Adding another related page helps SEO.'
+            }
+          : {
+              id: 'internal-links',
+              label: 'Internal links',
+              status: 'warn',
+              message: 'Add at least one link to a related tour, park, or article on this site.'
+            }
     );
   }
 
-  // Outbound links
+  // Outbound links (other domains only — optional)
   if (input.outboundLinkCount !== undefined) {
     const count = input.outboundLinkCount;
     checks.push(
@@ -483,13 +494,13 @@ export function analyzeSeo(input: SeoAnalysisInput): SeoAnalysis {
             id: 'outbound-links',
             label: 'Outbound links',
             status: 'good',
-            message: `${count} outbound link${count === 1 ? '' : 's'} to external sources.`
+            message: `${count} external link${count === 1 ? '' : 's'} (other websites).`
           }
         : {
             id: 'outbound-links',
             label: 'Outbound links',
-            status: 'warn',
-            message: 'Link out to a credible external source.'
+            status: 'good',
+            message: 'None — optional. Same-site links are counted under Internal links.'
           }
     );
   }

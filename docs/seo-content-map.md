@@ -122,10 +122,11 @@ Stored in translation tables, used in CMS scoring (`src/features/portal/cms/seo/
 
 ## Instant indexing on publish
 
-When CMS content is saved with `status: 'published'`, `notifyPublishedContent()` fires:
+When CMS content is saved with `status: 'published'`, `notifyPublishedContent()`:
 
-1. **IndexNow** — submits URLs to Bing/Yandex partners
-2. **Sitemap ping** — notifies Google and Bing of sitemap updates
+1. Revalidates public paths + `/sitemap.xml`
+2. **IndexNow** — submits URLs to Bing/Yandex partners
+3. **Google Indexing API** — notifies Search Console for detail URLs when configured
 
 Wired in:
 
@@ -137,7 +138,10 @@ Wired in:
 - `accommodations/service.ts`
 - `national-parks/service.ts`
 
-Env: `INDEXNOW_API_KEY` (default `benroso-safaris-indexnow`)
+Env:
+
+- `INDEXNOW_API_KEY` (default `benroso-safaris-indexnow`)
+- `GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON` — service account JSON (or base64). Enable Web Search Indexing API, add the service account email as a Search Console **Owner**.
 
 ---
 
@@ -160,7 +164,7 @@ Env: `INDEXNOW_API_KEY` (default `benroso-safaris-indexnow`)
 3. Add `LodgingBusiness` schema for accommodations
 4. Enforce Supabase `redirects` table at edge (301/302)
 5. Per-locale `<html lang={locale}>` in locale layout
-6. Google Indexing API (requires service account + GSC owner access)
+6. ~~Google Indexing API~~ — wired via `GOOGLE_INDEXING_SERVICE_ACCOUNT_JSON`
 
 ---
 
