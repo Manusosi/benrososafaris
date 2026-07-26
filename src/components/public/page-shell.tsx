@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react';
 
 import { HeroMediaBackdrop } from '@/components/public/hero-media-backdrop';
+import { ListingAside } from '@/components/public/listing-aside';
 import { BenrosoButton } from '@/components/public/ui/benroso-button';
 import { heroHasMedia } from '@/lib/public/page-heroes';
 import type { PageHero as PageHeroConfig } from '@/lib/public/types';
@@ -81,7 +82,7 @@ export function PageHero({
   );
 }
 
-const listingStickyTop = 'calc(var(--benroso-topbar-h)+var(--benroso-header-h)+1rem)';
+const listingStickyTop = 'calc(var(--benroso-topbar-h) + var(--benroso-header-h) + 1rem)';
 const listingStickyMaxHeight =
   'calc(100vh - var(--benroso-topbar-h) - var(--benroso-header-h) - 2rem)';
 
@@ -106,12 +107,11 @@ export function ListingShell({
         ) : null}
         <div className='grid items-start gap-8 lg:grid-cols-[minmax(0,240px)_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[minmax(0,260px)_minmax(0,1fr)]'>
           {filters ? (
-            <aside
-              className={cn(
-                'lg:sticky lg:top-[var(--listing-sticky-top)] lg:max-h-[var(--listing-sticky-max-h)] lg:overflow-y-auto lg:overscroll-contain lg:self-start',
+            <ListingAside
+              className={
                 filterAsideClassName ??
-                  'rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-[var(--benroso-ivory)] p-5'
-              )}
+                'max-lg:border-b max-lg:border-[var(--benroso-line)] max-lg:pb-8 lg:border-r lg:border-[var(--benroso-line)] lg:pr-8 xl:pr-10'
+              }
               style={
                 {
                   '--listing-sticky-top': listingStickyTop,
@@ -120,7 +120,7 @@ export function ListingShell({
               }
             >
               {filters}
-            </aside>
+            </ListingAside>
           ) : null}
           <div className='min-w-0'>{children}</div>
         </div>

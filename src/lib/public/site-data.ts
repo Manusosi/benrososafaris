@@ -970,7 +970,7 @@ function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters)
   const destinationFilters = filters.destination?.map(normalizeFilterValue) ?? [];
   const experienceFilters = filters.experience?.map(normalizeFilterValue) ?? [];
   const parkFilters = filters.park?.map(normalizeFilterValue) ?? [];
-  const tierFilters = filters.pricingTier ?? [];
+  const tierFilters = filters.pricingTiers ?? [];
 
   if (filters.country) {
     const slug = filters.country as TourSafariMarketId;
@@ -1022,26 +1022,29 @@ function tourMatchesFilters(tour: PublicTour, filters: PublicTourCatalogFilters)
     return false;
   }
 
-  if (filters.priceMin != null && (tour.maxPrice ?? tour.priceFrom ?? 0) < filters.priceMin) {
-    return false;
-  }
-  if (
-    filters.priceMax != null &&
-    (tour.minPrice ?? tour.priceFrom ?? Number.MAX_SAFE_INTEGER) > filters.priceMax
-  ) {
-    return false;
+  // Price range uses overlap against the tour's available from/to pricing.
+  const tourLow = tour.minPrice ?? tour.priceFrom ?? null;
+  const tourHigh = tour.maxPrice ?? tour.priceFrom ?? null;
+  if (filters.priceMin != null || filters.priceMax != null) {
+    if (tourLow == null && tourHigh == null) return false;
+    const low = tourLow ?? tourHigh ?? 0;
+    const high = tourHigh ?? tourLow ?? 0;
+    if (filters.priceMin != null && high < filters.priceMin) return false;
+    if (filters.priceMax != null && low > filters.priceMax) return false;
   }
 
   return true;
 }
 
 function buildTourCatalogFacets(tours: PublicTour[]): PublicTourCatalogFacets {
+  const countrySlugs = new Set<string>();
   const destinationLabels = new Set<string>();
   const experienceLabels = new Set<string>();
   const parkOptions = new Map<string, string>();
   const pricingTiers = new Set<PublicTourPricingTier['tier']>();
 
   for (const tour of tours) {
+    tour.countryIds?.forEach((slug) => countrySlugs.add(slug));
     tour.destinationLabels?.forEach((label) => destinationLabels.add(label));
     tour.experienceLabels?.forEach((label) => experienceLabels.add(label));
     tour.parkSlugs?.forEach((slug, index) => {
@@ -1052,6 +1055,7 @@ function buildTourCatalogFacets(tours: PublicTour[]): PublicTourCatalogFacets {
   }
 
   return {
+    countrySlugs: [...countrySlugs],
     destinationLabels: [...destinationLabels].toSorted((a, b) => a.localeCompare(b)),
     durationBounds: { ...TOUR_CATALOG_DURATION_BOUNDS },
     experienceLabels: [...experienceLabels].toSorted((a, b) => a.localeCompare(b)),

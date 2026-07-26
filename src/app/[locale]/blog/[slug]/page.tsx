@@ -193,6 +193,7 @@ export default async function BlogPostPage(props: BlogPageProps) {
         ]}
         description={post.excerpt ?? undefined}
         eyebrow={category ?? 'Blog'}
+        imageUrl={image?.url ?? undefined}
         title={post.title}
       />
       <main className='bg-white'>

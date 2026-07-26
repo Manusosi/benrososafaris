@@ -220,6 +220,8 @@ export type PublicTourDetail = PublicTour & {
 };
 
 export type PublicTourCatalogFacets = {
+  /** Country market slugs present on at least one published tour. */
+  countrySlugs: string[];
   destinationLabels: string[];
   durationBounds: {
     max: number;
@@ -243,7 +245,7 @@ export type PublicTourCatalogFilters = {
   park?: string[];
   priceMax?: number;
   priceMin?: number;
-  pricingTier?: PublicTourPricingTier['tier'][];
+  pricingTiers?: PublicTourPricingTier['tier'][];
 };
 
 export type PublicPackage = {

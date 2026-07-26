@@ -3,7 +3,15 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Slider } from '@/components/ui/slider';
+import {
+  ListingFilterDropdown,
+  ListingFilterEmpty,
+  ListingFilterGroup,
+  ListingFilterOption,
+  ListingFilterRange,
+  ListingFilters,
+  toggleFilterValue
+} from '@/components/public/listing-filters';
 import {
   ACCOMMODATION_COMFORT_LEVELS,
   ACCOMMODATION_COUNTRIES,
@@ -14,18 +22,19 @@ import {
   normalizeCountryValue
 } from '@/features/accommodations/public/constants';
 import { localePath } from '@/lib/public/locale-path';
-import { cn } from '@/lib/utils';
+
+type AccommodationActive = {
+  comfortLevels: string[];
+  countries: string[];
+  destinations: string[];
+  maxPrice?: string;
+  minPrice?: string;
+  propertyTypes: string[];
+  regions: string[];
+};
 
 type AccommodationFiltersProps = {
-  active: {
-    comfortLevels: string[];
-    countries: string[];
-    destinations: string[];
-    maxPrice?: string;
-    minPrice?: string;
-    propertyTypes: string[];
-    regions: string[];
-  };
+  active: AccommodationActive;
   facets: {
     comfortLevels: string[];
     countries: string[];
@@ -40,11 +49,7 @@ type AccommodationFiltersProps = {
   };
 };
 
-function toggleList(current: string[], value: string) {
-  return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
-}
-
-function buildQuery(active: AccommodationFiltersProps['active']) {
+function buildQuery(active: AccommodationActive) {
   const params = new URLSearchParams();
   if (active.countries.length) params.set('country', active.countries.join(','));
   if (active.destinations.length) params.set('destination', active.destinations.join(','));
@@ -56,47 +61,26 @@ function buildQuery(active: AccommodationFiltersProps['active']) {
   return params.toString();
 }
 
-function FilterGroup({ children, title }: { children: React.ReactNode; title: string }) {
+function countActiveFilters(active: AccommodationActive) {
   return (
-    <div className='space-y-3 border-b border-[var(--benroso-line)] pb-5 last:border-b-0 last:pb-0'>
-      <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>{title}</h3>
-      <ul className='space-y-2.5 font-sans text-sm'>{children}</ul>
-    </div>
+    active.countries.length +
+    active.destinations.length +
+    active.propertyTypes.length +
+    active.comfortLevels.length +
+    active.regions.length +
+    (active.minPrice || active.maxPrice ? 1 : 0)
   );
 }
 
-function FilterCheckbox({
-  checked,
-  id,
-  label,
-  onCheckedChange
-}: {
-  checked: boolean;
-  id: string;
-  label: string;
-  onCheckedChange: (checked: boolean) => void;
-}) {
-  return (
-    <li>
-      <label
-        className={cn(
-          'flex cursor-pointer items-center gap-2.5 transition-colors hover:text-[var(--benroso-primary)]',
-          checked ? 'font-semibold text-[var(--benroso-primary)]' : 'text-[var(--benroso-ink)]'
-        )}
-        htmlFor={id}
-      >
-        <input
-          checked={checked}
-          className='benroso-contact-checkbox-input'
-          id={id}
-          onChange={() => onCheckedChange(!checked)}
-          type='checkbox'
-        />
-        <span>{label}</span>
-      </label>
-    </li>
-  );
-}
+const EMPTY_FILTERS: AccommodationActive = {
+  comfortLevels: [],
+  countries: [],
+  destinations: [],
+  maxPrice: undefined,
+  minPrice: undefined,
+  propertyTypes: [],
+  regions: []
+};
 
 export function AccommodationFilters({
   active,
@@ -107,29 +91,40 @@ export function AccommodationFilters({
   const router = useRouter();
   const basePath = localePath(locale, '/accommodations');
 
-  const propertyTypes = [
-    ...ACCOMMODATION_PROPERTY_TYPES,
-    ...facets.propertyTypes.filter(
-      (type) =>
-        !ACCOMMODATION_PROPERTY_TYPES.includes(
-          type as (typeof ACCOMMODATION_PROPERTY_TYPES)[number]
-        )
-    )
-  ];
+  // Prefer countries that actually have published stays; fall back to the full preset list.
+  const countries = (
+    facets.countries.length
+      ? facets.countries.map((country) => normalizeCountryValue(country) ?? country).filter(Boolean)
+      : ACCOMMODATION_COUNTRIES.map((country) => country.value)
+  ).filter((country, index, list) => list.indexOf(country) === index);
+
+  const propertyTypes = (
+    facets.propertyTypes.length
+      ? [
+          ...ACCOMMODATION_PROPERTY_TYPES.filter((type) => facets.propertyTypes.includes(type)),
+          ...facets.propertyTypes.filter(
+            (type) =>
+              !ACCOMMODATION_PROPERTY_TYPES.includes(
+                type as (typeof ACCOMMODATION_PROPERTY_TYPES)[number]
+              )
+          )
+        ]
+      : [...ACCOMMODATION_PROPERTY_TYPES]
+  ).filter((type, index, list) => list.indexOf(type) === index);
 
   const comfortLevels = ACCOMMODATION_COMFORT_LEVELS.map((level) => level.value).filter(
     (value) => facets.comfortLevels.length === 0 || facets.comfortLevels.includes(value)
   );
 
-  const countries = ACCOMMODATION_COUNTRIES.map((country) => country.value);
   const selectedCountries = active.countries
     .map((country) => normalizeCountryValue(country) ?? country)
     .filter(Boolean);
-  const destinationsForCountry = selectedCountries.length
+
+  const destinations = selectedCountries.length
     ? facets.destinations.filter((destination) =>
         selectedCountries.some((country) => countriesMatch(destination.country, country))
       )
-    : [];
+    : facets.destinations;
 
   const sliderMin = priceBounds.min;
   const sliderMax = Math.max(priceBounds.max, sliderMin + 100);
@@ -147,12 +142,12 @@ export function AccommodationFilters({
     ]);
   }, [active.minPrice, active.maxPrice, sliderMin, sliderMax]);
 
-  function navigate(next: AccommodationFiltersProps['active']) {
+  function navigate(next: AccommodationActive) {
     const query = buildQuery(next);
-    router.push(query ? `${basePath}?${query}` : basePath);
+    router.push(query ? `${basePath}?${query}` : basePath, { scroll: false });
   }
 
-  function update(partial: Partial<AccommodationFiltersProps['active']>) {
+  function update(partial: Partial<AccommodationActive>) {
     const next = { ...active, ...partial };
 
     if (partial.countries) {
@@ -162,6 +157,7 @@ export function AccommodationFilters({
       next.destinations = next.destinations.filter((slug) => {
         const destination = facets.destinations.find((item) => item.slug === slug);
         if (!destination) return false;
+        if (!nextCountries.length) return true;
         return nextCountries.some((country) => countriesMatch(destination.country, country));
       });
     }
@@ -169,127 +165,129 @@ export function AccommodationFilters({
     navigate(next);
   }
 
+  const activeCount = countActiveFilters(active);
+
   return (
-    <div className='benroso-accommodation-filters space-y-5'>
-      <FilterGroup title='Country'>
+    <ListingFilters
+      activeCount={activeCount}
+      clearLabel='Clear all'
+      onClear={() => {
+        setPriceRange([sliderMin, sliderMax]);
+        navigate(EMPTY_FILTERS);
+      }}
+      title='Accommodations'
+    >
+      <ListingFilterGroup title='Country'>
         {countries.map((country) => {
-          const id = `filter-country-${country}`;
           const checked = active.countries.some(
             (value) => normalizeCountryValue(value) === country
           );
           return (
-            <FilterCheckbox
+            <ListingFilterOption
               key={country}
               checked={checked}
-              id={id}
+              id={`filter-country-${country.replace(/\W+/g, '-').toLowerCase()}`}
               label={formatCountryLabel(country) ?? country}
-              onCheckedChange={() => update({ countries: toggleList(active.countries, country) })}
+              onChange={() => update({ countries: toggleFilterValue(active.countries, country) })}
             />
           );
         })}
-      </FilterGroup>
+      </ListingFilterGroup>
 
-      {selectedCountries.length ? (
-        <FilterGroup title='Destination'>
-          {destinationsForCountry.length ? (
-            destinationsForCountry.map((destination) => {
-              const id = `filter-destination-${destination.slug}`;
-              return (
-                <FilterCheckbox
-                  key={destination.slug}
-                  checked={active.destinations.includes(destination.slug)}
-                  id={id}
-                  label={destination.label}
-                  onCheckedChange={() =>
-                    update({ destinations: toggleList(active.destinations, destination.slug) })
-                  }
-                />
-              );
-            })
-          ) : (
-            <li className='text-sm text-[var(--benroso-muted)]'>
-              No destinations for the selected country yet.
-            </li>
-          )}
-        </FilterGroup>
-      ) : null}
-
-      <FilterGroup title='Property Type'>
-        {propertyTypes.map((type) => {
-          const id = `filter-type-${type.replace(/\s+/g, '-').toLowerCase()}`;
-          return (
-            <FilterCheckbox
-              key={type}
-              checked={active.propertyTypes.includes(type)}
-              id={id}
-              label={type}
-              onCheckedChange={() =>
-                update({ propertyTypes: toggleList(active.propertyTypes, type) })
+      <ListingFilterDropdown
+        hint={
+          selectedCountries.length
+            ? undefined
+            : 'Showing all destinations. Select a country to narrow the list.'
+        }
+        selectedCount={active.destinations.length}
+        title='Destination'
+        triggerLabel='Select destinations'
+      >
+        {destinations.length ? (
+          destinations.map((destination) => (
+            <ListingFilterOption
+              key={destination.slug}
+              checked={active.destinations.includes(destination.slug)}
+              id={`filter-destination-${destination.slug}`}
+              label={destination.label}
+              onChange={() =>
+                update({
+                  destinations: toggleFilterValue(active.destinations, destination.slug)
+                })
               }
             />
-          );
-        })}
-      </FilterGroup>
+          ))
+        ) : (
+          <ListingFilterEmpty>
+            {selectedCountries.length
+              ? 'No destinations for the selected country yet.'
+              : 'No destinations published yet.'}
+          </ListingFilterEmpty>
+        )}
+      </ListingFilterDropdown>
 
-      <FilterGroup title='Comfort Level'>
-        {comfortLevels.map((level) => {
-          const id = `filter-comfort-${level}`;
-          return (
-            <FilterCheckbox
-              key={level}
-              checked={active.comfortLevels.includes(level)}
-              id={id}
-              label={formatComfortLevelLabel(level) ?? level}
-              onCheckedChange={() =>
-                update({ comfortLevels: toggleList(active.comfortLevels, level) })
-              }
-            />
-          );
-        })}
-      </FilterGroup>
-
-      {facets.regions.length ? (
-        <FilterGroup title='Location'>
-          {facets.regions.map((region) => {
-            const id = `filter-region-${region.replace(/\s+/g, '-').toLowerCase()}`;
-            return (
-              <FilterCheckbox
-                key={region}
-                checked={active.regions.includes(region)}
-                id={id}
-                label={region}
-                onCheckedChange={() => update({ regions: toggleList(active.regions, region) })}
-              />
-            );
-          })}
-        </FilterGroup>
-      ) : null}
-
-      <div className='space-y-4 border-b border-[var(--benroso-line)] pb-5 last:border-b-0 last:pb-0'>
-        <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>
-          Price Per Night (USD)
-        </h3>
-        <div className='space-y-4 rounded-[var(--benroso-radius)] bg-[var(--benroso-warm-gray)] px-5 py-4'>
-          <Slider
-            className='benroso-range-slider'
-            max={sliderMax}
-            min={sliderMin}
-            step={25}
-            value={priceRange}
-            onValueChange={(value) => setPriceRange([value[0], value[1]])}
-            onValueCommit={(value) =>
-              update({
-                minPrice: value[0] <= sliderMin ? undefined : String(value[0]),
-                maxPrice: value[1] >= sliderMax ? undefined : String(value[1])
-              })
+      <ListingFilterGroup title='Property type'>
+        {propertyTypes.map((type) => (
+          <ListingFilterOption
+            key={type}
+            checked={active.propertyTypes.includes(type)}
+            id={`filter-type-${type.replace(/\s+/g, '-').toLowerCase()}`}
+            label={type}
+            onChange={() =>
+              update({ propertyTypes: toggleFilterValue(active.propertyTypes, type) })
             }
           />
-          <div className='flex items-center justify-between text-xs text-[var(--benroso-muted)]'>
-            <span>${priceRange[0].toLocaleString()}</span>
-            <span>${priceRange[1].toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+        ))}
+      </ListingFilterGroup>
+
+      <ListingFilterGroup title='Comfort level'>
+        {comfortLevels.map((level) => (
+          <ListingFilterOption
+            key={level}
+            checked={active.comfortLevels.includes(level)}
+            id={`filter-comfort-${level}`}
+            label={formatComfortLevelLabel(level) ?? level}
+            onChange={() =>
+              update({ comfortLevels: toggleFilterValue(active.comfortLevels, level) })
+            }
+          />
+        ))}
+      </ListingFilterGroup>
+
+      {facets.regions.length ? (
+        <ListingFilterDropdown
+          selectedCount={active.regions.length}
+          title='Location'
+          triggerLabel='Select locations'
+        >
+          {facets.regions.map((region) => (
+            <ListingFilterOption
+              key={region}
+              checked={active.regions.includes(region)}
+              id={`filter-region-${region.replace(/\s+/g, '-').toLowerCase()}`}
+              label={region}
+              onChange={() => update({ regions: toggleFilterValue(active.regions, region) })}
+            />
+          ))}
+        </ListingFilterDropdown>
+      ) : null}
+
+      <ListingFilterRange
+        max={sliderMax}
+        min={sliderMin}
+        step={25}
+        suffix='USD'
+        title='Price per night'
+        value={priceRange}
+        onValueChange={setPriceRange}
+        onCommit={(value) =>
+          update({
+            minPrice: value[0] <= sliderMin ? undefined : String(value[0]),
+            maxPrice: value[1] >= sliderMax ? undefined : String(value[1])
+          })
+        }
+      />
+    </ListingFilters>
   );
 }

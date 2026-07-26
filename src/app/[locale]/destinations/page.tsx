@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 
 import { DestinationCard } from '@/components/public/cards/content-cards';
+import { DestinationFilters } from '@/components/public/destinations/destination-filters';
 import { EmptyState, ListingShell } from '@/components/public/page-shell';
 import { PublicPageHero } from '@/components/public/public-page-hero';
 import { BENROSO_PUBLIC_HERO_IMAGES } from '@/config/benroso';
 import { localePath } from '@/lib/public/locale-path';
 import { getPageHero, getPublicDestinations } from '@/lib/public/site-data';
 import { buildListingPageMetadata, hasSearchParams } from '@/lib/seo/listing-metadata';
-import { cn } from '@/lib/utils';
 
 type DestinationsPageProps = {
   params: Promise<{ locale: string }>;
@@ -49,7 +49,6 @@ export default async function DestinationsPage({ params, searchParams }: Destina
   ]);
   const hero = BENROSO_PUBLIC_HERO_IMAGES.destinations;
 
-  // Distinct countries present in the published data, for the sidebar filter.
   const countryFacets = [
     ...new Map(
       destinations
@@ -59,7 +58,15 @@ export default async function DestinationsPage({ params, searchParams }: Destina
           destination.country as string
         ])
     )
-  ].toSorted((a, b) => a[1].localeCompare(b[1]));
+  ]
+    .map(([slug, label]) => ({
+      count: destinations.filter(
+        (destination) => destination.country && slugifyCountry(destination.country) === slug
+      ).length,
+      label,
+      slug
+    }))
+    .toSorted((a, b) => a.label.localeCompare(b.label));
 
   const visible = activeCountry
     ? destinations.filter(
@@ -68,7 +75,8 @@ export default async function DestinationsPage({ params, searchParams }: Destina
       )
     : destinations;
 
-  const activeLabel = countryFacets.find(([slug]) => slug === activeCountry)?.[1];
+  const activeLabel = countryFacets.find((facet) => facet.slug === activeCountry)?.label;
+  const hasActiveFilter = Boolean(activeCountry);
 
   return (
     <>
@@ -83,31 +91,12 @@ export default async function DestinationsPage({ params, searchParams }: Destina
       />
       <ListingShell
         filters={
-          <div className='space-y-4'>
-            <h2 className='benroso-heading font-display text-xl'>Browse By Country</h2>
-            <ul className='space-y-1.5 text-sm'>
-              <FilterLink
-                href={localePath(locale, '/destinations')}
-                active={!activeCountry}
-                label='All destinations'
-                count={destinations.length}
-              />
-              {countryFacets.map(([slug, label]) => (
-                <FilterLink
-                  key={slug}
-                  href={localePath(locale, `/destinations?country=${slug}`)}
-                  active={activeCountry === slug}
-                  label={label}
-                  count={
-                    destinations.filter(
-                      (destination) =>
-                        destination.country && slugifyCountry(destination.country) === slug
-                    ).length
-                  }
-                />
-              ))}
-            </ul>
-          </div>
+          <DestinationFilters
+            activeCountry={activeCountry}
+            facets={countryFacets}
+            locale={locale}
+            totalCount={destinations.length}
+          />
         }
       >
         <div className='mb-6 flex items-baseline justify-between gap-3'>
@@ -137,55 +126,17 @@ export default async function DestinationsPage({ params, searchParams }: Destina
           </div>
         ) : (
           <EmptyState
-            actionHref={localePath(locale, '/contact')}
-            actionLabel='Speak With a Safari Planner'
+            actionHref={localePath(locale, hasActiveFilter ? '/destinations' : '/contact')}
+            actionLabel={hasActiveFilter ? 'Clear country filter' : 'Speak With a Safari Planner'}
             message={
               activeLabel
                 ? `No published destination guides for ${activeLabel} yet. Try another country or talk to a planner.`
                 : 'Destination guides will populate automatically from the CMS once published.'
             }
-            title='No destinations published yet'
+            title={hasActiveFilter ? 'No destinations match' : 'No destinations published yet'}
           />
         )}
       </ListingShell>
     </>
-  );
-}
-
-function FilterLink({
-  href,
-  active,
-  label,
-  count
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-  count: number;
-}) {
-  return (
-    <li>
-      <a
-        className={cn(
-          'flex items-center justify-between gap-2 rounded-[var(--benroso-radius)] px-3 py-2 transition-colors',
-          active
-            ? 'bg-[var(--benroso-primary)] font-semibold text-white'
-            : 'text-[var(--benroso-ink)] hover:bg-[var(--benroso-ivory)] hover:text-[var(--benroso-primary)]'
-        )}
-        href={href}
-      >
-        <span>{label}</span>
-        <span
-          className={cn(
-            'rounded-full px-2 py-0.5 text-xs',
-            active
-              ? 'bg-white/20 text-white'
-              : 'bg-[var(--benroso-ivory)] text-[var(--benroso-muted)]'
-          )}
-        >
-          {count}
-        </span>
-      </a>
-    </li>
   );
 }

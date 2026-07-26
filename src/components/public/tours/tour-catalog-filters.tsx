@@ -3,7 +3,14 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 
-import { Slider } from '@/components/ui/slider';
+import {
+  ListingFilterDropdown,
+  ListingFilterGroup,
+  ListingFilterOption,
+  ListingFilterRange,
+  ListingFilters,
+  toggleFilterValue
+} from '@/components/public/listing-filters';
 import type { PublicTourCatalogFacets, PublicTourPricingTier } from '@/lib/public/types';
 import { localePath } from '@/lib/public/locale-path';
 import {
@@ -13,35 +20,32 @@ import {
   TOUR_CATALOG_PRICE_BOUNDS,
   TOUR_COMFORT_TIERS
 } from '@/lib/public/tour-format';
-import { cn } from '@/lib/utils';
+
+type TourCatalogActive = {
+  country?: string;
+  destination: string[];
+  durationMax?: string;
+  durationMin?: string;
+  experience: string[];
+  park: string[];
+  priceMax?: string;
+  priceMin?: string;
+  pricingTiers: PublicTourPricingTier['tier'][];
+};
 
 type TourCatalogFiltersProps = {
-  active: {
-    country?: string;
-    destination: string[];
-    durationMax?: string;
-    durationMin?: string;
-    experience: string[];
-    park: string[];
-    priceMax?: string;
-    priceMin?: string;
-    pricingTier: PublicTourPricingTier['tier'][];
-  };
+  active: TourCatalogActive;
   facets: PublicTourCatalogFacets;
   locale: string;
 };
 
-function toggleList(current: string[], value: string) {
-  return current.includes(value) ? current.filter((item) => item !== value) : [...current, value];
-}
-
-function buildQuery(active: TourCatalogFiltersProps['active']) {
+function buildQuery(active: TourCatalogActive) {
   const params = new URLSearchParams();
   if (active.country) params.set('country', active.country);
   if (active.destination.length) params.set('destination', active.destination.join(','));
   if (active.experience.length) params.set('experience', active.experience.join(','));
   if (active.park.length) params.set('park', active.park.join(','));
-  if (active.pricingTier.length) params.set('tier', active.pricingTier.join(','));
+  if (active.pricingTiers.length) params.set('tier', active.pricingTiers.join(','));
   if (active.durationMin) params.set('duration_min', active.durationMin);
   if (active.durationMax) params.set('duration_max', active.durationMax);
   if (active.priceMin) params.set('price_min', active.priceMin);
@@ -55,156 +59,43 @@ function asNumber(value: string | undefined, fallback: number) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function FilterGroup({ children, title }: { children: React.ReactNode; title: string }) {
+function countActiveFilters(active: TourCatalogActive) {
   return (
-    <div className='space-y-3 border-b border-[var(--benroso-line)] pb-5 last:border-b-0 last:pb-0'>
-      <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>{title}</h3>
-      <ul className='space-y-2.5 font-sans text-sm'>{children}</ul>
-    </div>
+    (active.country ? 1 : 0) +
+    (active.destination?.length ?? 0) +
+    (active.experience?.length ?? 0) +
+    (active.park?.length ?? 0) +
+    (active.pricingTiers?.length ?? 0) +
+    (active.durationMin || active.durationMax ? 1 : 0) +
+    (active.priceMin || active.priceMax ? 1 : 0)
   );
 }
 
-function FilterCheckbox({
-  checked,
-  id,
-  label,
-  onCheckedChange
-}: {
-  checked: boolean;
-  id: string;
-  label: string;
-  onCheckedChange: () => void;
-}) {
-  return (
-    <li>
-      <label
-        className={cn(
-          'flex cursor-pointer items-center gap-2.5 transition-colors hover:text-[var(--benroso-primary)]',
-          checked ? 'font-semibold text-[var(--benroso-primary)]' : 'text-[var(--benroso-ink)]'
-        )}
-        htmlFor={id}
-      >
-        <input
-          checked={checked}
-          className='benroso-contact-checkbox-input'
-          id={id}
-          onChange={onCheckedChange}
-          type='checkbox'
-        />
-        <span className='min-w-0 truncate'>{label}</span>
-      </label>
-    </li>
-  );
-}
-
-function FilterRadio({
-  checked,
-  id,
-  label,
-  name,
-  onSelect
-}: {
-  checked: boolean;
-  id: string;
-  label: string;
-  name: string;
-  onSelect: () => void;
-}) {
-  return (
-    <li>
-      <label
-        className={cn(
-          'flex cursor-pointer items-center gap-2.5 transition-colors hover:text-[var(--benroso-primary)]',
-          checked ? 'font-semibold text-[var(--benroso-primary)]' : 'text-[var(--benroso-ink)]'
-        )}
-        htmlFor={id}
-      >
-        <input
-          checked={checked}
-          className='benroso-contact-radio-input'
-          id={id}
-          name={name}
-          onChange={onSelect}
-          type='radio'
-        />
-        <span className='min-w-0 truncate'>{label}</span>
-      </label>
-    </li>
-  );
-}
-
-function RangeFilter({
-  max,
-  min,
-  onCommit,
-  onValueChange,
-  suffix,
-  title,
-  value
-}: {
-  max: number;
-  min: number;
-  onCommit: (value: [number, number]) => void;
-  onValueChange: (value: [number, number]) => void;
-  suffix?: string;
-  title: string;
-  value: [number, number];
-}) {
-  return (
-    <div className='space-y-4 border-b border-[var(--benroso-line)] pb-5 last:border-b-0 last:pb-0'>
-      <h3 className='benroso-heading font-display text-sm uppercase tracking-[0.12em]'>{title}</h3>
-      <div className='rounded-[var(--benroso-radius)] bg-[var(--benroso-warm-gray)] px-5 py-4'>
-        <Slider
-          className='benroso-range-slider'
-          max={max}
-          min={min}
-          step={title === 'Price From' ? 50 : 1}
-          value={value}
-          onValueChange={(next) => onValueChange([next[0], next[1]])}
-          onValueCommit={(next) => onCommit([next[0], next[1]])}
-        />
-        <div className='mt-4 grid grid-cols-2 gap-3 text-xs text-[var(--benroso-muted)]'>
-          <RangeValue label='Min' suffix={suffix} value={value[0]} />
-          <RangeValue align='right' label='Max' suffix={suffix} value={value[1]} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function RangeValue({
-  align = 'left',
-  label,
-  suffix,
-  value
-}: {
-  align?: 'left' | 'right';
-  label: string;
-  suffix?: string;
-  value: number;
-}) {
-  return (
-    <span className={cn('block', align === 'right' && 'text-right')}>
-      <span className='block text-[10px] font-bold uppercase tracking-wide text-[var(--benroso-muted)]/75'>
-        {label}
-      </span>
-      <strong className='mt-1 block text-sm text-[var(--benroso-ink)]'>
-        {suffix === 'USD'
-          ? `USD ${value.toLocaleString()}`
-          : `${value.toLocaleString()} ${suffix ?? ''}`.trim()}
-      </strong>
-    </span>
-  );
-}
+const EMPTY_FILTERS: TourCatalogActive = {
+  country: undefined,
+  destination: [],
+  durationMax: undefined,
+  durationMin: undefined,
+  experience: [],
+  park: [],
+  priceMax: undefined,
+  priceMin: undefined,
+  pricingTiers: []
+};
 
 export function TourCatalogFilters({ active, facets, locale }: TourCatalogFiltersProps) {
   const router = useRouter();
   const basePath = localePath(locale, '/tours');
 
-  const durationMin = TOUR_CATALOG_DURATION_BOUNDS.min;
-  const durationMax = TOUR_CATALOG_DURATION_BOUNDS.max;
-  const priceMin = TOUR_CATALOG_PRICE_BOUNDS.min;
-  const priceMax = TOUR_CATALOG_PRICE_BOUNDS.max;
+  const destination = active.destination ?? [];
+  const experience = active.experience ?? [];
+  const park = active.park ?? [];
+  const pricingTiers = active.pricingTiers ?? [];
+
+  const durationMin = facets.durationBounds?.min ?? TOUR_CATALOG_DURATION_BOUNDS.min;
+  const durationMax = facets.durationBounds?.max ?? TOUR_CATALOG_DURATION_BOUNDS.max;
+  const priceMin = facets.priceBounds?.min ?? TOUR_CATALOG_PRICE_BOUNDS.min;
+  const priceMax = facets.priceBounds?.max ?? TOUR_CATALOG_PRICE_BOUNDS.max;
 
   const [durationRange, setDurationRange] = React.useState<[number, number]>([
     asNumber(active.durationMin, durationMin),
@@ -226,115 +117,154 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
     setPriceRange([asNumber(active.priceMin, priceMin), asNumber(active.priceMax, priceMax)]);
   }, [active.priceMin, active.priceMax, priceMin, priceMax]);
 
-  function navigate(next: TourCatalogFiltersProps['active']) {
+  function navigate(next: TourCatalogActive) {
     const query = buildQuery(next);
-    router.push(query ? `${basePath}?${query}` : basePath);
+    router.push(query ? `${basePath}?${query}` : basePath, { scroll: false });
   }
 
-  function update(partial: Partial<TourCatalogFiltersProps['active']>) {
-    navigate({ ...active, ...partial });
+  function update(partial: Partial<TourCatalogActive>) {
+    navigate({
+      ...active,
+      destination,
+      experience,
+      park,
+      pricingTiers,
+      ...partial
+    });
   }
 
-  const visibleTiers = TOUR_COMFORT_TIERS.filter(
-    (tier) => !facets.pricingTiers.length || facets.pricingTiers.includes(tier.value)
+  const countries = TOUR_CATALOG_COUNTRIES.filter(
+    ({ slug }) => !facets.countrySlugs?.length || facets.countrySlugs.includes(slug)
   );
 
+  const visibleTiers = TOUR_COMFORT_TIERS.filter(
+    (tier) => !facets.pricingTiers?.length || facets.pricingTiers.includes(tier.value)
+  );
+
+  const activeCount = countActiveFilters({
+    ...active,
+    destination,
+    experience,
+    park,
+    pricingTiers
+  });
+
   return (
-    <div className='benroso-accommodation-filters space-y-5'>
-      <FilterGroup title='Country'>
-        <FilterRadio
+    <ListingFilters
+      activeCount={activeCount}
+      clearLabel='Clear all'
+      onClear={() => {
+        setDurationRange([durationMin, durationMax]);
+        setPriceRange([priceMin, priceMax]);
+        navigate(EMPTY_FILTERS);
+      }}
+      title='Safari tours'
+    >
+      <ListingFilterGroup title='Country'>
+        <ListingFilterOption
           checked={!active.country}
           id='tour-country-all'
-          label='All'
+          label='All countries'
           name='tour-country'
-          onSelect={() => update({ country: undefined })}
+          type='radio'
+          onChange={() => update({ country: undefined })}
         />
-        {TOUR_CATALOG_COUNTRIES.map(({ country, slug }) => (
-          <FilterRadio
+        {countries.map(({ country, slug }) => (
+          <ListingFilterOption
             checked={active.country === slug}
             id={`tour-country-${slug}`}
             key={slug}
             label={country}
             name='tour-country'
-            onSelect={() => update({ country: slug })}
+            type='radio'
+            onChange={() => update({ country: slug })}
           />
         ))}
-      </FilterGroup>
+      </ListingFilterGroup>
 
       {facets.destinationLabels.length ? (
-        <FilterGroup title='Destinations'>
-          {facets.destinationLabels.map((destination) => (
-            <FilterCheckbox
-              checked={active.destination.includes(destination)}
-              id={`tour-destination-${destination.replace(/\W+/g, '-').toLowerCase()}`}
-              key={destination}
-              label={destination}
-              onCheckedChange={() =>
-                update({ destination: toggleList(active.destination, destination) })
-              }
+        <ListingFilterDropdown
+          selectedCount={destination.length}
+          title='Destinations'
+          triggerLabel='Select destinations'
+        >
+          {facets.destinationLabels.map((label) => (
+            <ListingFilterOption
+              checked={destination.includes(label)}
+              id={`tour-destination-${label.replace(/\W+/g, '-').toLowerCase()}`}
+              key={label}
+              label={label}
+              onChange={() => update({ destination: toggleFilterValue(destination, label) })}
             />
           ))}
-        </FilterGroup>
+        </ListingFilterDropdown>
       ) : null}
 
       {facets.parkOptions.length ? (
-        <FilterGroup title='National Parks'>
-          {facets.parkOptions.map((park) => (
-            <FilterCheckbox
-              checked={active.park.includes(park.slug)}
-              id={`tour-park-${park.slug}`}
-              key={park.slug}
-              label={park.label}
-              onCheckedChange={() => update({ park: toggleList(active.park, park.slug) })}
+        <ListingFilterDropdown
+          selectedCount={park.length}
+          title='National parks'
+          triggerLabel='Select parks'
+        >
+          {facets.parkOptions.map((item) => (
+            <ListingFilterOption
+              checked={park.includes(item.slug)}
+              id={`tour-park-${item.slug}`}
+              key={item.slug}
+              label={item.label}
+              onChange={() => update({ park: toggleFilterValue(park, item.slug) })}
             />
           ))}
-        </FilterGroup>
+        </ListingFilterDropdown>
       ) : null}
 
       {facets.experienceLabels.length ? (
-        <FilterGroup title='Safari Adventures'>
-          {facets.experienceLabels.map((experience) => (
-            <FilterCheckbox
-              checked={active.experience.includes(experience)}
-              id={`tour-experience-${experience.replace(/\W+/g, '-').toLowerCase()}`}
-              key={experience}
-              label={experience}
-              onCheckedChange={() =>
-                update({ experience: toggleList(active.experience, experience) })
-              }
+        <ListingFilterDropdown
+          selectedCount={experience.length}
+          title='Safari adventures'
+          triggerLabel='Select adventures'
+        >
+          {facets.experienceLabels.map((label) => (
+            <ListingFilterOption
+              checked={experience.includes(label)}
+              id={`tour-experience-${label.replace(/\W+/g, '-').toLowerCase()}`}
+              key={label}
+              label={label}
+              onChange={() => update({ experience: toggleFilterValue(experience, label) })}
             />
           ))}
-        </FilterGroup>
+        </ListingFilterDropdown>
       ) : null}
 
       {visibleTiers.length ? (
-        <FilterGroup title='Comfort Tier'>
+        <ListingFilterGroup title='Comfort tier'>
           {visibleTiers.map((tier) => (
-            <FilterCheckbox
-              checked={active.pricingTier.includes(tier.value)}
+            <ListingFilterOption
+              checked={pricingTiers.includes(tier.value)}
               id={`tour-tier-${tier.value}`}
               key={tier.value}
               label={formatComfortTierLabel(tier.value, 'short')}
-              onCheckedChange={() =>
+              onChange={() =>
                 update({
-                  pricingTier: toggleList(
-                    active.pricingTier,
+                  pricingTiers: toggleFilterValue(
+                    pricingTiers,
                     tier.value
                   ) as PublicTourPricingTier['tier'][]
                 })
               }
             />
           ))}
-        </FilterGroup>
+        </ListingFilterGroup>
       ) : null}
 
-      <RangeFilter
+      <ListingFilterRange
         max={durationMax}
         min={durationMin}
+        step={1}
         suffix='days'
         title='Duration'
         value={durationRange}
-        onValueChange={(value) => setDurationRange(value)}
+        onValueChange={setDurationRange}
         onCommit={(value) =>
           update({
             durationMin: value[0] <= durationMin ? undefined : String(value[0]),
@@ -343,37 +273,21 @@ export function TourCatalogFilters({ active, facets, locale }: TourCatalogFilter
         }
       />
 
-      <div className='space-y-5'>
-        <RangeFilter
-          max={priceMax}
-          min={priceMin}
-          suffix='USD'
-          title='Price From'
-          value={priceRange}
-          onValueChange={(value) => setPriceRange(value)}
-          onCommit={(value) =>
-            update({
-              priceMin: value[0] <= priceMin ? undefined : String(value[0]),
-              priceMax: value[1] >= priceMax ? undefined : String(value[1])
-            })
-          }
-        />
-        <button
-          className='inline-flex w-full items-center justify-center rounded-[var(--benroso-radius)] border border-[var(--benroso-line)] bg-white px-4 py-2.5 text-sm font-semibold text-[var(--benroso-primary)] transition-colors hover:border-[var(--benroso-primary)] hover:bg-[var(--benroso-ivory)]'
-          onClick={() =>
-            navigate({
-              country: undefined,
-              destination: [],
-              experience: [],
-              park: [],
-              pricingTier: []
-            })
-          }
-          type='button'
-        >
-          Reset Search Result
-        </button>
-      </div>
-    </div>
+      <ListingFilterRange
+        max={priceMax}
+        min={priceMin}
+        step={50}
+        suffix='USD'
+        title='Price from'
+        value={priceRange}
+        onValueChange={setPriceRange}
+        onCommit={(value) =>
+          update({
+            priceMin: value[0] <= priceMin ? undefined : String(value[0]),
+            priceMax: value[1] >= priceMax ? undefined : String(value[1])
+          })
+        }
+      />
+    </ListingFilters>
   );
 }

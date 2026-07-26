@@ -86,7 +86,7 @@ export default async function ToursPage({ params, searchParams }: ToursPageProps
     park: parseFilterList(query.park),
     priceMax: query.price_max?.trim() || undefined,
     priceMin: query.price_min?.trim() || undefined,
-    pricingTier: parseTierList(query.tier)
+    pricingTiers: parseTierList(query.tier)
   };
 
   const [{ tours, facets }, pageHero] = await Promise.all([
@@ -99,7 +99,7 @@ export default async function ToursPage({ params, searchParams }: ToursPageProps
       park: activeFilters.park,
       priceMax: parsePrice(activeFilters.priceMax),
       priceMin: parsePrice(activeFilters.priceMin),
-      pricingTier: activeFilters.pricingTier
+      pricingTiers: activeFilters.pricingTiers
     }),
     getPageHero('tours')
   ]);
@@ -146,10 +146,14 @@ export default async function ToursPage({ params, searchParams }: ToursPageProps
           </div>
         ) : (
           <EmptyState
-            actionHref={localePath(locale, '/contact')}
-            actionLabel='Plan a Custom Safari'
-            message='Published tours will appear here once they are added through the Benroso CMS.'
-            title='No tours published yet'
+            actionHref={localePath(locale, hasSearchParams(query) ? '/tours' : '/contact')}
+            actionLabel={hasSearchParams(query) ? 'Clear filters' : 'Plan a Custom Safari'}
+            message={
+              hasSearchParams(query)
+                ? 'No tours match these filters. Widen the duration or price range, or clear filters to see all safaris.'
+                : 'Published tours will appear here once they are added through the Benroso CMS.'
+            }
+            title={hasSearchParams(query) ? 'No tours match' : 'No tours published yet'}
           />
         )}
       </ListingShell>

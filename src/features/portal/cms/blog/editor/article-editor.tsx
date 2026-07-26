@@ -54,6 +54,57 @@ interface ArticleEditorProps {
   tags: TaxonomyOption[];
 }
 
+type AutosaveState = 'idle' | 'saving' | 'saved' | 'error';
+
+const LOCAL_DRAFT_PREFIX = 'benroso-article-draft:';
+const LOCAL_SAVE_MS = 400;
+const SERVER_AUTOSAVE_MS = 1500;
+
+function localDraftKey(articleId: string | undefined): string {
+  return `${LOCAL_DRAFT_PREFIX}${articleId ?? 'new'}`;
+}
+
+function readLocalDraft(articleId: string | undefined): ArticleFormValues | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(localDraftKey(articleId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { values?: ArticleFormValues };
+    return parsed.values ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalDraft(articleId: string | undefined, values: ArticleFormValues): void {
+  try {
+    window.localStorage.setItem(
+      localDraftKey(articleId),
+      JSON.stringify({ updatedAt: Date.now(), values })
+    );
+  } catch {
+    // Quota / private mode — ignore; server autosave still runs.
+  }
+}
+
+function clearLocalDraft(articleId: string | undefined): void {
+  try {
+    window.localStorage.removeItem(localDraftKey(articleId));
+  } catch {
+    // ignore
+  }
+}
+
+function draftIsRicher(local: ArticleFormValues, baseline: ArticleFormValues): boolean {
+  const localBody = local.content?.trim().length ?? 0;
+  const baseBody = baseline.content?.trim().length ?? 0;
+  if (localBody > baseBody) return true;
+  if (localBody < baseBody) return false;
+  const localTitle = local.title?.trim().length ?? 0;
+  const baseTitle = baseline.title?.trim().length ?? 0;
+  return localTitle > baseTitle;
+}
+
 export function ArticleEditor({
   id,
   initialValues,
@@ -62,9 +113,16 @@ export function ArticleEditor({
   tags: initialTags
 }: ArticleEditorProps) {
   const router = useRouter();
+  const [articleId, setArticleId] = React.useState(id);
   const [pending, setPending] = React.useState<SaveStatus | null>(null);
+  const [autosaveState, setAutosaveState] = React.useState<AutosaveState>('idle');
+  const [lastSavedAt, setLastSavedAt] = React.useState<Date | null>(null);
   const [seoOpen, setSeoOpen] = React.useState(false);
   const [status, setStatus] = React.useState<SaveStatus>(
+    initialStatus === 'published' ? 'published' : 'draft'
+  );
+  /** Status last written to the DB — autosave must not unpublish via the select alone. */
+  const [persistedStatus, setPersistedStatus] = React.useState<SaveStatus>(
     initialStatus === 'published' ? 'published' : 'draft'
   );
   const [categories, setCategories] = React.useState<TaxonomyOption[]>(initialCategories);
@@ -73,6 +131,12 @@ export function ArticleEditor({
   // Slug + SEO title track the title until the editor overrides them.
   const autoSlugRef = React.useRef(!id);
   const autoTitleRef = React.useRef(!id);
+  const skipServerAutosaveRef = React.useRef(true);
+  const serverSavingRef = React.useRef(false);
+  const lastSavedSnapshotRef = React.useRef(JSON.stringify(initialValues ?? emptyArticleValues));
+  const valuesRef = React.useRef(initialValues ?? emptyArticleValues);
+  const articleIdRef = React.useRef(articleId);
+  const persistedStatusRef = React.useRef(persistedStatus);
 
   const form = useAppForm({
     defaultValues: initialValues ?? emptyArticleValues,
@@ -82,6 +146,81 @@ export function ArticleEditor({
   });
 
   const values = useStore(form.store, (state) => state.values);
+  valuesRef.current = values;
+  articleIdRef.current = articleId;
+  persistedStatusRef.current = persistedStatus;
+
+  // Restore browser-local draft after accidental refresh (before server autosave catches up).
+  React.useEffect(() => {
+    const baseline = initialValues ?? emptyArticleValues;
+    const local = readLocalDraft(id);
+    if (!local || !draftIsRicher(local, baseline)) return;
+
+    (Object.keys(local) as Array<keyof ArticleFormValues>).forEach((key) => {
+      form.setFieldValue(key, local[key]);
+    });
+    lastSavedSnapshotRef.current = '';
+    toast.message('Restored unsaved changes from this browser.');
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- restore once on mount
+  }, []);
+
+  // Immediate local backup on every edit.
+  React.useEffect(() => {
+    const timer = window.setTimeout(() => {
+      writeLocalDraft(articleId, values);
+    }, LOCAL_SAVE_MS);
+    return () => window.clearTimeout(timer);
+  }, [articleId, values]);
+
+  // Debounced server autosave once title + slug are valid.
+  React.useEffect(() => {
+    if (skipServerAutosaveRef.current) {
+      skipServerAutosaveRef.current = false;
+      return;
+    }
+    if (pending !== null || serverSavingRef.current) return;
+    if (!articleDraftSchema.safeParse(values).success) return;
+    if (JSON.stringify(values) === lastSavedSnapshotRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      void runAutosave();
+    }, SERVER_AUTOSAVE_MS);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- debounce on form values only
+  }, [values, pending]);
+
+  async function runAutosave() {
+    if (serverSavingRef.current || pending !== null) return;
+    const current = valuesRef.current;
+    if (!articleDraftSchema.safeParse(current).success) return;
+    if (JSON.stringify(current) === lastSavedSnapshotRef.current) return;
+
+    serverSavingRef.current = true;
+    setAutosaveState('saving');
+    try {
+      const result = await saveArticle({
+        id: articleIdRef.current,
+        values: current,
+        status: persistedStatusRef.current
+      });
+
+      if (!articleIdRef.current) {
+        setArticleId(result.id);
+        articleIdRef.current = result.id;
+        clearLocalDraft(undefined);
+        writeLocalDraft(result.id, current);
+        window.history.replaceState(null, '', `/portal/blog/${result.id}`);
+      }
+
+      lastSavedSnapshotRef.current = JSON.stringify(current);
+      setLastSavedAt(new Date());
+      setAutosaveState('saved');
+    } catch {
+      setAutosaveState('error');
+    } finally {
+      serverSavingRef.current = false;
+    }
+  }
 
   // Resolve the featured image so the SEO panel can report alt-text coverage.
   const featuredIds = values.featuredImage ? [values.featuredImage] : [];
@@ -162,7 +301,13 @@ export function ArticleEditor({
     setPending(nextStatus);
     setStatus(nextStatus);
     try {
-      await saveArticle({ id, values, status: nextStatus });
+      const result = await saveArticle({ id: articleId, values, status: nextStatus });
+      setArticleId(result.id);
+      setPersistedStatus(nextStatus);
+      lastSavedSnapshotRef.current = JSON.stringify(values);
+      clearLocalDraft(articleId);
+      clearLocalDraft(result.id);
+      clearLocalDraft(undefined);
       toast.success(nextStatus === 'published' ? 'Article published.' : 'Draft saved.');
       router.push('/portal/blog');
       router.refresh();
@@ -174,6 +319,15 @@ export function ArticleEditor({
       setPending(null);
     }
   }
+
+  const autosaveLabel =
+    autosaveState === 'saving'
+      ? 'Saving…'
+      : autosaveState === 'error'
+        ? 'Autosave failed — try Save draft'
+        : autosaveState === 'saved' && lastSavedAt
+          ? `Saved ${lastSavedAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+          : null;
 
   return (
     <form.AppForm>
@@ -307,7 +461,19 @@ export function ArticleEditor({
           {/* Publish */}
           <Card className='gap-3 py-4'>
             <CardHeader className='px-4'>
-              <CardTitle className='text-sm'>Publish</CardTitle>
+              <div className='flex items-center justify-between gap-2'>
+                <CardTitle className='text-sm'>Publish</CardTitle>
+                {autosaveLabel ? (
+                  <span
+                    className={cn(
+                      'text-xs',
+                      autosaveState === 'error' ? 'text-destructive' : 'text-muted-foreground'
+                    )}
+                  >
+                    {autosaveLabel}
+                  </span>
+                ) : null}
+              </div>
             </CardHeader>
             <CardContent className='grid gap-3 px-4'>
               <div className='grid gap-1.5'>

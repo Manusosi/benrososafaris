@@ -60,7 +60,6 @@ export function ExperiencesListingSection({
     <ExperienceScrollReveal id={id}>
       <ListingShell
         className='bg-white'
-        filterAsideClassName='bg-white py-1 max-lg:border-b max-lg:border-[var(--benroso-line)] max-lg:pb-8 lg:border-r lg:border-[var(--benroso-line)] lg:pr-10'
         filters={<ExperienceListingFilters active={filters} onChange={handleFiltersChange} />}
       >
         {legacyCategory && categoryBlurb ? (
