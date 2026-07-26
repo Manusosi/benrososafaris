@@ -9,6 +9,7 @@ import { ArticleToc } from '@/components/public/blog/article-toc';
 import { RelatedArticles } from '@/components/public/blog/related-articles';
 import { ContactHero } from '@/components/public/contact/contact-hero';
 import { FaqSection } from '@/components/public/faq-section';
+import { enrichArticleHtmlWithCaptions } from '@/lib/public/article-image-captions';
 import { buildToc, getArticleNeighbors, getRelatedArticles } from '@/lib/public/blog';
 import { localePath } from '@/lib/public/locale-path';
 import { absoluteUrl, buildAlternates, buildBlogJsonLd } from '@/lib/seo';
@@ -164,7 +165,7 @@ export default async function BlogPostPage(props: BlogPageProps) {
     },
     `/${locale}/blog/${post.slug}`
   );
-  const rawHtml = contentToHtml(post.content);
+  const rawHtml = await enrichArticleHtmlWithCaptions(contentToHtml(post.content));
   const { html: bodyHtml, toc } = buildToc(rawHtml);
   const faqs = normalizeDirectAnswers(
     normalizeDirectAnswers(post.direct_answers).length ? post.direct_answers : post.faqs

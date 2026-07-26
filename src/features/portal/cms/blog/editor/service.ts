@@ -22,6 +22,8 @@ export interface TaxonomyOption {
   id: string;
   name: string;
   slug: string;
+  /** Number of articles currently linked via join tables. */
+  usageCount: number;
 }
 
 export interface ArticleTaxonomies {
@@ -215,17 +217,43 @@ export async function getArticle(id: string): Promise<ArticleRecord | null> {
   };
 }
 
-/** All categories and tags, for the editor sidebar selectors. */
+function countById(rows: Array<{ id: string }> | null | undefined): Map<string, number> {
+  const counts = new Map<string, number>();
+  for (const row of rows ?? []) {
+    counts.set(row.id, (counts.get(row.id) ?? 0) + 1);
+  }
+  return counts;
+}
+
+/** All categories and tags, for the editor sidebar selectors (with article usage counts). */
 export async function getArticleTaxonomies(): Promise<ArticleTaxonomies> {
   const supabase = await createClient();
-  const [{ data: categories }, { data: tags }] = await Promise.all([
-    supabase.from('blog_categories').select('id, name, slug').order('name'),
-    supabase.from('blog_tags').select('id, name, slug').order('name')
-  ]);
+  const [{ data: categories }, { data: tags }, { data: categoryLinks }, { data: tagLinks }] =
+    await Promise.all([
+      supabase.from('blog_categories').select('id, name, slug').order('name'),
+      supabase.from('blog_tags').select('id, name, slug').order('name'),
+      supabase.from('blog_post_categories').select('category_id'),
+      supabase.from('blog_post_tags').select('tag_id')
+    ]);
+
+  const categoryCounts = countById(
+    (categoryLinks ?? []).map((row) => ({ id: row.category_id as string }))
+  );
+  const tagCounts = countById((tagLinks ?? []).map((row) => ({ id: row.tag_id as string })));
 
   return {
-    categories: (categories ?? []).map((row) => ({ id: row.id, name: row.name, slug: row.slug })),
-    tags: (tags ?? []).map((row) => ({ id: row.id, name: row.name, slug: row.slug }))
+    categories: (categories ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      usageCount: categoryCounts.get(row.id) ?? 0
+    })),
+    tags: (tags ?? []).map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      usageCount: tagCounts.get(row.id) ?? 0
+    }))
   };
 }
 
@@ -246,7 +274,7 @@ export async function createBlogCategory(name: string): Promise<TaxonomyOption> 
   if (error) throw new Error(error.message);
 
   revalidatePath('/portal/blog');
-  return { id: data.id, name: data.name, slug: data.slug };
+  return { id: data.id, name: data.name, slug: data.slug, usageCount: 0 };
 }
 
 /** Inline-creates a new tag from the editor, returning the persisted row. */
@@ -266,5 +294,43 @@ export async function createBlogTag(name: string): Promise<TaxonomyOption> {
   if (error) throw new Error(error.message);
 
   revalidatePath('/portal/blog');
-  return { id: data.id, name: data.name, slug: data.slug };
+  return { id: data.id, name: data.name, slug: data.slug, usageCount: 0 };
+}
+
+/** Deletes a category only when no articles are attached. */
+export async function deleteBlogCategory(id: string): Promise<void> {
+  await assertCanWrite();
+  const supabase = await createClient();
+
+  const { count, error: countError } = await supabase
+    .from('blog_post_categories')
+    .select('*', { count: 'exact', head: true })
+    .eq('category_id', id);
+  if (countError) throw new Error(countError.message);
+  if ((count ?? 0) > 0) {
+    throw new Error('This category is still linked to articles. Unlink it first.');
+  }
+
+  const { error } = await supabase.from('blog_categories').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/portal/blog');
+}
+
+/** Deletes a tag only when no articles are attached. */
+export async function deleteBlogTag(id: string): Promise<void> {
+  await assertCanWrite();
+  const supabase = await createClient();
+
+  const { count, error: countError } = await supabase
+    .from('blog_post_tags')
+    .select('*', { count: 'exact', head: true })
+    .eq('tag_id', id);
+  if (countError) throw new Error(countError.message);
+  if ((count ?? 0) > 0) {
+    throw new Error('This tag is still linked to articles. Unlink it first.');
+  }
+
+  const { error } = await supabase.from('blog_tags').delete().eq('id', id);
+  if (error) throw new Error(error.message);
+  revalidatePath('/portal/blog');
 }

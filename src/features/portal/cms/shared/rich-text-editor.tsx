@@ -27,6 +27,7 @@ import { cn } from '@/lib/utils';
 import { getMediaByIds } from '../media/api/client';
 import { MediaPickerDialog } from '../media/components/media-picker';
 import { CMS_SURFACE } from './surface';
+import { Figcaption, Figure } from './tiptap-figure';
 
 /** Common internal destinations offered as quick picks in the link dialog. */
 const INTERNAL_LINK_PRESETS: { label: string; href: string }[] = [
@@ -66,7 +67,9 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
         heading: { levels: [1, 2, 3] },
         link: { openOnClick: false, autolink: true }
       }),
-      Image,
+      Image.configure({ allowBase64: false }),
+      Figure,
+      Figcaption,
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -89,6 +92,9 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           '[&_pre_code]:bg-transparent [&_pre_code]:p-0',
           '[&_hr]:my-4 [&_hr]:border-t [&_hr]:border-[#E5E7EB]',
           '[&_img]:my-2 [&_img]:max-w-full [&_img]:rounded-[3px]',
+          '[&_figure]:my-4 [&_figure]:overflow-hidden [&_figure]:rounded-[3px] [&_figure]:border [&_figure]:border-[#E5E7EB]',
+          '[&_figure_img]:my-0 [&_figure_img]:rounded-none',
+          '[&_figcaption]:bg-[#f8f5ef] [&_figcaption]:px-3 [&_figcaption]:py-2 [&_figcaption]:text-center [&_figcaption]:text-xs [&_figcaption]:italic [&_figcaption]:text-neutral-600',
           '[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse',
           '[&_th]:border [&_th]:border-[#E5E7EB] [&_th]:bg-[#f3f4f6] [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold',
           '[&_td]:border [&_td]:border-[#E5E7EB] [&_td]:p-2'
@@ -149,13 +155,35 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
     if (!editor || !ids.length) return;
     const assets = await getMediaByIds(ids);
     const asset = assets.find((item) => item.url);
-    if (asset?.url) {
+    if (!asset?.url) return;
+
+    const caption = asset.caption?.trim();
+    if (caption) {
       editor
         .chain()
         .focus()
-        .setImage({ src: asset.url, alt: asset.alt ?? undefined })
+        .insertContent({
+          type: 'figure',
+          content: [
+            {
+              type: 'image',
+              attrs: { src: asset.url, alt: asset.alt ?? '' }
+            },
+            {
+              type: 'figcaption',
+              content: [{ type: 'text', text: caption }]
+            }
+          ]
+        })
         .run();
+      return;
     }
+
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: asset.url, alt: asset.alt ?? undefined })
+      .run();
   }
 
   if (!editor) {

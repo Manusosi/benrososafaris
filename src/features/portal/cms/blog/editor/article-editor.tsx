@@ -39,6 +39,8 @@ import {
 import {
   createBlogCategory,
   createBlogTag,
+  deleteBlogCategory,
+  deleteBlogTag,
   saveArticle,
   type SaveStatus,
   type TaxonomyOption
@@ -253,6 +255,21 @@ export function ArticleEditor({
       toast.error(error instanceof Error ? error.message : 'Could not add category.')
   });
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => deleteBlogCategory(id),
+    onSuccess: (_result, id) => {
+      setCategories((prev) => prev.filter((item) => item.id !== id));
+      const next = values.categoryIds.filter((item) => item !== id);
+      form.setFieldValue('categoryIds', next);
+      if (values.primaryCategoryId === id) {
+        form.setFieldValue('primaryCategoryId', next[0] ?? '');
+      }
+      toast.success('Category deleted.');
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : 'Could not delete category.')
+  });
+
   const createTagMutation = useMutation({
     mutationFn: (name: string) => createBlogTag(name),
     onSuccess: (tag) => {
@@ -261,6 +278,20 @@ export function ArticleEditor({
       toast.success(`Added tag “${tag.name}”.`);
     },
     onError: (error) => toast.error(error instanceof Error ? error.message : 'Could not add tag.')
+  });
+
+  const deleteTagMutation = useMutation({
+    mutationFn: (id: string) => deleteBlogTag(id),
+    onSuccess: (_result, id) => {
+      setTags((prev) => prev.filter((item) => item.id !== id));
+      form.setFieldValue(
+        'tagIds',
+        values.tagIds.filter((item) => item !== id)
+      );
+      toast.success('Tag deleted.');
+    },
+    onError: (error) =>
+      toast.error(error instanceof Error ? error.message : 'Could not delete tag.')
   });
 
   function toggleCategory(categoryId: string) {
@@ -567,7 +598,11 @@ export function ArticleEditor({
             onToggle={toggleCategory}
             onSetPrimary={(categoryId) => form.setFieldValue('primaryCategoryId', categoryId)}
             onCreate={(name) => createCategoryMutation.mutate(name)}
+            onDelete={(id) => deleteCategoryMutation.mutate(id)}
             isCreating={createCategoryMutation.isPending}
+            deletingId={
+              deleteCategoryMutation.isPending ? deleteCategoryMutation.variables : undefined
+            }
           />
 
           {/* Tags */}
@@ -576,7 +611,9 @@ export function ArticleEditor({
             selectedIds={values.tagIds}
             onToggle={toggleTag}
             onCreate={(name) => createTagMutation.mutate(name)}
+            onDelete={(id) => deleteTagMutation.mutate(id)}
             isCreating={createTagMutation.isPending}
+            deletingId={deleteTagMutation.isPending ? deleteTagMutation.variables : undefined}
           />
 
           {/* Excerpt */}
@@ -613,7 +650,9 @@ interface CategoryBoxProps {
   onToggle: (id: string) => void;
   onSetPrimary: (id: string) => void;
   onCreate: (name: string) => void;
+  onDelete: (id: string) => void;
   isCreating: boolean;
+  deletingId?: string;
 }
 
 function CategoryBox({
@@ -623,7 +662,9 @@ function CategoryBox({
   onToggle,
   onSetPrimary,
   onCreate,
-  isCreating
+  onDelete,
+  isCreating,
+  deletingId
 }: CategoryBoxProps) {
   const [name, setName] = React.useState('');
 
@@ -646,30 +687,48 @@ function CategoryBox({
           <div className='grid max-h-48 gap-1.5 overflow-y-auto'>
             {categories.map((category) => {
               const checked = selectedIds.includes(category.id);
+              const usageCount = category.usageCount ?? 0;
               return (
                 <div key={category.id} className='flex items-center justify-between gap-2 text-sm'>
-                  <Label htmlFor={`cat-${category.id}`} className='flex items-center gap-2'>
+                  <Label htmlFor={`cat-${category.id}`} className='flex min-w-0 items-center gap-2'>
                     <Checkbox
                       id={`cat-${category.id}`}
                       checked={checked}
                       onCheckedChange={() => onToggle(category.id)}
                     />
-                    {category.name}
+                    <span className='truncate'>{category.name}</span>
+                    <span className='text-muted-foreground shrink-0 text-xs tabular-nums'>
+                      ({usageCount})
+                    </span>
                   </Label>
-                  {checked ? (
-                    <button
-                      type='button'
-                      onClick={() => onSetPrimary(category.id)}
-                      className={cn(
-                        'text-xs',
-                        primaryId === category.id
-                          ? 'font-semibold text-[#3c5142]'
-                          : 'text-muted-foreground hover:text-[#3c5142]'
-                      )}
-                    >
-                      {primaryId === category.id ? 'Primary' : 'Make primary'}
-                    </button>
-                  ) : null}
+                  <div className='flex shrink-0 items-center gap-2'>
+                    {checked ? (
+                      <button
+                        type='button'
+                        onClick={() => onSetPrimary(category.id)}
+                        className={cn(
+                          'text-xs',
+                          primaryId === category.id
+                            ? 'font-semibold text-[#3c5142]'
+                            : 'text-muted-foreground hover:text-[#3c5142]'
+                        )}
+                      >
+                        {primaryId === category.id ? 'Primary' : 'Make primary'}
+                      </button>
+                    ) : null}
+                    {usageCount === 0 ? (
+                      <button
+                        type='button'
+                        aria-label={`Delete category ${category.name}`}
+                        disabled={deletingId === category.id}
+                        onClick={() => onDelete(category.id)}
+                        className='text-muted-foreground hover:text-destructive disabled:opacity-50'
+                        title='Delete unused category'
+                      >
+                        <Icons.trash className='size-3.5' />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               );
             })}
@@ -708,10 +767,20 @@ interface TagBoxProps {
   selectedIds: string[];
   onToggle: (id: string) => void;
   onCreate: (name: string) => void;
+  onDelete: (id: string) => void;
   isCreating: boolean;
+  deletingId?: string;
 }
 
-function TagBox({ tags, selectedIds, onToggle, onCreate, isCreating }: TagBoxProps) {
+function TagBox({
+  tags,
+  selectedIds,
+  onToggle,
+  onCreate,
+  onDelete,
+  isCreating,
+  deletingId
+}: TagBoxProps) {
   const [name, setName] = React.useState('');
 
   function handleAdd() {
@@ -731,20 +800,36 @@ function TagBox({ tags, selectedIds, onToggle, onCreate, isCreating }: TagBoxPro
           <p className='text-muted-foreground text-xs'>No tags yet. Add one below.</p>
         ) : (
           <div className='grid max-h-48 gap-1.5 overflow-y-auto'>
-            {tags.map((tag) => (
-              <Label
-                htmlFor={`tag-${tag.id}`}
-                key={tag.id}
-                className='flex items-center gap-2 text-sm'
-              >
-                <Checkbox
-                  id={`tag-${tag.id}`}
-                  checked={selectedIds.includes(tag.id)}
-                  onCheckedChange={() => onToggle(tag.id)}
-                />
-                {tag.name}
-              </Label>
-            ))}
+            {tags.map((tag) => {
+              const usageCount = tag.usageCount ?? 0;
+              return (
+                <div key={tag.id} className='flex items-center justify-between gap-2 text-sm'>
+                  <Label htmlFor={`tag-${tag.id}`} className='flex min-w-0 items-center gap-2'>
+                    <Checkbox
+                      id={`tag-${tag.id}`}
+                      checked={selectedIds.includes(tag.id)}
+                      onCheckedChange={() => onToggle(tag.id)}
+                    />
+                    <span className='truncate'>{tag.name}</span>
+                    <span className='text-muted-foreground shrink-0 text-xs tabular-nums'>
+                      ({usageCount})
+                    </span>
+                  </Label>
+                  {usageCount === 0 ? (
+                    <button
+                      type='button'
+                      aria-label={`Delete tag ${tag.name}`}
+                      disabled={deletingId === tag.id}
+                      onClick={() => onDelete(tag.id)}
+                      className='text-muted-foreground hover:text-destructive disabled:opacity-50'
+                      title='Delete unused tag'
+                    >
+                      <Icons.trash className='size-3.5' />
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         )}
         <div className='flex items-center gap-2 border-t pt-3'>
