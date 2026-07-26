@@ -203,6 +203,29 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   color: var(--benroso-muted);
 }
 
+/* Inline links must read clearly against muted body copy (blog + rich text). */
+.public-site .benroso-legal-prose a {
+  color: var(--benroso-primary);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--benroso-lime);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.2em;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+
+.public-site .benroso-legal-prose a:hover,
+.public-site .benroso-legal-prose a:focus-visible {
+  color: var(--benroso-primary-dark);
+  text-decoration-color: var(--benroso-lime-hover);
+}
+
+.public-site .benroso-legal-prose a:visited {
+  color: var(--benroso-primary);
+}
+
 .public-site .benroso-legal-section {
   scroll-margin-top: calc(var(--benroso-header-h) + 1.5rem);
 }
