@@ -15,6 +15,7 @@ import { TravelDatePicker } from '@/components/ui/travel-date-picker';
 import { submitEnquiry } from '@/features/contact/api/service';
 import type { EnquiryType } from '@/features/contact/api/types';
 import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
+import { enquiryThankYouPath } from '@/lib/public/enquiry-thank-you';
 import { localePath } from '@/lib/public/locale-path';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
@@ -353,7 +354,7 @@ function ContactFormBody({
   const mutation = useMutation({
     mutationFn: submitEnquiry,
     onSuccess: () => {
-      router.push(`${localePath(locale, '/thank-you')}?source=contact`);
+      router.push(enquiryThankYouPath(locale, 'contact'));
     },
     onError: () => {
       onSubmitStatusChange('error');

@@ -12,7 +12,7 @@ import { useAppForm } from '@/components/ui/tanstack-form';
 import { getCountryDialCode } from '@/constants/world-countries';
 import { submitEnquiry } from '@/features/contact/api/service';
 import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
-import { localePath } from '@/lib/public/locale-path';
+import { enquiryThankYouPath } from '@/lib/public/enquiry-thank-you';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -224,7 +224,7 @@ function TourInquiryForm({
       turnstile.resetTurnstile();
     },
     onSuccess: () => {
-      router.push(`${localePath(locale, '/thank-you')}?source=tour`);
+      router.push(enquiryThankYouPath(locale, 'tour'));
     }
   });
 

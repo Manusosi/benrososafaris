@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import * as z from 'zod';
 
 import { Icons } from '@/components/icons';
@@ -9,6 +10,7 @@ import { TravelDatePicker } from '@/components/ui/travel-date-picker';
 import { useAppForm } from '@/components/ui/tanstack-form';
 import { submitEnquiry } from '@/features/contact/api/service';
 import { TurnstileField, useTurnstileGate } from '@/components/public/turnstile-field';
+import { enquiryThankYouPath } from '@/lib/public/enquiry-thank-you';
 import { formatTravelDateRange } from '@/lib/travel-date-utils';
 import { cn } from '@/lib/utils';
 
@@ -65,15 +67,14 @@ function DestinationInquiryForm({
   country,
   locale
 }: DestinationInquiryPanelProps) {
-  const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'success' | 'error'>('idle');
+  const router = useRouter();
+  const [submitStatus, setSubmitStatus] = React.useState<'idle' | 'error'>('idle');
   const turnstile = useTurnstileGate();
 
   const mutation = useMutation({
     mutationFn: submitEnquiry,
     onSuccess: () => {
-      setSubmitStatus('success');
-      form.reset();
-      turnstile.resetTurnstile();
+      router.push(enquiryThankYouPath(locale, 'destination'));
     },
     onError: () => setSubmitStatus('error')
   });
@@ -260,11 +261,6 @@ function DestinationInquiryForm({
           <p className='text-xs text-[var(--benroso-muted)]'>
             No payment is collected here. We aim to respond within 24 hours.
           </p>
-          {submitStatus === 'success' ? (
-            <p className='text-sm text-[var(--benroso-primary)]'>
-              Thank you for your enquiry. Our safari team will be in touch shortly.
-            </p>
-          ) : null}
           {submitStatus === 'error' ? (
             <p className='text-sm text-red-700'>
               {mutation.error instanceof Error
