@@ -29,6 +29,7 @@ import { getMediaByIds } from '../media/api/client';
 import { MediaPickerDialog } from '../media/components/media-picker';
 import { CMS_SURFACE } from './surface';
 import { Figcaption, Figure } from './tiptap-figure';
+import { TableContextToolbar, TableInsertPicker } from './tiptap-table-controls';
 
 /** Common internal destinations offered as quick picks in the link dialog. */
 const INTERNAL_LINK_PRESETS: { label: string; href: string }[] = [
@@ -96,9 +97,13 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
           '[&_figure]:my-4 [&_figure]:overflow-hidden [&_figure]:rounded-[3px] [&_figure]:border [&_figure]:border-[#E5E7EB]',
           '[&_figure_img]:my-0 [&_figure_img]:rounded-none',
           '[&_figcaption]:bg-[#f8f5ef] [&_figcaption]:px-3 [&_figcaption]:py-2 [&_figcaption]:text-center [&_figcaption]:text-xs [&_figcaption]:italic [&_figcaption]:text-neutral-600',
-          '[&_table]:my-2 [&_table]:w-full [&_table]:border-collapse',
-          '[&_th]:border [&_th]:border-[#E5E7EB] [&_th]:bg-[#f3f4f6] [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold',
-          '[&_td]:border [&_td]:border-[#E5E7EB] [&_td]:p-2'
+          '[&_.tableWrapper]:my-2 [&_.tableWrapper]:overflow-x-auto',
+          '[&_table]:w-full [&_table]:border-collapse [&_table]:table-fixed',
+          '[&_th]:relative [&_th]:min-w-[3rem] [&_th]:border [&_th]:border-[#E5E7EB] [&_th]:bg-[#f3f4f6] [&_th]:p-2 [&_th]:text-left [&_th]:font-semibold',
+          '[&_td]:relative [&_td]:min-w-[3rem] [&_td]:border [&_td]:border-[#E5E7EB] [&_td]:p-2',
+          '[&_.selectedCell]:after:pointer-events-none [&_.selectedCell]:after:absolute [&_.selectedCell]:after:inset-0 [&_.selectedCell]:after:bg-[#3c5142]/10',
+          '[&_.column-resize-handle]:pointer-events-none [&_.column-resize-handle]:absolute [&_.column-resize-handle]:top-0 [&_.column-resize-handle]:right-[-2px] [&_.column-resize-handle]:bottom-0 [&_.column-resize-handle]:w-1 [&_.column-resize-handle]:bg-[#3c5142]/40',
+          '[&_.resize-cursor]:cursor-col-resize'
         ),
         'data-placeholder': placeholder ?? ''
       }
@@ -215,6 +220,7 @@ export function RichTextEditor({ value, onChange, placeholder, className }: Rich
       )}
     >
       <Toolbar editor={editor} onImage={() => setImageOpen(true)} onLink={openLinkDialog} />
+      <TableContextToolbar editor={editor} />
       <EditorContent editor={editor} />
 
       <MediaPickerDialog
@@ -374,10 +380,6 @@ function Toolbar({
   onImage: () => void;
   onLink: () => void;
 }) {
-  function insertTable() {
-    editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
-  }
-
   return (
     <div className='flex flex-wrap items-center gap-0.5 border-b border-[#E5E7EB] p-1'>
       <ToolbarButton label='Undo' onClick={() => editor.chain().focus().undo().run()}>
@@ -494,9 +496,7 @@ function Toolbar({
       <ToolbarButton label='Image' onClick={onImage}>
         <Icons.image className='size-4' />
       </ToolbarButton>
-      <ToolbarButton label='Table' onClick={insertTable}>
-        <Icons.table className='size-4' />
-      </ToolbarButton>
+      <TableInsertPicker editor={editor} />
       <ToolbarButton
         label='Horizontal rule'
         onClick={() => editor.chain().focus().setHorizontalRule().run()}

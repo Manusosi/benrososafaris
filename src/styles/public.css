@@ -301,6 +301,45 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   text-align: center;
 }
 
+/* Rich-text tables (inserted from the CMS editor). Rendered as a block so wide
+   tables scroll horizontally on small screens instead of overflowing the page. */
+.public-site .benroso-legal-prose table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--benroso-line);
+  border-collapse: collapse;
+  border-radius: var(--benroso-radius);
+  margin: 1.75rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.public-site .benroso-legal-prose table th,
+.public-site .benroso-legal-prose table td {
+  border: 1px solid var(--benroso-line);
+  padding: 0.625rem 0.875rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.public-site .benroso-legal-prose table th {
+  background: var(--benroso-ivory);
+  color: var(--benroso-ink, var(--benroso-primary));
+  font-weight: 600;
+}
+
+.public-site .benroso-legal-prose table tbody tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--benroso-ivory) 45%, transparent);
+}
+
+/* Tiptap emits a <colgroup> when column resizing is used; ignore its fixed
+   pixel widths on the public site so the table stays fluid. */
+.public-site .benroso-legal-prose table col {
+  width: auto !important;
+}
+
 .public-site .benroso-legal-intro {
   color: var(--benroso-muted);
 }
