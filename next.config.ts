@@ -18,6 +18,12 @@ const baseConfig: NextConfig = {
     ]
   },
   images: {
+    // Serve original images directly (Supabase/local assets) instead of routing
+    // them through Vercel's Image Optimization. This avoids the Hobby plan's
+    // 5,000 monthly "Transformations" cap, which — once exceeded — makes newly
+    // published images (whose variants aren't cached yet) fail to load.
+    // Trade-off: no automatic resize/WebP, so keep uploaded images web-sized.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
