@@ -16,7 +16,7 @@ export function TawkChat() {
 
   return (
     <Script id='tawk-to' strategy='afterInteractive'>
-      {`var Tawk_API=Tawk_API||{};Tawk_API.customStyle={visibility:{desktop:{position:'bl',xOffset:20,yOffset:20},mobile:{position:'bl',xOffset:10,yOffset:80}}};var Tawk_LoadStart=new Date();
+      {`var Tawk_API=Tawk_API||{};Tawk_API.customStyle={visibility:{desktop:{position:'bl',xOffset:24,yOffset:24},mobile:{position:'bl',xOffset:24,yOffset:24}}};var Tawk_LoadStart=new Date();
 (function(){
 var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
 s1.async=true;
