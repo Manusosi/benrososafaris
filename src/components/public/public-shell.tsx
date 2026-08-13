@@ -1,3 +1,4 @@
+import { FloatingWhatsApp } from '@/components/public/floating-whatsapp';
 import { SiteFooter } from '@/components/public/site-footer';
 import { SiteHeader } from '@/components/public/site-header';
 import {
@@ -38,6 +39,7 @@ export async function PublicShell({ children, locale }: PublicShellProps) {
       />
       <main>{children}</main>
       <SiteFooter footerColumns={footerColumns} locale={locale} siteSettings={siteSettings} />
+      <FloatingWhatsApp />
     </div>
   );
 }

@@ -68,6 +68,16 @@ export const BENROSO_WHATSAPP = {
   message: 'Hello Benroso Safaris, I would like help planning my safari.'
 } as const;
 
+/**
+ * Tawk.to live-chat widget. Property and widget ids are public by design (they
+ * ship in the browser). Override per-environment with NEXT_PUBLIC_TAWK_PROPERTY_ID
+ * / NEXT_PUBLIC_TAWK_WIDGET_ID; leave the property id blank to disable the widget.
+ */
+export const BENROSO_TAWK = {
+  propertyId: process.env.NEXT_PUBLIC_TAWK_PROPERTY_ID || '6a7d539cae91a11d44e652e9',
+  widgetId: process.env.NEXT_PUBLIC_TAWK_WIDGET_ID || '1jvsot715'
+} as const;
+
 /** Hero background for the public contact page. */
 export const BENROSO_CONTACT_HERO = {
   imageUrl: '/assets/Elephant-in-Amboseli-National-Park-2.jpeg',
