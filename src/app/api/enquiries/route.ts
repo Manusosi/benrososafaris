@@ -31,26 +31,29 @@ const baseFields = {
   sourcePath: z.string().optional()
 };
 
+// Only name + email are required here; every safari-quote entry point (the full
+// contact form, the tour panel, the destination panel) enforces its own required
+// fields client-side and sends a different subset. Keeping the API lenient means a
+// lead is never dropped just because a lean form omits a field the full form asks for.
 const safariQuoteSchema = z.object({
   ...baseFields,
   ...securityFields,
-  adults: z.number().int().min(1),
-  budget: z.string().min(1),
-  budgetTier: z.string().min(1),
+  adults: z.number().int().min(1).optional(),
+  budget: z.string().optional(),
+  budgetTier: z.string().optional(),
   children: z.number().int().min(0).default(0),
-  country: z.string().min(2),
-  destinations: z.string().min(2),
+  country: z.string().optional(),
+  destinations: z.string().optional(),
   enquiryType: z.literal('safari-quote'),
   infants: z.number().int().min(0).default(0),
   message: z.string().optional(),
-  phone: z.string().min(6),
-  preferredDates: z.string().min(2),
+  preferredDates: z.string().optional(),
   referralSource: z.string().optional(),
   travelEndDate: z.string().optional(),
-  travelPlanningStage: z.string().min(1),
+  travelPlanningStage: z.string().optional(),
   travelStartDate: z.string().optional(),
-  travelers: z.number().int().positive(),
-  tripType: z.string().min(1)
+  travelers: z.number().int().positive().optional(),
+  tripType: z.string().optional()
 });
 
 const generalSchema = z.object({
@@ -109,16 +112,29 @@ function labelFor(map: Record<string, string>, value: string) {
 
 function buildSafariMessage(data: z.infer<typeof safariQuoteSchema>) {
   const details = [
-    `Safari quote request for ${data.destinations}.`,
-    `Travel dates: ${data.preferredDates}.`,
-    `Budget preference: ${labelFor(BUDGET_TIER_LABELS, data.budgetTier)}.`,
-    `Tour budget per person: ${data.budget}.`,
-    `Country of residence: ${data.country}.`,
-    `Travelers: ${data.adults} adult(s), ${data.children} child(ren), ${data.infants} infant(s) (${data.travelers} total).`,
-    `Travel planning: ${labelFor(TRAVEL_PLANNING_LABELS, data.travelPlanningStage)}.`,
-    `Trip type: ${labelFor(TRIP_TYPE_LABELS, data.tripType)}.`
+    data.destinations ? `Safari quote request for ${data.destinations}.` : 'Safari quote request.'
   ];
 
+  if (data.preferredDates) details.push(`Travel dates: ${data.preferredDates}.`);
+  if (data.budgetTier) {
+    details.push(`Budget preference: ${labelFor(BUDGET_TIER_LABELS, data.budgetTier)}.`);
+  }
+  if (data.budget) details.push(`Tour budget per person: ${data.budget}.`);
+  if (data.country) details.push(`Country of residence: ${data.country}.`);
+
+  if (data.adults != null) {
+    const total = data.travelers ? ` (${data.travelers} total)` : '';
+    details.push(
+      `Travelers: ${data.adults} adult(s), ${data.children} child(ren), ${data.infants} infant(s)${total}.`
+    );
+  } else if (data.travelers != null) {
+    details.push(`Travelers: ${data.travelers} total.`);
+  }
+
+  if (data.travelPlanningStage) {
+    details.push(`Travel planning: ${labelFor(TRAVEL_PLANNING_LABELS, data.travelPlanningStage)}.`);
+  }
+  if (data.tripType) details.push(`Trip type: ${labelFor(TRIP_TYPE_LABELS, data.tripType)}.`);
   if (data.referralSource) {
     details.push(`Referral source: ${labelFor(REFERRAL_LABELS, data.referralSource)}.`);
   }
@@ -181,13 +197,13 @@ function buildNotificationPayload(
   message: string
 ): EnquiryNotificationPayload {
   return {
-    adults: data.enquiryType === 'safari-quote' ? data.adults : null,
+    adults: data.enquiryType === 'safari-quote' ? (data.adults ?? null) : null,
     bookingReference: data.enquiryType === 'other' ? (data.bookingReference ?? null) : null,
-    budget: data.enquiryType === 'safari-quote' ? data.budget : null,
-    budgetTier: data.enquiryType === 'safari-quote' ? data.budgetTier : null,
+    budget: data.enquiryType === 'safari-quote' ? (data.budget ?? null) : null,
+    budgetTier: data.enquiryType === 'safari-quote' ? (data.budgetTier ?? null) : null,
     children: data.enquiryType === 'safari-quote' ? data.children : null,
-    country: data.enquiryType === 'safari-quote' ? data.country : null,
-    destinations: data.enquiryType === 'safari-quote' ? data.destinations : null,
+    country: data.enquiryType === 'safari-quote' ? (data.country ?? null) : null,
+    destinations: data.enquiryType === 'safari-quote' ? (data.destinations ?? null) : null,
     email: data.email,
     enquiryType: data.enquiryType,
     infants: data.enquiryType === 'safari-quote' ? data.infants : null,
@@ -195,13 +211,14 @@ function buildNotificationPayload(
     message,
     name: data.name,
     phone: data.phone ?? null,
-    preferredDates: data.enquiryType === 'safari-quote' ? data.preferredDates : null,
+    preferredDates: data.enquiryType === 'safari-quote' ? (data.preferredDates ?? null) : null,
     referralSource: data.enquiryType === 'safari-quote' ? (data.referralSource ?? null) : null,
     sourcePath: data.sourcePath ?? null,
     topic: data.enquiryType === 'general' ? data.topic : null,
-    travelPlanningStage: data.enquiryType === 'safari-quote' ? data.travelPlanningStage : null,
+    travelPlanningStage:
+      data.enquiryType === 'safari-quote' ? (data.travelPlanningStage ?? null) : null,
     travelers: data.enquiryType === 'safari-quote' ? (data.travelers ?? null) : null,
-    tripType: data.enquiryType === 'safari-quote' ? data.tripType : null
+    tripType: data.enquiryType === 'safari-quote' ? (data.tripType ?? null) : null
   };
 }
 
@@ -214,7 +231,9 @@ function buildEnquiryInsertRow(
     booking_reference: data.enquiryType === 'other' ? (data.bookingReference ?? null) : null,
     budget:
       data.enquiryType === 'safari-quote'
-        ? `${labelFor(BUDGET_TIER_LABELS, data.budgetTier)} | ${data.budget}`
+        ? [data.budgetTier ? labelFor(BUDGET_TIER_LABELS, data.budgetTier) : null, data.budget]
+            .filter(Boolean)
+            .join(' | ') || null
         : null,
     country: data.enquiryType === 'safari-quote' ? data.country : null,
     destinations: data.enquiryType === 'safari-quote' ? data.destinations : null,

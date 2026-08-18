@@ -258,6 +258,7 @@ function TourInquiryForm({
         budgetTier: value.budgetTier || undefined,
         children: value.children,
         country: value.country,
+        destinations: tourTitle,
         infants: value.infants,
         locale,
         message: buildInquiryMessage(value, tourTitle, tourSlug),
