@@ -17,8 +17,8 @@ export function FleetFeatures({ locale }: FleetFeaturesProps) {
     <section className='border-t border-[var(--benroso-line)] bg-[var(--benroso-ivory)]'>
       <div className='benroso-container py-14 md:py-16 lg:py-20'>
         <div className='mx-auto max-w-5xl'>
-          <div className='grid gap-10 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_19rem] xl:gap-12'>
-            <div>
+          <div className='grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_17.5rem] lg:items-start lg:gap-10 xl:grid-cols-[minmax(0,1fr)_19rem] xl:gap-12'>
+            <div className='min-w-0'>
               <div className='text-center lg:text-left'>
                 <p className='benroso-eyebrow'>What You Can Expect</p>
                 <h2 className='benroso-heading mt-3 font-display text-[clamp(1.75rem,3vw,2.35rem)] leading-tight'>

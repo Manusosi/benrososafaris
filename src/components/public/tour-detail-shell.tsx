@@ -119,8 +119,8 @@ export function TourDetailShell({
 
       <section className='bg-white'>
         <div className='benroso-container py-10 md:py-12'>
-          <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10'>
-            <article>
+          <div className='grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10'>
+            <article className='min-w-0'>
               <section className='scroll-mt-36' id='description'>
                 <h2 className='benroso-heading font-display text-[clamp(1.9rem,3vw,2.55rem)] leading-tight'>
                   Trip Overview

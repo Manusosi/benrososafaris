@@ -81,7 +81,7 @@ export function DestinationDetailShell({ destination, locale }: DestinationDetai
             <span className='text-[var(--benroso-ink)]'>{destination.name}</span>
           </nav>
 
-          <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10'>
+          <div className='grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-10'>
             <div className='min-w-0'>
               <AccommodationGallery images={galleryImages} title={destination.name} />
 

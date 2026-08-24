@@ -1751,6 +1751,56 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   justify-content: space-between;
 }
 
+/*
+ * Mobile filter disclosure. The full filter stack is ~1100px tall, which pushed
+ * the first result card two screens down the page, so below lg it collapses
+ * behind a toggle. From lg up the sidebar is always open and the toggle hidden.
+ */
+.public-site .benroso-listing-filters__toggle {
+  align-items: center;
+  background: var(--benroso-ivory, #fff);
+  border: 1px solid var(--benroso-line);
+  border-radius: var(--benroso-button-radius);
+  color: var(--benroso-heading);
+  cursor: pointer;
+  display: flex;
+  font-size: 0.85rem;
+  font-weight: 700;
+  justify-content: space-between;
+  letter-spacing: 0.04em;
+  min-height: 2.75rem;
+  padding: 0 1rem;
+  text-transform: uppercase;
+  width: 100%;
+}
+
+.public-site .benroso-listing-filters__toggle-label {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 1023px) {
+  .public-site .benroso-listing-filters__body.is-collapsed {
+    display: none;
+  }
+
+  .public-site .benroso-listing-filters.is-mobile-collapsed .benroso-listing-filters__header,
+  .public-site .benroso-listing-filters.is-mobile-collapsed .benroso-listing-filters__active {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .public-site .benroso-listing-filters__toggle {
+    display: none;
+  }
+
+  .public-site .benroso-listing-filters__body.is-collapsed {
+    display: flex;
+  }
+}
+
 .public-site .benroso-listing-filters__title {
   color: var(--benroso-heading);
   font-family: var(--font-display, inherit);

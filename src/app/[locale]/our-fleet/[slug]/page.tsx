@@ -145,8 +145,8 @@ export default async function FleetVehicleDetailPage({ params }: FleetVehiclePag
       </section>
 
       <section className='benroso-section bg-white'>
-        <div className='benroso-container grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start'>
-          <article>
+        <div className='benroso-container grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start'>
+          <article className='min-w-0'>
             <p className='benroso-eyebrow'>Fleet Detail</p>
             <h2 className='benroso-heading mt-3 font-display text-[clamp(1.9rem,3.5vw,2.75rem)] leading-tight'>
               Built for comfortable safari days

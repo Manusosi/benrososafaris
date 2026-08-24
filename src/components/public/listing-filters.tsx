@@ -32,9 +32,29 @@ export function ListingFilters({
   title = 'Filter'
 }: ListingFiltersProps) {
   const showClear = activeCount > 0 && (onClear || clearHref);
+  // Collapsed by default on mobile so results are reachable without scrolling
+  // past the full filter stack. Always expanded from lg up (see public.css).
+  const [open, setOpen] = React.useState(false);
 
   return (
-    <div className={cn('benroso-listing-filters', className)}>
+    <div className={cn('benroso-listing-filters', !open && 'is-mobile-collapsed', className)}>
+      <button
+        aria-controls='listing-filters-body'
+        aria-expanded={open}
+        className='benroso-listing-filters__toggle'
+        onClick={() => setOpen((value) => !value)}
+        type='button'
+      >
+        <span className='benroso-listing-filters__toggle-label'>
+          <Icons.adjustments aria-hidden className='size-4' />
+          {open ? 'Hide filters' : 'Filter results'}
+          {activeCount > 0 ? ` (${activeCount})` : ''}
+        </span>
+        <Icons.chevronDown
+          aria-hidden
+          className={cn('size-4 transition-transform', open && 'rotate-180')}
+        />
+      </button>
       <div className='benroso-listing-filters__header'>
         <h2 className='benroso-listing-filters__title'>{title}</h2>
         {showClear ? (
@@ -54,7 +74,12 @@ export function ListingFilters({
           {activeCount} active {activeCount === 1 ? 'filter' : 'filters'}
         </p>
       ) : null}
-      <div className='benroso-listing-filters__body'>{children}</div>
+      <div
+        className={cn('benroso-listing-filters__body', !open && 'is-collapsed')}
+        id='listing-filters-body'
+      >
+        {children}
+      </div>
     </div>
   );
 }

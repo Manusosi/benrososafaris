@@ -77,8 +77,8 @@ export function AccommodationDetailShell({
             <span className='text-[var(--benroso-ink)]'>{accommodation.name}</span>
           </nav>
 
-          <div className='grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10'>
-            <div>
+          <div className='grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-10'>
+            <div className='min-w-0'>
               <AccommodationGallery images={accommodation.gallery} title={accommodation.name} />
 
               <div className='mt-6 flex flex-wrap gap-2'>
