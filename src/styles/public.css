@@ -798,6 +798,13 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
   border-radius: var(--benroso-radius);
   margin: 0 0.875rem 0.875rem;
   overflow: hidden;
+  /*
+   * A season/pax price matrix is 6 columns wide. Squeezing that into a ~315px
+   * phone shell left the price cells at 52px, so let the shell scroll instead
+   * and give the table a readable floor width below sm (see rule further down).
+   */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (min-width: 768px) {
@@ -809,6 +816,42 @@ body:has(.team-member-dialog[data-state='open']) [data-slot='dialog-overlay'] {
 .public-site .benroso-pricing-tier__table {
   table-layout: fixed;
   width: 100%;
+}
+
+/*
+ * Below sm, size columns from their content with a readable floor rather than a
+ * fixed percentage split. Narrow tables (day trips, 2-3 columns) still fit the
+ * shell with no scrollbar; only wide season/pax matrices overflow and scroll.
+ */
+@media (max-width: 639px) {
+  .public-site .benroso-pricing-tier__table {
+    table-layout: auto;
+  }
+
+  .public-site .benroso-pricing-tier__head th {
+    min-width: 4.75rem;
+  }
+
+  .public-site .benroso-pricing-tier__head th:first-child,
+  .public-site .benroso-pricing-tier__season {
+    min-width: 7rem;
+  }
+
+  .public-site .benroso-pricing-tier__price {
+    min-width: 4.75rem;
+  }
+}
+
+.public-site .benroso-pricing-tier__scroll-hint {
+  color: var(--benroso-muted);
+  font-size: 0.7rem;
+  margin: -0.35rem 0.875rem 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .public-site .benroso-pricing-tier__scroll-hint {
+    display: none;
+  }
 }
 
 .public-site .benroso-pricing-tier__head th {

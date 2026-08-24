@@ -256,6 +256,11 @@ export function ExperiencePackageTabs({ levels, locale }: ExperiencePackageTabsP
                   </tbody>
                 </table>
               </div>
+              {bands.length > 2 ? (
+                <p className='benroso-pricing-tier__scroll-hint'>
+                  Swipe the table to see all prices →
+                </p>
+              ) : null}
             </div>
           ) : (
             <div className='flex min-h-48 flex-col items-center justify-center gap-3 p-6 text-center'>
